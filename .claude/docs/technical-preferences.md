@@ -7,13 +7,18 @@
 
 - **Engine**: Ninguno — plataforma web, sin motor de juego
 - **Language**: JavaScript (módulos ES), tipado con JSDoc
-- **Type checking**: `npx tsc --checkJs --noEmit`, configurado en `jsconfig.json`
-  (raíz del repo). `prototypes/` queda excluido a propósito. Hasta que `src/` tenga
-  archivos `.js`, `tsc` avisará de que no encuentra entradas: es lo esperado
+- **Type checking**: `npm run typecheck`, configurado en `jsconfig.json` (raíz del repo).
+  `prototypes/` queda excluido a propósito. `moduleResolution` es **`NodeNext`**, y eso no
+  es preferencia: es lo único que hace que `tsc` **exija** la extensión `.js` en los
+  imports. Con `Bundler` un import sin extensión compila y falla con un 404 en el navegador
+- **Comprobación completa**: `npm run check` = tipos + invariantes de CI + tests
 - **Build step**: Ninguno. Los módulos ES se sirven tal cual al navegador.
   Los imports deben incluir la extensión `.js` — el navegador la exige y no hay
   bundler que la resuelva
-- **Rendering**: Pendiente de ADR — DOM contra Canvas
+- **Rendering**: **DOM.** Un elemento por objeto del tablero, disposición con CSS Grid,
+  separación como `gap`. Ver [ADR-0005](../../docs/architecture/0005-dom-contra-canvas.md).
+  Un `<canvas>` es admisible como elemento **hoja** para un instrumento que necesite
+  pintura de píxeles, con alternativa accesible equivalente; nunca como área de juego
 - **Physics**: Ninguna. Los instrumentos no necesitan simulación física
 
 ## Input & Platform
@@ -152,14 +157,17 @@ Herramientas declaradas:
   cero dependencias es el artefacto servido, no el entorno de desarrollo
 - [ADR-0004](../../docs/architecture/0004-marca-nominal-como-mecanismo.md) — la marca
   nominal en JSDoc como mecanismo de aplicación, en lugar de análisis semántico en CI
+- [ADR-0005](../../docs/architecture/0005-dom-contra-canvas.md) — DOM para el área de
+  juego. Los colores forzados del sistema operativo no funcionan sobre un canvas
 
-ADR pendientes, ya identificadas en `design/gdd/game-concept.md`:
+ADR pendientes:
 
-1. **DOM contra Canvas** para el área de juego — afecta al coste del port a móvil
-   y a cómo se implementa la accesibilidad
-2. **Persistencia de datos de salud** — los Niveles 0 a 2 la evitan por diseño;
-   el Nivel 3 la asume de forma explícita, con RGPD
-3. **Framework de interfaz del panel del terapeuta** — se decide en el Nivel 1
+1. ~~**DOM contra Canvas**~~ — **resuelta**, ADR-0005
+2. **Persistencia de datos de salud** — los Niveles 0 a 2 la evitan por diseño, y la
+   sesión 2 con el colaborador confirmó que la primera prueba real **no necesita
+   persistencia en absoluto**. Se decide cuando llegue el Nivel 1
+3. **Framework de interfaz del panel del terapeuta** — se decide al diseñar el sistema 11.
+   ADR-0005 no lo condiciona: el panel siempre iba a ser DOM
 
 ## Engine Specialists
 

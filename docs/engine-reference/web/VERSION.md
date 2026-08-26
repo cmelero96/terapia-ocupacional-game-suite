@@ -37,7 +37,7 @@ Estas no se deciden aquí. Están registradas como preguntas abiertas en
 
 | Decisión | Por qué importa |
 |----------|-----------------|
-| **DOM contra Canvas** para el área de juego | Afecta al coste del port a móvil y a cómo se implementa la accesibilidad. El DOM da ARIA y foco de teclado gratis; el Canvas obliga a construirlos a mano |
+| ~~**DOM contra Canvas**~~ | **RESUELTA el 2026-08-26 — ADR-0005: DOM.** El argumento decisivo no fue el que esta fila anticipaba: es que **`forced-colors` no hace nada sobre un canvas**. Para una población de baja visión que eligió activamente el alto contraste, eso desactiva la función más importante del sistema operativo para ese usuario |
 | **Persistencia de datos de salud** | Los datos de progreso del paciente son categoría especial en el RGPD. Los Niveles 0 a 2 los evitan por diseño (anti-pilar 4). El Nivel 3 los asume de forma explícita |
 | **Framework de interfaz para el panel del terapeuta** | El Nivel 0 no tiene panel. Se decide cuando llegue el Nivel 1 |
 
