@@ -1,0 +1,36 @@
+{
+  // Comprobación de tipos sin paso de build. Ejecutar: npx tsc --checkJs --noEmit
+  //
+  // El proyecto no usa TypeScript: los archivos son .js que el navegador ejecuta
+  // tal cual, y los tipos se declaran en comentarios JSDoc. tsc solo verifica;
+  // nunca emite nada.
+  //
+  // Los imports DEBEN incluir la extensión .js — los navegadores la exigen en los
+  // módulos ES nativos. No hay bundler que la resuelva.
+  "compilerOptions": {
+    "checkJs": true,
+    "noEmit": true,
+    "allowJs": true,
+
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+
+    "strict": true,
+    "noImplicitAny": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "exactOptionalPropertyTypes": true,
+
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true
+  },
+
+  // prototypes/ queda FUERA a propósito. El código de prototipo es desechable y
+  // sus normas están relajadas por diseño; type-checkearlo daría ruido sin valor.
+  "include": ["src/**/*.js", "tools/**/*.js", "tests/**/*.js"],
+  "exclude": ["node_modules", "prototypes", "**/*.min.js"]
+}

@@ -1,168 +1,293 @@
-# Game World Entity Registry
+# Entity Registry
 #
-# PURPOSE: Single source of truth for all named game-world facts that appear
-# in more than one document. Skills check this before writing new content to
-# detect cross-doc inconsistencies at authoring time.
+# Hechos que cruzan documentos. Un valor vive aquí una sola vez, y los GDD lo
+# citan en lugar de repetirlo. Si un GDD necesita un valor distinto, eso es un
+# conflicto que hay que resolver, no un número que se cambia en silencio.
 #
-# RULES:
-#   - Only register facts that cross system boundaries. Internal-only facts
-#     (a formula used in one GDD only) do NOT need to be registered.
-#   - Never delete entries — set status: deprecated instead.
-#   - When a value changes: update the value, set revised: to today's date,
-#     and add a comment with the old value and which GDD changed it.
-#   - source: is the authoritative GDD — the one that "owns" this fact.
-#     Other GDDs that reference it list themselves in referenced_by.
-#   - When a new GDD references an existing entry, append its path to
-#     referenced_by. Do not create a duplicate entry.
-#
-# WRITTEN BY: /design-system (Phase 5 — after GDD sections are approved)
-#             /consistency-check (when resolving conflicts)
-# READ BY:    /design-system (Phase 2 — before authoring begins, and after
-#               Section C/D writes to conflict-check new entities/formulas)
-#             /consistency-check (primary input — grep-first, GDD-second)
-#             /review-all-gdds (Phase 1 — baseline for Phase 2 checks)
-#             /architecture-review (data structure and interface validation)
-#
-# SEARCH PATTERNS (for skills using Grep):
-#   All entity names:        Grep pattern="^  - name:" path="design/registry/entities.yaml"
-#   Specific entity:         Grep pattern="  - name: goblin" path="design/registry/entities.yaml"
-#   All items:               Grep pattern="^  - name:" path="design/registry/entities.yaml" (items section)
-#   What combat.md owns:     Grep pattern="source: design/gdd/combat.md"
-#   What inventory.md uses:  Grep pattern="referenced_by.*inventory"
-#   All gold values:          Grep pattern="value_gold:"
-#   Deprecated entries:      Grep pattern="status: deprecated"
-#
-# FORMAT: YAML. Consistent indentation is critical for grep reliability.
-#   Sections: entities | items | formulas | constants
-#   Each entry: name, status, source, referenced_by[], attributes{}, added, revised
+# NUNCA se renumeran ni se reescriben valores existentes sin declarar el conflicto.
+# Actualizado por /design-system y verificado por /consistency-check.
 
-version: 1
-last_updated: ""
+constants:
+  - name: Cmin
+    value: 9
+    unit: elementos
+    description: Tablero mínimo. Dominio inferior de objetivos(C).
+    source: design/gdd/manifiesto-banco-imagenes.md
+    referenced_by:
+      - design/gdd/manifiesto-banco-imagenes.md
 
-# ─── ENTITIES ────────────────────────────────────────────────────────────────
-# Named game-world objects: enemies, NPCs, characters, factions, bosses.
-# Register an entity here when it appears in more than one GDD — e.g., an
-# enemy defined in combat.md that also drops items listed in inventory.md.
-#
-# Required fields: name, status, source, referenced_by, added
-# Attribute fields: any key stats that could appear in another GDD
-#   (health, damage, drops, faction, etc.)
+  - name: Cmax
+    value: 100
+    unit: elementos
+    description: >
+      Tablero máximo que el producto permite. Dimensiona el banco de imágenes
+      entero: subirlo después obliga a producir más contenido.
+    safe_range: [50, 150]
+    source: design/gdd/manifiesto-banco-imagenes.md
+    referenced_by:
+      - design/gdd/manifiesto-banco-imagenes.md
+      - design/gdd/game-concept.md
 
-entities: []
+  - name: objetivosMin
+    value: 3
+    unit: objetivos
+    description: Objetivos a encontrar en el tablero mínimo.
+    safe_range: [2, 5]
+    source: design/gdd/manifiesto-banco-imagenes.md
+    referenced_by:
+      - design/gdd/manifiesto-banco-imagenes.md
 
-# Example (remove when first real entry is added):
-#
-# entities:
-#   - name: goblin
-#     status: active              # active | deprecated
-#     source: design/gdd/combat.md
-#     referenced_by:
-#       - design/gdd/combat.md
-#       - design/gdd/inventory.md
-#     health: 40
-#     damage: 8
-#     drops:
-#       - item: goblin_arm        # must match an entry in items section
-#         qty: 1
-#         drop_rate: 0.8          # 0.0–1.0
-#     added: 2026-03-26
-#     revised: ""
+  - name: objetivosMax
+    value: 10
+    unit: objetivos
+    description: >
+      Objetivos a encontrar en el tablero máximo. Elegido para preservar
+      distractores(100) = 90, y así no invalidar cifras ya citadas en otros
+      documentos.
+    safe_range: [8, 15]
+    source: design/gdd/manifiesto-banco-imagenes.md
+    referenced_by:
+      - design/gdd/manifiesto-banco-imagenes.md
 
+  - name: Rmax
+    value: 4
+    unit: repeticiones
+    description: >
+      Repeticiones medias máximas aceptables por distractor único, en similitud
+      visual máxima, en el tablero más grande. Junto con Cmax es una de las dos
+      perillas con consecuencia económica directa del proyecto.
+    safe_range: [2, 6]
+    source: design/gdd/manifiesto-banco-imagenes.md
+    referenced_by:
+      - design/gdd/manifiesto-banco-imagenes.md
+      - design/gdd/game-concept.md
 
-# ─── ITEMS ───────────────────────────────────────────────────────────────────
-# Named collectables, equipment, consumables, crafting materials, currency.
-# Register an item when its name or value appears in more than one GDD.
-#
-# Required fields: name, status, source, referenced_by, added
-# Attribute fields: value_gold, weight, stackable, category, and any stat
-#   modifiers that another system (e.g., economy, crafting) might reference.
+  - name: clusterMin
+    value: 24
+    unit: elementos por grupo visual
+    derived: true
+    derivation: ceil(distractores(Cmax) / Rmax) + 1
+    description: >
+      Mínimo de elementos activos por grupo visual. DERIVADA de Cmax y Rmax: no
+      se fija a mano. Sustituye el rango "aproximadamente 23-30" que aparecía
+      antes en game-concept.md, que no era una entrada válida de validación.
+      ESCALÓN DE APLICACIÓN POR NIVEL: en el Nivel 0 (MVP, 30 imágenes en total)
+      es ADVERTENCIA, porque ningún reparto de 30 imágenes satisface un mínimo de
+      24 y el primer manifiesto sería inválido por construcción. Del Nivel 1 en
+      adelante BLOQUEA el build. El escalón existe para que la salida fácil no sea
+      bajar clusterMin, que es lo único que hace real la perilla de similitud visual.
+    source: design/gdd/manifiesto-banco-imagenes.md
+    referenced_by:
+      - design/gdd/manifiesto-banco-imagenes.md
+      - design/gdd/game-concept.md
 
-items: []
+  - name: solapamientoMax
+    value: 0.7
+    unit: fracción
+    description: >
+      Techo de etiquetado cruzado por asset. Por encima, el pool de similitud
+      "ninguna" se encoge demasiado y el eje semántico deja de discriminar.
+      Incumplirlo es advertencia de calidad de datos, no error bloqueante.
+    safe_range: [0.5, 0.8]
+    source: design/gdd/manifiesto-banco-imagenes.md
+    referenced_by:
+      - design/gdd/manifiesto-banco-imagenes.md
 
-# Example:
-#
-# items:
-#   - name: goblin_arm
-#     status: active
-#     source: design/gdd/combat.md   # drop defined in combat GDD
-#     referenced_by:
-#       - design/gdd/combat.md
-#       - design/gdd/inventory.md    # inventory GDD lists its weight/stack rules
-#       - design/gdd/economy.md      # economy GDD references its sell price
-#     value_gold: 5
-#     weight: 1
-#     stackable: true
-#     category: crafting_material
-#     added: 2026-03-26
-#     revised: ""
+  - name: G
+    value: 16
+    unit: clusters visuales
+    description: >
+      Clusters visuales distintos en el banco. Es el coste real de producción de
+      contenido: las categorías semánticas son gratis, los clusters no. 13 si se
+      reutilizan clusters entre categorías vía etiquetado múltiple.
+    safe_range: [13, 20]
+    source: design/gdd/manifiesto-banco-imagenes.md
+    referenced_by:
+      - design/gdd/manifiesto-banco-imagenes.md
+      - design/gdd/game-concept.md
 
+  - name: Rsesion
+    value: null
+    unit: apariciones por sesión
+    description: >
+      PENDIENTE. Techo diagnóstico de reaparición de un mismo asset a lo largo de
+      una sesión. No se puede fijar sin telemetría real de B (tableros por
+      sesión). Ver F7: la habituación de sesión NO se resuelve dimensionando el
+      banco.
+    blocked_on: telemetría real de tableros por sesión
+    source: design/gdd/manifiesto-banco-imagenes.md
+    referenced_by:
+      - design/gdd/manifiesto-banco-imagenes.md
 
-# ─── FORMULAS ────────────────────────────────────────────────────────────────
-# Named calculations with defined variables and output ranges.
-# Register a formula when its output feeds into another system's input,
-# or when another GDD references it by name.
-#
-# Required fields: name, status, source, referenced_by, variables[],
-#   output_range[min, max], added
-# Optional: expression (the actual formula), notes
+  - name: umbralContrasteTablero
+    value: 4.5
+    unit: razón de contraste
+    description: >
+      Umbral VINCULANTE y bloqueante para todo par declarado del ámbito tablero.
+      Decidido en F1 del sistema 2 a partir de la auditoría de tokens: con 7:1
+      caerían tres pares del prototipo, todos de texto secundario, donde la presión
+      de paleta es máxima. Subir el suelo agotaría la paleta sin mejorar la
+      accesibilidad real. 7:1 queda como deseable, reportado y no bloqueante.
+    source: design/gdd/tokens-tema-contraste.md
+    referenced_by:
+      - design/gdd/tokens-tema-contraste.md
+      - design/gdd/manifiesto-banco-imagenes.md
 
-formulas: []
+  - name: alphaThreshold
+    value: 128
+    unit: valor de canal alfa
+    description: Alfa desde el que un píxel cuenta como sujeto al medir contraste de silueta. F2 del sistema 2.
+    safe_range: [1, 254]
+    source: design/gdd/tokens-tema-contraste.md
+    referenced_by:
+      - design/gdd/tokens-tema-contraste.md
 
-# Example:
-#
-# formulas:
-#   - name: damage_formula
-#     status: active
-#     source: design/gdd/combat.md
-#     referenced_by:
-#       - design/gdd/combat.md
-#       - design/gdd/progression.md   # progression GDD scales attack variable
-#     variables:
-#       - attack
-#       - defense
-#       - crit_chance
-#       - crit_multiplier
-#     output_range: [0, 999]
-#     expression: "max(0, attack - defense) * (1 + crit_chance * crit_multiplier)"
-#     notes: "Output feeds into health-system damage intake. Min is 0 (armour
-#       can absorb all damage). Max is uncapped in formula but tuning knob
-#       damage_cap in combat.md clamps at 999."
-#     added: 2026-03-26
-#     revised: ""
+  - name: bandWidthPx
+    value: 2
+    unit: px
+    description: Ancho del anillo perimetral muestreado al medir contraste de silueta. F2 del sistema 2.
+    safe_range: [1, 4]
+    source: design/gdd/tokens-tema-contraste.md
+    referenced_by:
+      - design/gdd/tokens-tema-contraste.md
 
+  - name: k
+    value: 0.18
+    unit: fracción del tamaño de objetivo
+    description: >
+      Factor de separación entre objetivos. Elegido para que la fracción y el piso
+      absoluto se crucen exactamente en 44 px, la frontera clínica entre el modo de
+      reto motor y la escalera estándar. PENDIENTE CLÍNICO: sale de razonamiento de
+      ingeniería, no de medición de temblor real.
+    safe_range: [0.12, 0.25]
+    source: design/gdd/tokens-tema-contraste.md
+    referenced_by:
+      - design/gdd/tokens-tema-contraste.md
 
-# ─── CONSTANTS ───────────────────────────────────────────────────────────────
-# Named numerical values referenced across multiple systems.
-# Register a constant when it is defined in one GDD but another GDD must
-# agree with it (e.g., gold carry limit defined in economy but checked in
-# inventory, or base inventory slots defined in inventory but displayed in HUD).
-#
-# Required fields: name, status, source, referenced_by, value, unit, added
+  - name: separacionMin
+    value: 8
+    unit: px
+    description: >
+      Piso absoluto de separación entre objetivos, activo por debajo de 44 px.
+      PENDIENTE CLÍNICO, igual que k.
+    safe_range: [6, 12]
+    source: design/gdd/tokens-tema-contraste.md
+    referenced_by:
+      - design/gdd/tokens-tema-contraste.md
 
-constants: []
+  - name: distanciaPerceptualMin
+    value: 20
+    unit: delta E (CIELAB, CIE76)
+    description: >
+      Piso de ADVERTENCIA para "se ven claramente distintos" entre dos TOKENS. Muy
+      por encima del umbral de laboratorio de diferencia justo perceptible (~2.3),
+      a propósito: visión subóptima en tableta de consulta.
+      DOMINIO RECORTADO tras /design-review: token contra token, NO assets
+      fotográficos. F6 no tiene procedimiento de extracción de color para una
+      fotografía, así que la afirmación anterior de que daba una herramienta al
+      sistema 1 se retiró. Si el sistema 13 la quiere, define primero la extracción.
+      Nota de asimetría: contraste>=4.5 implica dE>=~43 (barrido de 200k pares), así
+      que F1 subsume a F6 para figura/fondo; el recíproco es falso.
+    safe_range: [15, 30]
+    source: design/gdd/tokens-tema-contraste.md
+    referenced_by:
+      - design/gdd/tokens-tema-contraste.md
+      - design/gdd/manifiesto-banco-imagenes.md
 
-# Example:
-#
-# constants:
-#   - name: gold_carry_limit
-#     status: active
-#     source: design/gdd/economy.md
-#     referenced_by:
-#       - design/gdd/economy.md
-#       - design/gdd/inventory.md   # inventory enforces the carry limit
-#       - design/gdd/ui.md          # HUD displays current gold vs limit
-#     value: 9999
-#     unit: gold
-#     added: 2026-03-26
-#     revised: ""
-#
-#   - name: base_inventory_slots
-#     status: active
-#     source: design/gdd/inventory.md
-#     referenced_by:
-#       - design/gdd/inventory.md
-#       - design/gdd/progression.md  # progression unlocks additional slots
-#     value: 20
-#     unit: slots
-#     added: 2026-03-26
-#     revised: ""
+  - name: boardBgInvariante
+    value: true
+    unit: booleano
+    description: >
+      El fondo del tablero NO depende del tema. Un solo valor, claro, fijo.
+      Razón: doce objetos plausibles medidos contra el fondo dan seis fallos en tema
+      claro y seis en oscuro, con CERO fallos en ambos — los conjuntos son
+      complementarios. Con un banco fijo y tema conmutable, la mitad del banco queda
+      fuera de norma en el tema activo. Y el encuadre es de PILAR 3: conmutar el tema
+      alteraría la dificultad clínica sin que el terapeuta toque una perilla.
+      Un tablero oscuro es un ajuste clínico del Nivel 1, explícito y registrado.
+    source: design/gdd/tokens-tema-contraste.md
+    referenced_by:
+      - design/gdd/tokens-tema-contraste.md
+      - design/gdd/manifiesto-banco-imagenes.md
+
+formulas:
+  - name: objetivos
+    expression: >
+      clamp(round(objetivosMin + (objetivosMax - objetivosMin) * (C - Cmin) / (Cmax - Cmin)),
+      objetivosMin, objetivosMax)
+    variables: [C, Cmin, Cmax, objetivosMin, objetivosMax]
+    output_range: [3, 10]
+    description: >
+      Objetivos a encontrar en un tablero de C elementos. SUSTITUYE a
+      max(3, round(C * 0.1)), que producía una meseta inicial de 26 muescas
+      seguida de mesetas de 10 y contaminaba la comparación longitudinal.
+    source: design/gdd/manifiesto-banco-imagenes.md
+    referenced_by:
+      - design/gdd/manifiesto-banco-imagenes.md
+
+  - name: distractores
+    expression: C - objetivos(C)
+    variables: [C]
+    output_range: [6, 90]
+    source: design/gdd/manifiesto-banco-imagenes.md
+    referenced_by:
+      - design/gdd/manifiesto-banco-imagenes.md
+
+  - name: repeticiones
+    expression: distractores(C) / len(pool_nivel(t))
+    variables: [C, nivel, t]
+    output_range: [0, null]
+    description: >
+      Media de apariciones de cada distractor único en un tablero. Deliberadamente
+      sin acotar: es la señal de alarma, no un valor que la fórmula limite. Describe
+      la MEDIA con muestreo con reemplazo; para un techo duro por semilla, el
+      generador debe barajar sin reemplazo.
+    source: design/gdd/manifiesto-banco-imagenes.md
+    referenced_by:
+      - design/gdd/manifiesto-banco-imagenes.md
+
+  - name: clusterMin
+    expression: ceil(distractores(Cmax) / Rmax) + 1
+    variables: [Cmax, Rmax]
+    output_range: [2, null]
+    source: design/gdd/manifiesto-banco-imagenes.md
+    referenced_by:
+      - design/gdd/manifiesto-banco-imagenes.md
+      - design/gdd/game-concept.md
+
+  - name: solapamiento
+    expression: unionCategorias(t) / (N - 1)
+    variables: [t, N]
+    output_range: [0, 1]
+    description: >
+      Fracción del banco NO disponible como distractor "ninguna" para ese
+      objetivo. Cuantifica el riesgo de sobre-etiquetado.
+    source: design/gdd/manifiesto-banco-imagenes.md
+    referenced_by:
+      - design/gdd/manifiesto-banco-imagenes.md
+
+  - name: bancoTotal
+    expression: sum(clusterSize(g) for g in 1..G)
+    variables: [G, clusterSize]
+    output_range: [312, null]
+    description: >
+      Imágenes únicas totales. 384 con 16 clusters al mínimo; 312 si se reutilizan
+      clusters entre categorías. El modelo antiguo "categorías x grupos x tamaño"
+      ya no aplica: las categorías son etiquetas transversales y no multiplican.
+    source: design/gdd/manifiesto-banco-imagenes.md
+    referenced_by:
+      - design/gdd/manifiesto-banco-imagenes.md
+      - design/gdd/game-concept.md
+
+  - name: tasaReaparicion
+    expression: (B * k) / clusterSize(id.cluster)
+    variables: [B, k, clusterSize]
+    output_range: [0, null]
+    description: >
+      Apariciones esperadas de un asset a lo largo de una SESIÓN. Fórmula de
+      MONITORIZACIÓN, no de dimensionado. Demuestra que la habituación de sesión no
+      se resuelve agrandando el banco: haría falta un cluster de 226 elementos.
+      Se resuelve con política de muestreo (sistema 8) e instrumentación (sistema 9).
+    source: design/gdd/manifiesto-banco-imagenes.md
+    referenced_by:
+      - design/gdd/manifiesto-banco-imagenes.md

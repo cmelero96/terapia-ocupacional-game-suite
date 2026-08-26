@@ -5,14 +5,19 @@ Each agent owns a specific domain, enforcing separation of concerns and quality.
 
 ## Technology Stack
 
-- **Engine**: [CHOOSE: Godot 4 / Unity / Unreal Engine 5]
-- **Language**: [CHOOSE: GDScript / C# / C++ / Blueprint]
+- **Engine**: Ninguno — plataforma web (sin motor de juego)
+- **Language**: JavaScript (módulos ES), tipado con JSDoc y verificado con `tsc --checkJs`
 - **Version Control**: Git with trunk-based development
-- **Build System**: [SPECIFY after choosing engine]
-- **Asset Pipeline**: [SPECIFY after choosing engine]
+- **Build System**: Ninguno — los módulos ES se sirven tal cual.
+  Solo comprobación de tipos: `npx tsc --checkJs --noEmit`
+- **Asset Pipeline**: Archivos estáticos referenciados por identificador desde un
+  manifiesto de banco de imágenes, nunca por ruta desde el código del instrumento
 
-> **Note**: Engine-specialist agents exist for Godot, Unity, and Unreal with
-> dedicated sub-specialists. Use the set matching your engine.
+> **Note**: This project uses **no game engine**. The Godot / Unity / Unreal
+> specialist agents do not apply. Code routes to the generic programmer agents
+> instead — see the Engine Specialists section of
+> `.claude/docs/technical-preferences.md`. The `accessibility-specialist` is the
+> lead specialist for the input adaptation layer, not a secondary reviewer.
 
 ## Project Structure
 
@@ -20,7 +25,7 @@ Each agent owns a specific domain, enforcing separation of concerns and quality.
 
 ## Engine Version Reference
 
-@docs/engine-reference/godot/VERSION.md
+@docs/engine-reference/web/VERSION.md
 
 ## Technical Preferences
 
