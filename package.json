@@ -12,9 +12,14 @@
     "test": "node --test \"tests/**/*_test.js\"",
     "typecheck": "tsc --checkJs --noEmit -p jsconfig.json",
     "invariantes": "node tools/ci/invariantes.js",
-    "check": "npm run typecheck && npm run invariantes && npm run test"
+    "tokens": "node tools/theme/generar-css.js",
+    "tokens:comprobar": "node tools/theme/generar-css.js --comprobar",
+    "servir": "node tools/servir.js",
+    "test:navegador": "playwright test",
+    "check": "npm run typecheck && npm run tokens:comprobar && npm run invariantes && npm run test"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@types/node": "^24.13.3",
     "typescript": "5.9.3"
   }

@@ -212,6 +212,18 @@ for (const d of declaradosExistentes) {
   }
 }
 
+// ---------------------------------------------------------------- AC-9 del sistema 10
+// La raiz de composicion NO debe estar exenta: construir y repartir son cosas distintas.
+const RAIZ_COMPOSICION = 'src/plataforma/raiz.js';
+if (archivos.some((f) => rel(f) === RAIZ_COMPOSICION) && marcados.includes(RAIZ_COMPOSICION)) {
+  fallos.push({
+    barrera: 'AC-9/s10',
+    mensaje:
+      `${RAIZ_COMPOSICION} lleva el marcador de exencion, y no debe: la raiz de ` +
+      `composicion solo mueve parametros, no llama a ninguna fuente`,
+  });
+}
+
 // ---------------------------------------------------------------- por archivo
 for (const archivo of archivos) {
   const r = rel(archivo);
@@ -309,6 +321,7 @@ console.log(`  AC-13  dificultad no escalar ...... ${marca('AC-13')}`);
 console.log(`  AC-14  sin perillas de tiempo ..... ${marca('AC-14')}`);
 console.log(`  AC-2   sin ramificar por modo ..... ${marca('AC-2/s5')}`);
 console.log(`  AC-6   sin APIs de audio ........... ${marca('AC-6/s6')}`);
+console.log(`  AC-9   raiz sin exencion ........... ${marca('AC-9/s10')}`);
 
 const noCreados = declarados.filter((d) => !declaradosExistentes.includes(d));
 if (noCreados.length > 0) {

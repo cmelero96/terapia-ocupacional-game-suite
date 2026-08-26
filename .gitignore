@@ -101,6 +101,8 @@ Saved/
 __pycache__/
 *.pyc
 node_modules/
+test-results/
+playwright-report/
 .npm/
 
 # === Archives ===

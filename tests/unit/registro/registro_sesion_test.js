@@ -140,7 +140,7 @@ test('test_la_precision_se_calcula_sobre_todos_los_tableros_de_la_sesion', () =>
 test('test_la_dificultad_registrada_es_la_EFECTIVA', () => {
   /** @type {import('../../../src/tablero/generador.js').Tablero} */
   const tablero = {
-    objetivo: 'o', distractores: [], semilla: 1,
+    objetivo: 'o', distractores: [], celdas: ['o'], semilla: 1,
     svPedida: 0.8, ssPedida: 0.8, svEfectiva: 9 / 11, ssEfectiva: 2 / 11,
   };
   const d = dificultadRegistrada(tablero, { t: 60, C: 12 });

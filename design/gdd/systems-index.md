@@ -86,7 +86,7 @@ reglas que declara dejan de estar vigiladas.
 | 7 | Control de silencio y volumen *(inferido)* | Adaptación | MVP | **Designed** · **implementado** — se reduce a un contrato reservado | [estimulo-reducido-y-silencio.md](estimulo-reducido-y-silencio.md) | 6 |
 | 8 | Generación de tableros | Instrumento | MVP | **Designed** (pendiente de revisión) · **implementado** | [generacion-tableros.md](generacion-tableros.md) | 1, 2, 3, 4 |
 | 9 | Registro de rendimiento | Registro | MVP | **Designed** (pendiente de revisión) · **implementado** | [registro-rendimiento.md](registro-rendimiento.md) | 1, 3, 4, 5, **8** |
-| 10 | Instrumento: Busca (búsqueda visual) — **posee la raíz de composición del MVP** | Instrumento | MVP | Not Started | — | 2, **3**, 5, 8, 9 |
+| 10 | Instrumento: Busca (búsqueda visual) — **posee la raíz de composición del MVP** | Instrumento | MVP | **Designed** · **implementado y ejecutable** | [instrumento-busca.md](instrumento-busca.md) | 2, 3, 4, 5, 6, 8, 9 |
 | 11 | Frontera de modo y panel del terapeuta | UI | MVP | Not Started | — | 2, 4, 5 |
 | 12 | Pantalla de resultados de sesión | UI | MVP | Not Started | — | 2, 9 |
 | 13 | Herramientas del banco: validador, importador de lote, reexportador, galería de clusters, diff, normalización *(inferido)* | Meta | MVP | Not Started | — | 1, 2 |
@@ -294,9 +294,9 @@ bloqueado es el Nivel 1, y hay 13 GDD que escribir antes de llegar ahí.
 | Sistemas identificados | 27 |
 | GDD empezados | 3 |
 | GDD revisados | 3 |
-| GDD diseñados sin revisar | 5 |
+| GDD diseñados sin revisar | 6 |
 | GDD provisionales sin validar | 1 (sistema 15) |
-| Sistemas con código en `src/` | **7** (3, 4, 5, 6, 7, 8 y 9) |
+| Sistemas con código en `src/` | **9** (2 parcial, 3, 4, 5, 6, 7, 8, 9 y 10) |
 | GDD aprobados | 0 |
 | Sistemas MVP diseñados | 3 / 14 |
 | Sistemas Vertical Slice diseñados | 0 / 6 |

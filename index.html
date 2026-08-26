@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Busca — instrumento terapéutico</title>
+<link rel="stylesheet" href="src/theme/tokens.css">
+<style>
+  /* Estructura. Los COLORES viven en tokens.css, generado desde los datos normativos. */
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body { font: 16px/1.5 system-ui, sans-serif; }
+
+  .frame-root {
+    min-height: 100%;
+    display: grid;
+    grid-template-rows: auto 1fr;
+  }
+
+  /* Zona de referencia del objetivo: FUERA del tablero y no activable. Si el paciente
+     pudiera activarla, la tarea cambia. */
+  .objetivo {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-bottom: 2px solid var(--frame-line);
+  }
+  .objetivo::before {
+    content: 'Busca:';
+    color: var(--frame-ink-soft);
+  }
+  .objetivo-glifo { font-size: 2.5rem; line-height: 1; }
+  .objetivo-nombre {
+    font-size: 1.25rem;
+    font-weight: 600;
+    /* El único uso del acento en todo el producto. */
+    color: var(--board-accent);
+  }
+
+  /* El tablero. `.board-root` y `.frame-root` son HERMANOS conceptualmente: los tokens del
+     tablero se declaran aquí y no heredan del marco. */
+  .board-root {
+    display: grid;
+    grid-template-columns: repeat(var(--cols, 4), var(--t, 60px));
+    gap: var(--sep, 10.8px);
+    justify-content: center;
+    align-content: start;
+    padding: 1.5rem;
+  }
+
+  .celda {
+    inline-size: var(--t, 60px);
+    block-size: var(--t, 60px);
+    /* Nunca por debajo de 24 px: WCAG 2.5.8, límite duro del sistema 4. */
+    min-inline-size: 24px;
+    min-block-size: 24px;
+    display: grid;
+    place-items: center;
+    font-size: calc(var(--t, 60px) * 0.55);
+    background: var(--board-bg);
+    color: var(--board-ink);
+    border: 2px solid var(--board-line);
+    border-radius: 8px;
+    cursor: pointer;
+    /* Sin arrastre y sin gestos: un solo punto de activación. */
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* El indicador de foco ES el cursor de barrido. No hay un segundo modelo de foco. */
+  .celda:focus-visible {
+    outline: 3px solid var(--board-scan-cursor);
+    outline-offset: 2px;
+  }
+
+  /* ACUSE DE RECIBO. Idéntico para acierto y para fallo: el selector no sabe cuál fue,
+     porque el atributo no lleva esa información. */
+  .celda[data-acuse='si'] {
+    border-color: var(--board-ink);
+    border-width: 4px;
+  }
+  .celda { transition: border-color 90ms linear, border-width 90ms linear; }
+
+  /* Estímulo reducido: ni una transición, ni un desvanecimiento. Instantáneo significa
+     instantáneo. El acuse pierde el movimiento y CONSERVA la existencia. */
+  .board-root[data-sin-movimiento='si'] .celda { transition: none; }
+  @media (prefers-reduced-motion: reduce) {
+    .celda { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div class="frame-root">
+  <div class="objetivo" id="zona-objetivo"></div>
+  <div class="board-root" id="tablero" role="group" aria-label="Tablero de búsqueda"></div>
+</div>
+
+<script type="module">
+  import { arrancar } from './src/plataforma/raiz.js';
+  import { BANCO_PROVISIONAL, resolverProvisional } from './src/banco-provisional.js';
+
+  const params = new URLSearchParams(location.search);
+  const n = (clave, porDefecto) => {
+    const v = params.get(clave);
+    return v === null ? porDefecto : Number(v);
+  };
+
+  const config = {
+    t: n('t', 60),
+    C: n('c', 12),
+    sv: n('sv', 0.25),
+    ss: n('ss', 0.25),
+  };
+
+  // ANDAMIO DE MEDICIÓN, no función de producto.
+  //
+  // El banco provisional tiene 32 elementos, así que `C = 100` no se puede pedir hoy: la
+  // guarda del sistema 8 lo rechaza, y hace bien. `?rep=N` repite el banco con ids
+  // sufijados para poder MEDIR el presupuesto de 100 elementos DOM que ADR-0005 dejó como
+  // predicción sin medir.
+  //
+  // Desaparece el día que el banco real tenga 96 elementos.
+  const rep = Math.max(1, n('rep', 1));
+  const banco = rep === 1
+    ? [...BANCO_PROVISIONAL]
+    : Array.from({ length: rep }, (_, k) =>
+        BANCO_PROVISIONAL.map((e) => ({ ...e, id: k === 0 ? e.id : `${e.id}~${k}` })),
+      ).flat();
+  const resolver = (id) => resolverProvisional(id.split('~')[0]);
+
+  const estado = arrancar({
+    raiz: document.getElementById('tablero'),
+    zonaObjetivo: document.getElementById('zona-objetivo'),
+    banco,
+    resolver,
+    config,
+    prefersReducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
+  });
+
+  // Superficie mínima para las pruebas de navegador. No es API de producto.
+  globalThis.__busca = { estado, config };
+</script>
+</body>
+</html>

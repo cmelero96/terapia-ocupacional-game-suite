@@ -21,6 +21,7 @@ import { barajar } from '../plataforma/aleatoriedad.js';
  * @typedef {object} Tablero
  * @property {string} objetivo
  * @property {string[]} distractores
+ * @property {string[]} celdas Los C ids YA barajados, objetivo incluido
  * @property {number} svPedida
  * @property {number} ssPedida
  * @property {number} svEfectiva
@@ -138,9 +139,18 @@ export function generarTablero({ banco, objetivo, C, sv, ss, semilla, fuenteAlea
 
   const distractores = barajar([...tomadosV, ...tomadosS, ...tomadosR], fuenteAleatoria);
 
+  // **El generador COLOCA el objetivo, no solo elige los distractores.** Si el consumidor
+  // concatena objetivo mas distractores, la posicion del objetivo es determinista —
+  // siempre la primera casilla — y el paciente aprende donde mirar en lugar de buscar.
+  //
+  // Lo cazo una prueba de navegador, no una revision de diseño: en los tests unitarios el
+  // orden de `distractores` era correcto y nadie miraba donde acababa el objetivo.
+  const celdas = barajar([objetivo, ...distractores], fuenteAleatoria);
+
   return {
     objetivo,
     distractores,
+    celdas,
     svPedida: sv,
     ssPedida: ss,
     // Las EFECTIVAS son lo que el paciente vio de verdad, y el sistema 9 recalcula `dp`

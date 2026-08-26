@@ -1,0 +1,118 @@
+/* ARCHIVO GENERADO — no editar a mano.
+ *
+ * Fuente: src/theme/tokens-datos.js
+ * Generar: node tools/theme/generar-css.js
+ *
+ * ADR-0002: el JS es normativo y este CSS es un artefacto confirmado en git, para que el
+ * artefacto servido no dependa de que la herramienta se haya ejecutado. Y sin proyeccion
+ * en arranque, no hay parpadeo.
+ */
+
+/* Capas de cascada, en orden de fuerza creciente. Dos trampas documentadas:
+ *   - una regla FUERA de toda capa vence a cualquier capa, incluida `forced`
+ *   - `!important` INVIERTE el orden de las capas
+ * Por eso todo lo de este archivo esta dentro de una capa y sin `!important`.
+ */
+@layer scheme, theme, forced;
+
+/* Los tokens NO se declaran en `:root`.
+ *
+ * Viven en dos contenedores HERMANOS que nunca se anidan, y por tanto no heredan entre
+ * si. Es lo que impide que un token del marco se filtre al tablero — donde el umbral de
+ * contraste es clinico y no estetico.
+ */
+@layer theme {
+  .frame-root {
+    --frame-bg: #ffffff;
+    --frame-ink: #1c1917;
+    --frame-ink-soft: #57534e;
+    --frame-line: #78716c;
+    --frame-accent: #1d4ed8;
+    color-scheme: light dark;
+    background: var(--frame-bg);
+    color: var(--frame-ink);
+  }
+
+  .board-root {
+    --board-bg: #f7f5f2;
+    --board-ink: #1c1917;
+    --board-line: #57534e;
+    --board-accent: #1d4ed8;
+    --board-scan-cursor: #0f766e;
+    --board-dwell-progress: #0f766e;
+    /* Invariante al tema. Ver la nota de tokens-datos.js. */
+    color-scheme: light;
+    background: var(--board-bg);
+    color: var(--board-ink);
+  }
+}
+
+@layer scheme {
+  :root:not([data-theme='light']) .frame-root {
+    /* Redefinido solo bajo preferencia oscura; la definicion completa esta arriba. */
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  @layer scheme {
+    :root:not([data-theme='light']) .frame-root {
+      --frame-bg: #1c1917;
+      --frame-ink: #f5f5f4;
+      --frame-ink-soft: #d6d3d1;
+      --frame-line: #78716c;
+      --frame-accent: #93b4fd;
+    }
+  }
+}
+
+@layer scheme {
+  :root[data-theme='dark'] .frame-root {
+    --frame-bg: #1c1917;
+    --frame-ink: #f5f5f4;
+    --frame-ink-soft: #d6d3d1;
+    --frame-line: #78716c;
+    --frame-accent: #93b4fd;
+  }
+  :root[data-theme='light'] .frame-root {
+    --frame-bg: #ffffff;
+    --frame-ink: #1c1917;
+    --frame-ink-soft: #57534e;
+    --frame-line: #78716c;
+    --frame-accent: #1d4ed8;
+  }
+}
+
+/* Colores forzados del sistema operativo.
+ *
+ * NUNCA `forced-color-adjust: none` en el ambito del tablero: el usuario eligio alto
+ * contraste, y anularlo para una poblacion de baja vision con el fin de preservar una
+ * garantia de diseño esta del reves.
+ */
+@layer forced {
+  @media (forced-colors: active) {
+    .frame-root,
+    .board-root {
+      --frame-bg: Canvas;
+      --frame-ink: CanvasText;
+      --frame-ink-soft: GrayText;
+      --frame-line: CanvasText;
+      --frame-accent: LinkText;
+      --board-bg: Canvas;
+      --board-ink: CanvasText;
+      --board-line: CanvasText;
+      --board-accent: LinkText;
+      /* `Highlight` tiene UN SOLO hogar: el indicador del objetivo actual. */
+      --board-scan-cursor: Highlight;
+      --board-dwell-progress: Highlight;
+    }
+  }
+}
+
+/* Separacion de la rejilla: F3, `max(8, 0,18t)`. Se publica como referencia; el valor
+ * efectivo lo inyecta el instrumento, porque depende de `t`. */
+.board-root {
+  --board-sep-t24: 8.00px;
+  --board-sep-t44: 8.00px;
+  --board-sep-t60: 10.80px;
+  --board-sep-t140: 25.20px;
+}
