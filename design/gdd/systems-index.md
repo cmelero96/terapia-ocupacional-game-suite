@@ -82,8 +82,8 @@ reglas que declara dejan de estar vigiladas.
 | 3 | Inyección de no determinismo (aleatoriedad y reloj) *(inferido)* | Core | MVP | **Revisado** (NEEDS REVISION, cambios aplicados) | [inyeccion-no-determinismo.md](inyeccion-no-determinismo.md) | — |
 | 4 | Modelo de dificultad: dos ejes, cuatro perillas | Clínico | MVP | **Designed** (pendiente de revisión) · **implementado** | [modelo-dificultad.md](modelo-dificultad.md) | — |
 | 5 | Capa de adaptación de entrada | Adaptación | MVP | **Designed** (pendiente de revisión) · **implementado** (lógica pura) | [capa-adaptacion-entrada.md](capa-adaptacion-entrada.md) | 2, 3, 4 |
-| 6 | Modo de estímulo reducido *(inferido)* | Adaptación | MVP | Not Started | — | 2, 5 |
-| 7 | Control de silencio y volumen *(inferido)* | Adaptación | MVP | Not Started | — | 6 |
+| 6 | Modo de estímulo reducido *(inferido)* | Adaptación | MVP | **Designed** · **implementado** | [estimulo-reducido-y-silencio.md](estimulo-reducido-y-silencio.md) | 2, 5 |
+| 7 | Control de silencio y volumen *(inferido)* | Adaptación | MVP | **Designed** · **implementado** — se reduce a un contrato reservado | [estimulo-reducido-y-silencio.md](estimulo-reducido-y-silencio.md) | 6 |
 | 8 | Generación de tableros | Instrumento | MVP | **Designed** (pendiente de revisión) · **implementado** | [generacion-tableros.md](generacion-tableros.md) | 1, 2, 3, 4 |
 | 9 | Registro de rendimiento | Registro | MVP | **Designed** (pendiente de revisión) · **implementado** | [registro-rendimiento.md](registro-rendimiento.md) | 1, 3, 4, 5, **8** |
 | 10 | Instrumento: Busca (búsqueda visual) — **posee la raíz de composición del MVP** | Instrumento | MVP | Not Started | — | 2, **3**, 5, 8, 9 |
@@ -294,9 +294,9 @@ bloqueado es el Nivel 1, y hay 13 GDD que escribir antes de llegar ahí.
 | Sistemas identificados | 27 |
 | GDD empezados | 3 |
 | GDD revisados | 3 |
-| GDD diseñados sin revisar | 4 |
+| GDD diseñados sin revisar | 5 |
 | GDD provisionales sin validar | 1 (sistema 15) |
-| Sistemas con código en `src/` | **5** (3, 4, 5, 8 y 9) |
+| Sistemas con código en `src/` | **7** (3, 4, 5, 6, 7, 8 y 9) |
 | GDD aprobados | 0 |
 | Sistemas MVP diseñados | 3 / 14 |
 | Sistemas Vertical Slice diseñados | 0 / 6 |

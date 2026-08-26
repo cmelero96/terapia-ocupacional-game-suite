@@ -12,6 +12,7 @@
  *   AC-13  (sist. 4)  no existe un control de dificultad escalar
  *   AC-14  (sist. 4)  ninguna perilla de dificultad tiene unidades de tiempo
  *   AC-2   (sist. 5)  ningun instrumento ramifica por modo de entrada
+ *   AC-6   (sist. 6)  no existe ninguna API de audio en src/
  *
  * Uso:  node tools/ci/invariantes.js
  * Sale con codigo 1 si alguna barrera falla.
@@ -93,6 +94,24 @@ const ESCALARES_PROHIBIDOS = [/\bnivel\b/, /\bdificultad\b/, /\bdifficulty\b/, /
 const TIEMPO_EN_DIFICULTAD = [
   /\bsegundos?\b/i, /\bmilisegundos?\b/i, /\btimeout\b/i, /\bduracion\b/i,
   /\bvelocidad\b/i, /\bcronometro\b/i, /_MS\b/, /\bplazo\b/i,
+];
+
+/**
+ * Sistemas 6 y 7, AC-6 — no existe ninguna API de audio en `src/`.
+ *
+ * El anti-pilar 3 prohibe la gamificacion extrinseca, el pilar 2 prohibe anunciar un
+ * fallo, y con sensibilidad sensorial confirmada el silencio es el valor por defecto. El
+ * resultado es que no hay ningun sonido que controlar.
+ *
+ * El dia que un instrumento necesite audio, esta barrera se relaja A LA VEZ que se
+ * documenta el cumplimiento de las cuatro condiciones de `hayAudioPermitido`, y no antes.
+ */
+const AUDIO_PROHIBIDO = [
+  'AudioContext',
+  'new Audio(',
+  'HTMLAudioElement',
+  'speechSynthesis',
+  'SpeechSynthesisUtterance',
 ];
 
 /**
@@ -252,6 +271,16 @@ for (const archivo of archivos) {
       }
     }
 
+    // AC-6 de los sistemas 6 y 7 — nada de audio en src/.
+    for (const literal of AUDIO_PROHIBIDO) {
+      if (linea.includes(literal)) {
+        fallos.push({
+          barrera: 'AC-6/s6',
+          mensaje: `${r}:${n} — API de audio en src/: ${literal}. Ver hayAudioPermitido`,
+        });
+      }
+    }
+
     // AC-2 del sistema 5 — ningun instrumento ramifica por modo de entrada.
     if (!r.startsWith('src/entrada/')) {
       for (const literal of MODOS_LITERALES) {
@@ -279,6 +308,7 @@ console.log(`  AC-2b  acuñacion de marcas ........ ${marca('AC-2b')}`);
 console.log(`  AC-13  dificultad no escalar ...... ${marca('AC-13')}`);
 console.log(`  AC-14  sin perillas de tiempo ..... ${marca('AC-14')}`);
 console.log(`  AC-2   sin ramificar por modo ..... ${marca('AC-2/s5')}`);
+console.log(`  AC-6   sin APIs de audio ........... ${marca('AC-6/s6')}`);
 
 const noCreados = declarados.filter((d) => !declaradosExistentes.includes(d));
 if (noCreados.length > 0) {
