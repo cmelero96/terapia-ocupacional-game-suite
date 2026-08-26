@@ -1,15 +1,17 @@
 /**
  * Sistema 14 — invariantes como barreras de CI.
  *
- * Comprueba las tres barreras lexicas que el sistema 3 declara y este hace cumplir:
- *
- *   AC-1   ninguna llamada directa a una fuente no determinista fuera del borde impuro
- *   AC-2   el borde impuro es EXACTAMENTE un archivo, y es el declarado
- *   AC-2b  la marca nominal no se acuña ni se falsifica fuera del borde impuro
- *
  * Es la apuesta de ADR-0004 puesta a prueba: `tsc` rechaza el error accidental, y lo
  * unico que queda por vigilar es la falsificacion deliberada, que es lexica porque
  * obliga a escribir uno de un puñado de literales.
+ *
+ * Barreras:
+ *   AC-1   (sist. 3)  ninguna fuente no determinista fuera de su borde declarado
+ *   AC-2   (sist. 3)  la lista de bordes exentos es EXACTAMENTE la declarada
+ *   AC-2b  (sist. 3)  la marca nominal no se acuña ni se falsifica fuera del borde
+ *   AC-13  (sist. 4)  no existe un control de dificultad escalar
+ *   AC-14  (sist. 4)  ninguna perilla de dificultad tiene unidades de tiempo
+ *   AC-2   (sist. 5)  ningun instrumento ramifica por modo de entrada
  *
  * Uso:  node tools/ci/invariantes.js
  * Sale con codigo 1 si alguna barrera falla.
@@ -20,23 +22,59 @@ import { join, relative, sep } from 'node:path';
 
 const RAIZ = process.cwd();
 const SRC = join(RAIZ, 'src');
-const BORDE_IMPURO = join('src', 'plataforma', 'borde-impuro.js');
 const MARCADOR = '@borde-impuro';
 
-/** Fuentes no deterministas del entorno. La lista la POSEE el sistema 3, regla 1. */
-const FUENTES_PROHIBIDAS = [
+/**
+ * LISTA BLANCA POR ARCHIVO, y esto sustituye al conteo "exactamente 1".
+ *
+ * El conteo era mas debil de lo que parecia: con un solo numero, el borde impuro podia
+ * leer `event.timeStamp` y nadie lo veia. Con una lista por archivo, cada borde solo
+ * puede tocar lo que su razon de existir justifica.
+ *
+ * El cambio lo identifico el GDD del sistema 5, al descubrir que necesita un SEGUNDO
+ * borde —el de eventos— para leer `event.timeStamp` una vez y pasarlo como dato.
+ *
+ * @type {Record<string, string[]>}
+ */
+const BORDES = {
+  // Sistema 3: aleatoriedad, relojes y, desde el sistema 5, temporizadores.
+  'src/plataforma/borde-impuro.js': [
+    'Math.random(',
+    'crypto.getRandomValues(',
+    'Date.now(',
+    'new Date(',
+    'performance.now(',
+    'setTimeout(',
+    'clearTimeout(',
+    'setInterval(',
+    'clearInterval(',
+    'requestAnimationFrame(',
+    'cancelAnimationFrame(',
+  ],
+  // Sistema 5: lee `event.timeStamp` UNA vez y lo pasa como dato. Nada mas.
+  'src/entrada/borde-eventos.js': ['.timeStamp'],
+};
+
+/**
+ * Fuentes no deterministas del entorno. La lista la POSEE el sistema 3, regla 1.
+ *
+ * Los tres temporizadores estaban reservados hasta que existiera el contrato del
+ * `Programador`. El sistema 5 lo publico, asi que **desde hoy rompen el build** en lugar
+ * de avisar.
+ */
+const PROHIBIDOS = [
   'Math.random(',
   'crypto.getRandomValues(',
   'Date.now(',
   'new Date(',
   'performance.now(',
   '.timeStamp',
+  'setTimeout(',
+  'setInterval(',
+  'requestAnimationFrame(',
 ];
 
-/**
- * Literales de acuñacion de marcas. Falsificar una marca obliga a escribir uno de
- * estos, y eso es lo que la hace visible.
- */
+/** Literales de acuñacion de marcas. Sistema 3, F5. */
 const ACUNACION = [
   'envolverConValidacion',
   "kind: 'aleatoria'",
@@ -45,54 +83,42 @@ const ACUNACION = [
 ];
 
 /**
- * Los temporizadores NO estan en la lista todavia, y es deliberado: inyectar el reloj
- * hace el tiempo legible, no hace el disparo programable. Entran cuando el sistema 5
- * publique el contrato del programador de tiempo inyectable.
- */
-const RESERVADOS_SISTEMA_5 = ['setTimeout(', 'setInterval(', 'requestAnimationFrame('];
-
-/**
  * Sistema 4, AC-13 — no existe un control de dificultad ESCALAR configurable.
  *
- * La dificultad es un vector `{ t, C, sv, ss }` en dos ejes independientes. El modo de
- * fallo que esto previene es que alguien añada un control de "nivel 1 a 10" por
- * comodidad de interfaz y colapse los dos ejes, rompiendo el pilar 3 sin que ningun
- * test funcional lo note.
- *
- * Se usan limites de palabra a proposito: `dificultadTolerada` y `pool_nivel` son
- * legitimos y NO deben coincidir.
+ * Limites de palabra a proposito: `dificultadTolerada` y `pool_nivel` son legitimos.
  */
 const ESCALARES_PROHIBIDOS = [/\bnivel\b/, /\bdificultad\b/, /\bdifficulty\b/, /\blevel\b/];
 
-/**
- * Sistema 4, AC-14 — ninguna perilla de dificultad tiene unidades de tiempo.
- *
- * El anti-pilar 2 prohibe los limites de tiempo por defecto, y el modelo de dificultad
- * es exactamente donde se notaria la tentacion de añadir una perilla de velocidad.
- * El tiempo SE MIDE (sistema 9); no se impone.
- */
+/** Sistema 4, AC-14 — ninguna perilla de dificultad tiene unidades de tiempo. */
 const TIEMPO_EN_DIFICULTAD = [
   /\bsegundos?\b/i, /\bmilisegundos?\b/i, /\btimeout\b/i, /\bduracion\b/i,
   /\bvelocidad\b/i, /\bcronometro\b/i, /_MS\b/, /\bplazo\b/i,
 ];
 
 /**
+ * Sistema 5, AC-2 — ningun instrumento ramifica por modo de entrada.
+ *
+ * El modo viaja SOLO para el registro. Un `if (modo === 'pulsador')` dentro de un
+ * instrumento haria que cada instrumento nuevo pagara el coste de las cinco vias.
+ */
+const MODOS_LITERALES = [
+  "'tactil'", "'raton'", "'teclado'", "'pulsador'", "'permanencia'",
+];
+
+/**
  * Quita comentarios de bloque y de linea antes de buscar.
  *
- * Sin esto, la barrera marca cada mencion en un JSDoc — y los documentos de este
- * proyecto explican por escrito lo que prohiben, asi que los falsos positivos serian
- * constantes. Limitacion conocida y aceptada: un literal de cadena que contenga `//`
- * o `/*` puede confundir al recortador. Para codigo propio es suficiente; si algun dia
- * deja de serlo, la respuesta es un analizador, no un parche.
+ * Sin esto la barrera marca cada mencion en un JSDoc, y los documentos de este proyecto
+ * explican por escrito lo que prohiben. Limitacion aceptada: un literal de cadena que
+ * contenga `//` o el inicio de un bloque puede confundir al recortador.
  *
  * @param {string} codigo
- * @returns {string} El mismo texto con los comentarios sustituidos por espacios, para
- *   que los numeros de linea no se muevan
+ * @returns {string}
  */
 function sinComentarios(codigo) {
   let salida = '';
   let i = 0;
-  let estado = 'codigo'; // codigo | bloque | linea | cadena | plantilla
+  let estado = 'codigo';
   let delim = '';
   while (i < codigo.length) {
     const c = codigo[i];
@@ -112,7 +138,6 @@ function sinComentarios(codigo) {
       if (c === '\n') { estado = 'codigo'; salida += '\n'; i++; continue; }
       salida += ' '; i++; continue;
     }
-    // cadena o plantilla
     if (c === '\\') { salida += codigo.slice(i, i + 2); i += 2; continue; }
     if ((estado === 'cadena' && c === delim) || (estado === 'plantilla' && c === '`')) {
       estado = 'codigo';
@@ -134,10 +159,11 @@ function archivosJs(dir) {
   return salida;
 }
 
+/** @param {string} ruta @returns {string} Ruta relativa con barras normales */
+const rel = (ruta) => relative(RAIZ, ruta).split(sep).join('/');
+
 /** @type {{ barrera: string, mensaje: string }[]} */
 const fallos = [];
-/** @type {string[]} */
-const avisos = [];
 
 const archivos = archivosJs(SRC);
 if (archivos.length === 0) {
@@ -145,83 +171,86 @@ if (archivos.length === 0) {
   process.exit(1);
 }
 
-// ---------------------------------------------------------------- AC-2
-const exentos = archivos.filter((f) => readFileSync(f, 'utf8').includes(MARCADOR));
-const exentosRel = exentos.map((f) => relative(RAIZ, f));
+// ---------------------------------------------------------------- AC-2, la lista blanca
+const marcados = archivos.filter((f) => readFileSync(f, 'utf8').includes(MARCADOR)).map(rel);
+const declarados = Object.keys(BORDES);
+const declaradosExistentes = declarados.filter((d) => archivos.some((f) => rel(f) === d));
 
-if (exentos.length !== 1) {
-  fallos.push({
-    barrera: 'AC-2',
-    mensaje:
-      `el borde impuro debe ser EXACTAMENTE 1 archivo, y hay ${exentos.length}:\n` +
-      exentosRel.map((f) => `        ${f}`).join('\n'),
-  });
-} else if (exentosRel[0] !== BORDE_IMPURO.split(sep).join(sep)) {
-  fallos.push({
-    barrera: 'AC-2',
-    mensaje:
-      `el archivo exento no esta en la ruta declarada.\n` +
-      `        declarada: ${BORDE_IMPURO}\n        encontrada: ${exentosRel[0]}`,
-  });
+for (const m of marcados) {
+  if (!declarados.includes(m)) {
+    fallos.push({
+      barrera: 'AC-2',
+      mensaje: `${m} se declara borde con ${MARCADOR} y NO esta en la lista blanca`,
+    });
+  }
+}
+for (const d of declaradosExistentes) {
+  if (!marcados.includes(d)) {
+    fallos.push({
+      barrera: 'AC-2',
+      mensaje: `${d} esta en la lista blanca y le falta el marcador ${MARCADOR}`,
+    });
+  }
 }
 
-// ---------------------------------------------------------------- AC-1 y AC-2b
+// ---------------------------------------------------------------- por archivo
 for (const archivo of archivos) {
-  const rel = relative(RAIZ, archivo);
-  const esBorde = exentos.includes(archivo);
+  const r = rel(archivo);
+  const permitidos = BORDES[r] ?? [];
   const lineas = sinComentarios(readFileSync(archivo, 'utf8')).split('\n');
 
   lineas.forEach((linea, idx) => {
     const n = idx + 1;
 
-    if (!esBorde) {
-      for (const literal of FUENTES_PROHIBIDAS) {
-        if (linea.includes(literal)) {
-          fallos.push({
-            barrera: 'AC-1',
-            mensaje: `${rel}:${n} — fuente no determinista fuera del borde impuro: ${literal}`,
-          });
-        }
-      }
-      for (const literal of ACUNACION) {
-        if (linea.includes(literal)) {
-          fallos.push({
-            barrera: 'AC-2b',
-            mensaje: `${rel}:${n} — acuñacion de marca fuera del borde impuro: ${literal}`,
-          });
-        }
-      }
-    }
-
-    for (const literal of RESERVADOS_SISTEMA_5) {
-      if (linea.includes(literal)) {
-        avisos.push(
-          `${rel}:${n} — ${literal} · reservado. Entra en la lista prohibida cuando el ` +
-            `sistema 5 publique el contrato del programador de tiempo inyectable`,
-        );
-      }
-    }
-
-    // AC-13 y AC-14 aplican a todo `src/`, incluido el borde impuro.
-    for (const patron of ESCALARES_PROHIBIDOS) {
-      if (patron.test(linea)) {
+    // AC-1 — cada borde solo puede tocar lo que su razon de existir justifica.
+    for (const literal of PROHIBIDOS) {
+      if (linea.includes(literal) && !permitidos.includes(literal)) {
         fallos.push({
-          barrera: 'AC-13',
-          mensaje:
-            `${rel}:${n} — dificultad escalar configurable: ${patron.source}. ` +
-            `La dificultad es un vector de dos ejes, no un numero`,
+          barrera: 'AC-1',
+          mensaje: `${r}:${n} — fuente no determinista no permitida en este archivo: ${literal}`,
         });
       }
     }
 
-    if (rel.includes(`src${sep}dificultad`)) {
+    // AC-2b — la acuñacion vive solo en el borde impuro.
+    if (r !== 'src/plataforma/borde-impuro.js' && r !== 'src/plataforma/esquema.js') {
+      for (const literal of ACUNACION) {
+        if (linea.includes(literal)) {
+          fallos.push({
+            barrera: 'AC-2b',
+            mensaje: `${r}:${n} — acuñacion de marca fuera del borde impuro: ${literal}`,
+          });
+        }
+      }
+    }
+
+    // AC-13 y AC-14 — sistema 4.
+    for (const patron of ESCALARES_PROHIBIDOS) {
+      if (patron.test(linea)) {
+        fallos.push({
+          barrera: 'AC-13',
+          mensaje: `${r}:${n} — dificultad escalar configurable: ${patron.source}`,
+        });
+      }
+    }
+    if (r.startsWith('src/dificultad/')) {
       for (const patron of TIEMPO_EN_DIFICULTAD) {
         if (patron.test(linea)) {
           fallos.push({
             barrera: 'AC-14',
-            mensaje:
-              `${rel}:${n} — perilla con unidades de tiempo en el modelo de dificultad: ` +
-              `${patron.source}. El anti-pilar 2 lo prohibe`,
+            mensaje: `${r}:${n} — perilla con unidades de tiempo en dificultad: ${patron.source}`,
+          });
+        }
+      }
+    }
+
+    // AC-2 del sistema 5 — ningun instrumento ramifica por modo de entrada.
+    if (!r.startsWith('src/entrada/')) {
+      for (const literal of MODOS_LITERALES) {
+        if (linea.includes(literal)) {
+          fallos.push({
+            barrera: 'AC-2/s5',
+            mensaje: `${r}:${n} — literal de modo de entrada fuera de src/entrada/: ${literal}`,
           });
         }
       }
@@ -230,20 +259,22 @@ for (const archivo of archivos) {
 }
 
 // ---------------------------------------------------------------- informe
-console.log(`invariantes de CI — ${archivos.length} archivos en src/\n`);
-console.log(`  AC-2   borde impuro unico ......... ${exentos.length === 1 ? 'OK' : 'FALLO'}  (${exentosRel.join(', ') || 'ninguno'})`);
-const fallosAC1 = fallos.filter((f) => f.barrera === 'AC-1').length;
-const fallosAC2b = fallos.filter((f) => f.barrera === 'AC-2b').length;
-console.log(`  AC-1   fuentes no deterministas ... ${fallosAC1 === 0 ? 'OK' : 'FALLO'}`);
-console.log(`  AC-2b  acuñacion de marcas ........ ${fallosAC2b === 0 ? 'OK' : 'FALLO'}`);
-const fallosAC13 = fallos.filter((f) => f.barrera === 'AC-13').length;
-const fallosAC14 = fallos.filter((f) => f.barrera === 'AC-14').length;
-console.log(`  AC-13  dificultad no escalar ...... ${fallosAC13 === 0 ? 'OK' : 'FALLO'}`);
-console.log(`  AC-14  sin perillas de tiempo ..... ${fallosAC14 === 0 ? 'OK' : 'FALLO'}`);
+/** @param {string} b */
+const cuenta = (b) => fallos.filter((f) => f.barrera === b).length;
+/** @param {string} b */
+const marca = (b) => (cuenta(b) === 0 ? 'OK' : 'FALLO');
 
-if (avisos.length > 0) {
-  console.log(`\n  AVISOS (${avisos.length}), no rompen el build:`);
-  for (const a of avisos) console.log(`    ${a}`);
+console.log(`invariantes de CI — ${archivos.length} archivos en src/\n`);
+console.log(`  AC-2   bordes en lista blanca ..... ${marca('AC-2')}  (${declaradosExistentes.join(', ') || 'ninguno'})`);
+console.log(`  AC-1   fuentes no deterministas ... ${marca('AC-1')}`);
+console.log(`  AC-2b  acuñacion de marcas ........ ${marca('AC-2b')}`);
+console.log(`  AC-13  dificultad no escalar ...... ${marca('AC-13')}`);
+console.log(`  AC-14  sin perillas de tiempo ..... ${marca('AC-14')}`);
+console.log(`  AC-2   sin ramificar por modo ..... ${marca('AC-2/s5')}`);
+
+const noCreados = declarados.filter((d) => !declaradosExistentes.includes(d));
+if (noCreados.length > 0) {
+  console.log(`\n  Bordes declarados que aun no existen: ${noCreados.join(', ')}`);
 }
 
 if (fallos.length > 0) {

@@ -127,6 +127,28 @@ export const relojMonotono = { kind: 'monotono', now: () => performance.now() };
 export const relojPared = { kind: 'pared', now: () => Date.now() };
 
 /**
+ * El programador de tiempo real. Envuelve `setTimeout`, y es la unica via de `src/` que
+ * lo hace.
+ *
+ * Su existencia es lo que permite que `setTimeout`, `setInterval` y
+ * `requestAnimationFrame` entren en la lista prohibida de la regla 1: hasta que este
+ * contrato existio, prohibirlos habria dejado al sistema 5 sin forma de implementar la
+ * activacion por permanencia ni el barrido automatico.
+ *
+ * El programador de test avanza a mano, y es lo que hace posible aserir que **nada expira
+ * en treinta minutos** en microsegundos en lugar de en media hora.
+ *
+ * @type {import('../entrada/adaptador.js').Programador}
+ */
+export const programadorReal = {
+  // En el navegador —el unico destino real de este modulo— `setTimeout` devuelve un
+  // `number`. Node devuelve un objeto `Timeout`, y ese tipo solo aparece porque los
+  // tests corren en Node. El cast declara el contrato del destino, no lo esconde.
+  programar: (callback, ms) => /** @type {number} */ (/** @type {unknown} */ (setTimeout(callback, ms))),
+  cancelar: (id) => clearTimeout(id),
+};
+
+/**
  * Mide la resolucion real del reloj monotono, en ejecucion.
  *
  * Existe porque `performance.now()` esta degradado en resolucion por mitigaciones de

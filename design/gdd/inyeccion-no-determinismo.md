@@ -67,13 +67,15 @@ entero.**
    | `performance.now()` | Reloj monótono |
    | `event.timeStamp` | **Reloj monótono disfrazado de propiedad de un evento.** Ver la regla 7 |
 
-   **Los temporizadores — `setTimeout`, `setInterval`, `requestAnimationFrame` — NO están
-   en esta lista todavía, y es deliberado.** Inyectar el reloj hace el tiempo *legible*;
+   **Los temporizadores — `setTimeout`, `setInterval`, `requestAnimationFrame` — ENTRARON
+   en la lista el 2026-08-26**, cuando el sistema 5 publicó el contrato del `Programador`.
+   Hasta entonces eran aviso y no fallo, por la razón que sigue: Inyectar el reloj hace el tiempo *legible*;
    no hace el disparo *programable*. Prohibirlos antes de que exista el contrato de un
    programador de tiempo inyectable dejaría al sistema 5 sin forma de implementar la
    activación por permanencia, y lo empujaría a inventarse una exención ad hoc — que es
    exactamente lo que AC-2 existe para impedir. **Entran en esta lista el día que el
-   sistema 5 publique ese contrato**, y esa fila está reservada aquí para entonces.
+   sistema 5 publique ese contrato**. Ya lo hizo: `Programador = { programar, cancelar }`,
+   con su única implementación real en el borde impuro. La reserva queda cerrada.
 
    Es un invariante sobre **código fuente**, no sobre comportamiento, así que su
    verificación es del **sistema 14**. Aquí se declara; allí se hace cumplir.
@@ -695,13 +697,29 @@ archivo y línea. El propio borde impuro está exento por definición.
 *Excepción para `.timeStamp`: el borde de entrada del sistema 5 lo lee una vez y lo pasa
 como dato. Ese archivo se declara exento en el GDD del sistema 5, no aquí.*
 
-**AC-2 — El borde impuro es exactamente UN módulo, y es el declarado** · Análisis estático · **BLOCKING** · aplica el **sistema 14**
-**DADO** el árbol de **`src/`** — no "el código fuente": `tools/` está exento por ADR-0003,
-y dos puertas que dicen ser el mismo análisis no pueden discrepar de ámbito —,
-**CUANDO** el análisis cuenta los archivos marcados como exentos,
-**ENTONCES** el conteo es **exactamente 1** y la ruta es **exactamente**
-`src/plataforma/borde-impuro.js`; un segundo archivo exento, o uno en otra ruta, rompe el
-build nombrando los dos.
+> **AC-2 cambió el 2026-08-26, y el cambio lo trajo el sistema 5.** La primera redacción
+> contaba archivos exentos y exigía **exactamente 1**. El sistema 5 necesita un **segundo**
+> borde —`src/entrada/borde-eventos.js`— para leer `event.timeStamp` una vez y pasarlo como
+> dato, así que el conteo dejaba de servir.
+>
+> Se sustituye por una **lista blanca por archivo, cada uno con sus literales permitidos**, y
+> es **más estricto que el conteo, no menos**: con un solo número, el borde impuro podía leer
+> `.timeStamp` y nadie lo veía. Ahora cada borde solo puede tocar lo que su razón de existir
+> justifica.
+
+**AC-2 — La lista de bordes exentos es exactamente la declarada** · Análisis estático · **BLOCKING** · aplica el **sistema 14**
+**DADO** el árbol de **`src/`** — no "el código fuente": `tools/` está exento por ADR-0003 —,
+**CUANDO** se comparan los archivos con el marcador `@borde-impuro` contra la lista blanca,
+**ENTONCES** los dos conjuntos coinciden **exactamente**, y cada archivo solo contiene los
+literales que su entrada de la lista le permite:
+
+| Borde | Literales permitidos |
+|---|---|
+| `src/plataforma/borde-impuro.js` | Las cinco fuentes no deterministas más los temporizadores |
+| `src/entrada/borde-eventos.js` | **`.timeStamp` y nada más** |
+
+Un archivo marcado que no esté en la lista, uno de la lista sin marcador, o un literal fuera
+de su entrada, rompen el build nombrando el archivo y la línea.
 *El conteo por sí solo no basta: si la exención es una marca que el propio archivo se pone,
 un archivo trivial marcado, con la lógica real sin marcar en otro sitio, **pasaría AC-1 y
 AC-2 a la vez**. Anclar la ruta lo cierra. Y AC-2 existe porque fragmentar el borde es la

@@ -407,3 +407,85 @@ formulas:
     source: design/gdd/modelo-dificultad.md
     referenced_by:
       - design/gdd/modelo-dificultad.md
+
+  # ----------------------------------------------------------------------------
+  # Sistema 5 — capa de adaptación de entrada. design/gdd/capa-adaptacion-entrada.md
+  # ----------------------------------------------------------------------------
+
+  - name: msPasoMin
+    value: 400
+    unit: ms
+    validated: false
+    description: >
+      Suelo de la cadencia del barrido automático. Por debajo nadie llega a reaccionar.
+      SIN VALIDACIÓN EMPÍRICA. Es el suelo que hace que subir C degrade el barrido de
+      forma DECLARADA en lugar de silenciosa: a partir de nPasos = 30 con msVuelta =
+      12000, la vuelta real deja de cumplir la configurada y el panel lo avisa.
+    source: design/gdd/capa-adaptacion-entrada.md
+    referenced_by:
+      - design/gdd/capa-adaptacion-entrada.md
+
+  - name: msPasoMax
+    value: 4000
+    unit: ms
+    validated: false
+    description: >
+      Techo de la cadencia del barrido. Por encima la espera es cruel.
+      SIN VALIDACIÓN EMPÍRICA.
+    source: design/gdd/capa-adaptacion-entrada.md
+    referenced_by:
+      - design/gdd/capa-adaptacion-entrada.md
+
+  - name: pxToleranciaMin
+    value: 8
+    unit: px
+    validated: false
+    description: >
+      Suelo absoluto de la zona de tolerancia. SIN VALIDACIÓN EMPÍRICA.
+    source: design/gdd/capa-adaptacion-entrada.md
+    referenced_by:
+      - design/gdd/capa-adaptacion-entrada.md
+
+  - name: ratioTolerancia
+    value: 0.25
+    unit: fracción del tamaño de objetivo
+    validated: false
+    description: >
+      Fracción de t que define el radio de tolerancia. SIN VALIDACIÓN EMPÍRICA.
+      CONFLICTO CONOCIDO Y RESUELTO: por encima de t = 32 la tolerancia (0,25t) supera
+      la separación entre objetivos del sistema 2 (max(8, 0,18t)) — a t=60 son 15 px
+      contra 10,8 — así que la zona de tolerancia se solapa con el objetivo vecino.
+      Resolución: la tolerancia NUNCA captura un punto que caiga dentro de otro
+      objetivo; se aplica solo al espacio vacío, y en caso de duda gana el objetivo
+      cuyo centro esté más cerca. El conflicto no lo vio ninguno de los dos GDD por
+      separado: aparece solo al poner las dos fórmulas juntas.
+    source: design/gdd/capa-adaptacion-entrada.md
+    referenced_by:
+      - design/gdd/capa-adaptacion-entrada.md
+      - design/gdd/tokens-tema-contraste.md
+
+  - name: msVuelta
+    value: 12000
+    unit: ms
+    validated: false
+    description: >
+      Tiempo de una vuelta completa del barrido automático. Perilla CLÍNICA, de
+      paciente y no de ejercicio. La perilla es la VUELTA y no el paso a propósito:
+      con la perilla en el paso, subir C de 12 a 40 multiplicaría por 3,3 el tiempo de
+      vuelta sin que el terapeuta tocara nada — una entrada moviendo un parámetro
+      clínico en silencio.
+    source: design/gdd/capa-adaptacion-entrada.md
+    referenced_by:
+      - design/gdd/capa-adaptacion-entrada.md
+
+  - name: msPermanencia
+    value: 800
+    unit: ms
+    validated: false
+    description: >
+      Tiempo sobre el objetivo para que la activación por permanencia dispare. Perilla
+      CLÍNICA. Junto a msVuelta, son las dos constantes más fáciles de validar del
+      proyecto: se observan en una sola sesión con un paciente que use esas vías.
+    source: design/gdd/capa-adaptacion-entrada.md
+    referenced_by:
+      - design/gdd/capa-adaptacion-entrada.md
