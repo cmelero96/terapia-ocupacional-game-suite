@@ -225,7 +225,15 @@ for (const archivo of archivos) {
     }
 
     // AC-13 y AC-14 — sistema 4.
-    for (const patron of ESCALARES_PROHIBIDOS) {
+    //
+    // Se salta la linea si es una sentencia de import o de reexportacion: una RUTA de
+    // modulo que contenga "dificultad" no es un control escalar, y marcarla seria el
+    // falso positivo que hace que una barrera se desactive por molesta.
+    // Solo se salta una RUTA de modulo, nunca una declaracion: `export function
+    // malo(nivel)` SI se comprueba. Una ruta que contenga "dificultad" no es un control
+    // escalar, y marcarla seria el falso positivo que desactiva una barrera por molesta.
+    const esRutaDeModulo = /\bfrom\s+['"]/.test(linea) || /^\s*import\s+['"]/.test(linea);
+    for (const patron of esRutaDeModulo ? [] : ESCALARES_PROHIBIDOS) {
       if (patron.test(linea)) {
         fallos.push({
           barrera: 'AC-13',
