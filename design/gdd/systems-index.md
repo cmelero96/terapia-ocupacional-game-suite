@@ -91,7 +91,7 @@ reglas que declara dejan de estar vigiladas.
 | 12 | Pantalla de resultados de sesión | UI | MVP | Not Started | — | 2, 9 |
 | 13 | Herramientas del banco: validador, importador de lote, reexportador, galería de clusters, diff, normalización *(inferido)* | Meta | MVP | Not Started | — | 1, 2 |
 | 14 | Invariantes como barreras de CI: analizadores estáticos + tokenizador de CSS + **detección de fuente aleatoria o reloj constante fuera de `tests/`** *(inferido)* | Meta | MVP | Not Started | — | 1, 2, 3, 5, 9 |
-| 15 | Taxonomía de perfiles funcionales | Clínico | Vertical Slice | **BLOQUEADO** | — | — |
+| 15 | Taxonomía de perfiles funcionales | Clínico | Vertical Slice | **Provisional** — andamio de ingeniería, SIN validar clínicamente | [taxonomia-perfiles-funcionales.md](taxonomia-perfiles-funcionales.md) | — |
 | 16 | Presets y perfiles del terapeuta | Clínico | Vertical Slice | Not Started | — | 4, 15 |
 | 17 | Dificultad adaptativa | Clínico | Vertical Slice | Not Started | — | 4, 9 |
 | 18 | Persistencia local | Registro | Vertical Slice | Not Started | — | 9 |
@@ -295,6 +295,7 @@ bloqueado es el Nivel 1, y hay 13 GDD que escribir antes de llegar ahí.
 | GDD empezados | 3 |
 | GDD revisados | 3 |
 | GDD diseñados sin revisar | 4 |
+| GDD provisionales sin validar | 1 (sistema 15) |
 | Sistemas con código en `src/` | **5** (3, 4, 5, 8 y 9) |
 | GDD aprobados | 0 |
 | Sistemas MVP diseñados | 3 / 14 |
