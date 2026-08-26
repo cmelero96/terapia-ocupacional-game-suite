@@ -296,3 +296,114 @@ formulas:
     source: design/gdd/manifiesto-banco-imagenes.md
     referenced_by:
       - design/gdd/manifiesto-banco-imagenes.md
+
+  # ----------------------------------------------------------------------------
+  # Sistema 4 — modelo de dificultad. design/gdd/modelo-dificultad.md
+  # ----------------------------------------------------------------------------
+
+  - name: tMin
+    value: 24
+    unit: px
+    description: >
+      Tamaño de objetivo mínimo absoluto. LÍMITE DURO, no preferencia: es el mínimo
+      de WCAG 2.2 criterio 2.5.8. El terapeuta no puede bajar de aquí, y un valor
+      inferior se RECHAZA, nunca se recorta.
+    source: design/gdd/modelo-dificultad.md
+    referenced_by:
+      - design/gdd/modelo-dificultad.md
+      - docs/engine-reference/web/modules/accessibility.md
+
+  - name: tAAA
+    value: 44
+    unit: px
+    description: >
+      Mínimo AAA de WCAG 2.5.8. No es un límite: es la FRONTERA DONDE LOS DOS EJES
+      DEJAN DE SER INDEPENDIENTES. Por debajo, un paciente con control psicomotor
+      reducido falla tocando al lado del objetivo correcto, y ese fallo entra en el
+      registro como si no hubiera encontrado el objetivo. La sesión se marca
+      ejesAcoplados y la métrica del eje perceptivo no se calcula.
+    source: design/gdd/modelo-dificultad.md
+    referenced_by:
+      - design/gdd/modelo-dificultad.md
+
+  - name: tMax
+    value: 140
+    unit: px
+    description: >
+      Tamaño de objetivo máximo. Techo de disposición: por encima, el tablero no cabe
+      a Cmax elementos.
+    source: design/gdd/modelo-dificultad.md
+    referenced_by:
+      - design/gdd/modelo-dificultad.md
+
+  - name: Cmin
+    value: 3
+    unit: elementos
+    description: >
+      Elementos mínimos en un tablero. Con menos de 3 no hay búsqueda.
+    source: design/gdd/modelo-dificultad.md
+    referenced_by:
+      - design/gdd/modelo-dificultad.md
+
+  - name: wC
+    value: 0.40
+    unit: peso
+    validated: false
+    description: >
+      Peso de la CANTIDAD en la dificultad perceptiva (F2). SIN VALIDACIÓN EMPÍRICA.
+      wC + wV + wS = 1 por construcción: si alguien cambia uno sin ajustar otro, dp
+      deja de estar acotada en 100 y AC-5 lo delata.
+    source: design/gdd/modelo-dificultad.md
+    referenced_by:
+      - design/gdd/modelo-dificultad.md
+
+  - name: wV
+    value: 0.40
+    unit: peso
+    validated: false
+    description: >
+      Peso de la SIMILITUD VISUAL en F2. SIN VALIDACIÓN EMPÍRICA. Está al mismo nivel
+      que wC porque en búsqueda visual la similitud entre objetivo y distractor es el
+      determinante principal del tiempo de búsqueda, por encima del tamaño del
+      conjunto. Es una elección defendible, no un dato de este producto.
+    source: design/gdd/modelo-dificultad.md
+    referenced_by:
+      - design/gdd/modelo-dificultad.md
+
+  - name: wS
+    value: 0.20
+    unit: peso
+    validated: false
+    description: >
+      Peso de la SIMILITUD SEMÁNTICA en F2. SIN VALIDACIÓN EMPÍRICA. La mitad que la
+      visual: la similitud de significado estorba menos que la de forma cuando la
+      tarea es encontrar algo mirando.
+    source: design/gdd/modelo-dificultad.md
+    referenced_by:
+      - design/gdd/modelo-dificultad.md
+
+  - name: precisionObjetivo
+    value: 0.80
+    unit: proporción
+    validated: false
+    description: >
+      Precisión que se mantiene CONSTANTE para medir el progreso (F3). El eje de
+      progreso del producto no es la precisión: es cuánta dificultad tolera el
+      paciente manteniendo esta precisión. SIN VALIDACIÓN EMPÍRICA, y candidata a
+      convertirse en perilla clínica en lugar de constante de proyecto.
+    source: design/gdd/modelo-dificultad.md
+    referenced_by:
+      - design/gdd/modelo-dificultad.md
+
+  - name: nMin
+    value: 5
+    unit: intentos
+    validated: false
+    description: >
+      Intentos mínimos para que un nivel de dificultad cuente en F3. SIN VALIDACIÓN
+      EMPÍRICA. Su razón de existir es concreta: sin él, tres aciertos por suerte en
+      el nivel más difícil harían que el registro dijera que el paciente mejoró un
+      58% en una sesión.
+    source: design/gdd/modelo-dificultad.md
+    referenced_by:
+      - design/gdd/modelo-dificultad.md

@@ -80,7 +80,7 @@ reglas que declara dejan de estar vigiladas.
 | 1 | Manifiesto del banco de imágenes | Core | MVP | **Revisado** (NEEDS REVISION, cambios aplicados) | [manifiesto-banco-imagenes.md](manifiesto-banco-imagenes.md) | 3 *(solo tipos)* |
 | 2 | Tokens de tema y contraste | Core | MVP | **Revisado** (NEEDS REVISION, cambios aplicados) | [tokens-tema-contraste.md](tokens-tema-contraste.md) | — |
 | 3 | Inyección de no determinismo (aleatoriedad y reloj) *(inferido)* | Core | MVP | **Revisado** (NEEDS REVISION, cambios aplicados) | [inyeccion-no-determinismo.md](inyeccion-no-determinismo.md) | — |
-| 4 | Modelo de dificultad: dos ejes, cuatro perillas | Clínico | MVP | Not Started | — | — |
+| 4 | Modelo de dificultad: dos ejes, cuatro perillas | Clínico | MVP | **Designed** (pendiente de revisión) · **implementado** | [modelo-dificultad.md](modelo-dificultad.md) | — |
 | 5 | Capa de adaptación de entrada | Adaptación | MVP | Not Started | — | 2, 3 |
 | 6 | Modo de estímulo reducido *(inferido)* | Adaptación | MVP | Not Started | — | 2, 5 |
 | 7 | Control de silencio y volumen *(inferido)* | Adaptación | MVP | Not Started | — | 6 |
@@ -294,6 +294,8 @@ bloqueado es el Nivel 1, y hay 13 GDD que escribir antes de llegar ahí.
 | Sistemas identificados | 27 |
 | GDD empezados | 3 |
 | GDD revisados | 3 |
+| GDD diseñados sin revisar | 1 |
+| Sistemas con código en `src/` | **2** (3 y 4) |
 | GDD aprobados | 0 |
 | Sistemas MVP diseñados | 3 / 14 |
 | Sistemas Vertical Slice diseñados | 0 / 6 |

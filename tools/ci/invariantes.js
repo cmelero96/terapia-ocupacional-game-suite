@@ -52,6 +52,31 @@ const ACUNACION = [
 const RESERVADOS_SISTEMA_5 = ['setTimeout(', 'setInterval(', 'requestAnimationFrame('];
 
 /**
+ * Sistema 4, AC-13 — no existe un control de dificultad ESCALAR configurable.
+ *
+ * La dificultad es un vector `{ t, C, sv, ss }` en dos ejes independientes. El modo de
+ * fallo que esto previene es que alguien añada un control de "nivel 1 a 10" por
+ * comodidad de interfaz y colapse los dos ejes, rompiendo el pilar 3 sin que ningun
+ * test funcional lo note.
+ *
+ * Se usan limites de palabra a proposito: `dificultadTolerada` y `pool_nivel` son
+ * legitimos y NO deben coincidir.
+ */
+const ESCALARES_PROHIBIDOS = [/\bnivel\b/, /\bdificultad\b/, /\bdifficulty\b/, /\blevel\b/];
+
+/**
+ * Sistema 4, AC-14 — ninguna perilla de dificultad tiene unidades de tiempo.
+ *
+ * El anti-pilar 2 prohibe los limites de tiempo por defecto, y el modelo de dificultad
+ * es exactamente donde se notaria la tentacion de añadir una perilla de velocidad.
+ * El tiempo SE MIDE (sistema 9); no se impone.
+ */
+const TIEMPO_EN_DIFICULTAD = [
+  /\bsegundos?\b/i, /\bmilisegundos?\b/i, /\btimeout\b/i, /\bduracion\b/i,
+  /\bvelocidad\b/i, /\bcronometro\b/i, /_MS\b/, /\bplazo\b/i,
+];
+
+/**
  * Quita comentarios de bloque y de linea antes de buscar.
  *
  * Sin esto, la barrera marca cada mencion en un JSDoc — y los documentos de este
@@ -176,6 +201,31 @@ for (const archivo of archivos) {
         );
       }
     }
+
+    // AC-13 y AC-14 aplican a todo `src/`, incluido el borde impuro.
+    for (const patron of ESCALARES_PROHIBIDOS) {
+      if (patron.test(linea)) {
+        fallos.push({
+          barrera: 'AC-13',
+          mensaje:
+            `${rel}:${n} — dificultad escalar configurable: ${patron.source}. ` +
+            `La dificultad es un vector de dos ejes, no un numero`,
+        });
+      }
+    }
+
+    if (rel.includes(`src${sep}dificultad`)) {
+      for (const patron of TIEMPO_EN_DIFICULTAD) {
+        if (patron.test(linea)) {
+          fallos.push({
+            barrera: 'AC-14',
+            mensaje:
+              `${rel}:${n} — perilla con unidades de tiempo en el modelo de dificultad: ` +
+              `${patron.source}. El anti-pilar 2 lo prohibe`,
+          });
+        }
+      }
+    }
   });
 }
 
@@ -186,6 +236,10 @@ const fallosAC1 = fallos.filter((f) => f.barrera === 'AC-1').length;
 const fallosAC2b = fallos.filter((f) => f.barrera === 'AC-2b').length;
 console.log(`  AC-1   fuentes no deterministas ... ${fallosAC1 === 0 ? 'OK' : 'FALLO'}`);
 console.log(`  AC-2b  acuñacion de marcas ........ ${fallosAC2b === 0 ? 'OK' : 'FALLO'}`);
+const fallosAC13 = fallos.filter((f) => f.barrera === 'AC-13').length;
+const fallosAC14 = fallos.filter((f) => f.barrera === 'AC-14').length;
+console.log(`  AC-13  dificultad no escalar ...... ${fallosAC13 === 0 ? 'OK' : 'FALLO'}`);
+console.log(`  AC-14  sin perillas de tiempo ..... ${fallosAC14 === 0 ? 'OK' : 'FALLO'}`);
 
 if (avisos.length > 0) {
   console.log(`\n  AVISOS (${avisos.length}), no rompen el build:`);
