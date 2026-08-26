@@ -132,6 +132,8 @@ Herramientas declaradas:
   ejecutado nunca, y tres GDD ya declaran criterios BLOCKING que dependen de ella. Sin pin,
   `npx` trae la **7.0.2**, la reimplementación nativa: un cambio de motor de versión mayor
   en la puerta de calidad, sin decisión. **Fijar la versión es parte de la instalación**
+- **`@types/node`** — solo tipos, y solo en desarrollo. `tsc` no puede comprobar un
+  archivo que importe `node:test` sin ellos. No aporta código a nada servido
 - `node:test` — incorporado en Node, sin instalación
 - **Playwright** — para tests de interacción y accesibilidad, y **como decodificador de
   imagen** en el pipeline de validación del banco. Compra un decodificador correcto y

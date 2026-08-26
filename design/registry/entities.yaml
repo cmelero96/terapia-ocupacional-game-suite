@@ -76,6 +76,11 @@ constants:
       24 y el primer manifiesto sería inválido por construcción. Del Nivel 1 en
       adelante BLOQUEA el build. El escalón existe para que la salida fácil no sea
       bajar clusterMin, que es lo único que hace real la perilla de similitud visual.
+      CONFIRMADA CLÍNICAMENTE el 2026-08-26: el colaborador confirmó que la
+      similitud semántica y la visual son ejes distintos (sesión 2, pregunta 0.1),
+      así que el banco es la rama de 384 elementos (16 x 24) y NO la de ~130 que
+      habría resultado de fusionar los dos ejes. Esta derivación queda validada,
+      no solo derivada.
     source: design/gdd/manifiesto-banco-imagenes.md
     referenced_by:
       - design/gdd/manifiesto-banco-imagenes.md

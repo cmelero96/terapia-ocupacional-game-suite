@@ -34,6 +34,45 @@ trabajos es la propuesta de valor central del producto, no una función secundar
 
 ---
 
+## Alcance revisado tras la sesión 2 con el colaborador (2026-08-26)
+
+Las respuestas de `production/therapist-session-2.md` cambian el alcance de la primera
+prueba real en tres puntos. **Este bloque manda sobre la columna `Prioridad` de la tabla
+de abajo mientras dure la fase de pruebas internas.**
+
+| Cambio | Sistemas afectados |
+|---|---|
+| **"Múltiples juegos" es requisito de "pulida"** | Entran los instrumentos **21** (clasificar por categorías) y **24** (denominación de objetos) junto al **10** (Busca). Se eligen por coste marginal: los tres comparten banco, capa de entrada y registro |
+| **Hay pacientes con sensibilidad sensorial** | **6** (modo de estímulo reducido) y **7** (control de silencio y volumen) pasan de aplazables a **obligatorios** |
+| **"Pulida" no incluye guardar nada** | **18** (persistencia local), **19** (biblioteca portable), **16** (presets) y **20** (evolución longitudinal) **salen** de la primera prueba |
+
+**El banco es de 384 elementos**, confirmado: la similitud semántica y la visual son ejes
+distintos, así que no se fusionan y no hay rama de ~130.
+
+**El sistema 15 (taxonomía de perfiles) se diseña pero no se implementa.** El colaborador
+delegó la taxonomía en el equipo, así que la versión que exista es un andamio de
+ingeniería: el producto **no sugiere** ejercicios por perfil hasta que un clínico la
+valide. El terapeuta elige y configura a mano.
+
+### Sistemas de la primera prueba real, en orden
+
+```
+Foundation   1 manifiesto ·  2 tokens ·  3 inyección ·  4 modelo de dificultad
+Core         5 capa de adaptación de entrada ·  8 generación de tableros
+             9 registro (en memoria, sin persistir)
+Adaptación   6 estímulo reducido ·  7 silencio y volumen
+Instrumentos 10 Busca ·  21 clasificar ·  24 denominación
+UI           11 frontera de modo y panel ·  12 resultados de sesión
+Meta         13 herramientas del banco (necesarias para validar 384 elementos)
+             14 invariantes de CI  ← el único candidato honesto a aplazar
+```
+
+Tres diseñados de los quince. `14` es aplazable para una prueba interna: sus
+comprobaciones se pueden correr a mano al principio, con el riesgo declarado de que las
+reglas que declara dejan de estar vigiladas.
+
+---
+
 ## Systems Enumeration
 
 | # | Sistema | Categoría | Prioridad | Estado | Design Doc | Depende de |

@@ -171,7 +171,10 @@ Del paciente:
 
 ### Ejes de dificultad y perillas
 
-**Son dos ejes independientes, no una escalera única.** **[PENDIENTE CLÍNICO]**
+**Son dos ejes independientes, no una escalera única.** **CONFIRMADO por el colaborador
+clínico el 2026-08-26** (sesión 2, pregunta 0.1). Era la pregunta con consecuencia
+económica directa: la confirmación fija el banco en **384 elementos** y descarta la
+hipótesis de ~130 que habría fusionado los dos ejes.
 
 | Eje | Perillas | Qué exige al paciente |
 | ---- | ---- | ---- |
@@ -519,7 +522,13 @@ segundos.
   > instrumento y en el módulo de registro **no caduca en el Nivel 3**: sigue siendo
   > correcta indefinidamente para esa parte del código.
   >
-  > **[PENDIENTE CLÍNICO] ¿De quién es el dispositivo?** El documento asume "la
+  > **RESUELTO el 2026-08-26** (sesión 2, pregunta 0.4): **el dispositivo es nuestro**
+  > durante la fase de pruebas internas. Desaparece la política de TI de un centro ajeno
+  > como restricción, y el despliegue es copiar archivos. Sigue faltando el modelo,
+  > navegador y versión concretos, que `/test-setup` necesita para medir la resolución de
+  > `performance.now()`. Cuando se amplíe a centros, esta pregunta vuelve.
+  >
+  > **[Contexto original] ¿De quién es el dispositivo?** El documento asume "la
   > tableta de la consulta", es decir del centro. Si es así, los datos del paciente
   > se quedan en el centro por construcción y todo encaja. Si el terapeuta usa su
   > propio portátil, los datos de salud salen por la puerta cuando cambie de trabajo.
@@ -650,7 +659,16 @@ en lugar de eliminarlo.
 **5. Los perfiles concretos siguen sin nombrar.** "Gente mayor, autismo, TDAH" son
 categorías diagnósticas, no perfiles funcionales de emparejamiento. `/map-systems`
 necesita saber qué **capacidad** entrena cada instrumento y para qué **limitación
-funcional** sirve, no la etiqueta diagnóstica. Sigue **[PENDIENTE CLÍNICO]**.
+funcional** sirve, no la etiqueta diagnóstica.
+
+**Estado el 2026-08-26** (sesión 2, pregunta 0.2): el colaborador **no tiene la taxonomía
+clara y delega en el equipo de desarrollo**. Se construye una versión provisional en
+`design/gdd/taxonomia-perfiles-funcionales.md`.
+
+> **Esa taxonomía es un andamio de ingeniería, no un instrumento clínico.** Existe para
+> que el software se pueda construir y para que el colaborador tenga algo concreto que
+> corregir. **El producto no sugiere ejercicios por perfil mientras siga sin validar**: el
+> terapeuta elige y configura, y el sistema solo recuerda lo que eligió.
 | **Perfil NO servido por este instrumento** | **Busca exige visión funcional. No es apto para pacientes ciegos.** Una tarea de búsqueda visual no tiene equivalente significativo sin vista, y ningún trabajo de ARIA la hace usable — solo la hace no hostil. El catálogo debe ofrecer instrumentos alternativos, por ejemplo auditivos, para ese perfil. Esta línea existe para que un terapeuta no lo asigne por error y gaste la sesión |
 | **What they're looking for** | Una tarea que sí puedan hacer, que no les infantilice y que no exponga su déficit |
 | **What would turn them away** | Que les señalen un fallo. Que el control exija una precisión que no tienen. Estética infantil |
@@ -725,6 +743,12 @@ consecutivos) e **instrumentación** en el registro. Ver F7 del GDD del sistema 
 variedad semántica; más elementos por grupo sirve a la variedad visual con cantidad
 alta. Compiten por el mismo presupuesto. La distribución se decide en el GDD del
 banco de imágenes, no aquí.
+
+**CONFIRMADO el 2026-08-26** (sesión 2, pregunta 0.5): **sí hay pacientes con
+sensibilidad sensorial.** Los sistemas 6 (modo de estímulo reducido) y 7 (control de
+silencio y volumen) pasan de aplazables a **obligatorios en la primera prueba real**. Y
+refuerza el anti-pilar 3: un efecto de celebración no sería solo ruido innecesario, sería
+un problema activo para parte de la población.
 
 **[PENDIENTE CLÍNICO]** Antes de producir 400 imágenes, el colaborador debe
 confirmar que la similitud visual es un eje que él usa de verdad. Dimensionar el

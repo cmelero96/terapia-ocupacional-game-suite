@@ -13,8 +13,11 @@
     "allowJs": true,
 
     "target": "ES2022",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "module": "NodeNext",
+    // NodeNext y no Bundler: es lo unico que hace que tsc EXIJA la extension .js en
+    // los imports. Con "Bundler", `import './mod-a'` compila sin un error y falla con
+    // un 404 en el navegador de la consulta.
+    "moduleResolution": "NodeNext",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
 
     "strict": true,

@@ -1,0 +1,21 @@
+{
+  "name": "terapia-ocupacional-game-suite",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Plataforma web de instrumentos terapeuticos gestionada por Terapeutas Ocupacionales",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test \"tests/**/*_test.js\"",
+    "typecheck": "tsc --checkJs --noEmit -p jsconfig.json",
+    "invariantes": "node tools/ci/invariantes.js",
+    "check": "npm run typecheck && npm run invariantes && npm run test"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.3",
+    "typescript": "5.9.3"
+  }
+}
