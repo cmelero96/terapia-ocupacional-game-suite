@@ -25,8 +25,11 @@ export const PALABRAS_CON_HUECO = Object.freeze([
   { id: 'camisa', palabra: 'ca_sa', hueco: 'mi', opciones: ['mi', 'me', 'ni', 'mo'] },
   { id: 'botella', palabra: 'bo_lla', hueco: 'te', opciones: ['te', 'ta', 'de', 'ti'] },
   { id: 'manzana', palabra: 'man_na', hueco: 'za', opciones: ['za', 'sa', 'ce', 'zo'] },
-  { id: 'periodico', palabra: 'pe_dico', hueco: 'rió', opciones: ['rió', 'ria', 'rio', 'reo'] },
-  { id: 'telefono', palabra: 'te_fono', hueco: 'lé', opciones: ['lé', 'le', 'la', 'li'] },
+  // Ojo con la tilde: un distractor que solo se diferencia en el acento —`rio` frente a
+  // `rió`— da la MISMA palabra mal acentuada, no una no-palabra. Eso mide ortografia, que
+  // es otra tarea. Lo caza `test_ningun_distractor_se_diferencia_SOLO_en_la_tilde`.
+  { id: 'periodico', palabra: 'pe_dico', hueco: 'rió', opciones: ['rió', 'ria', 'ro', 'reo'] },
+  { id: 'telefono', palabra: 'te_fono', hueco: 'lé', opciones: ['lé', 'la', 'li', 'ne'] },
   { id: 'bicicleta', palabra: 'bici_ta', hueco: 'cle', opciones: ['cle', 'cla', 'que', 'gle'] },
   { id: 'escalera', palabra: 'esca_ra', hueco: 'le', opciones: ['le', 'la', 'li', 'ne'] },
   { id: 'cepillo', palabra: 'ce_llo', hueco: 'pi', opciones: ['pi', 'pe', 'bi', 'po'] },

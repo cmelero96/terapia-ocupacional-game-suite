@@ -295,3 +295,31 @@ export class Barrido {
     this.pulsadorMantenido = false;
   }
 }
+
+/**
+ * Reasigna el modo de un evento cuando el barrido esta activo.
+ *
+ * **Por que existe esta funcion, y por que vive AQUI.**
+ *
+ * Con barrido activo, la tecla que activa el objeto enfocado no es "el teclado": es **el
+ * pulsador**. El navegador no puede distinguirlos —un pulsador de barbilla se presenta al
+ * sistema como una tecla— asi que el unico dato que separa las dos vias es la
+ * configuracion de acceso.
+ *
+ * Sin esto, la sesion registra `'teclado'` para un paciente que jugo con pulsador, y el
+ * dato de modo se vuelve falso justo para la poblacion en la que mas importa: la latencia
+ * de una via de barrido no es comparable con la de un teclado.
+ *
+ * Y vive en `src/entrada/` porque **el modo es de la capa de entrada**. La barrera AC-2 del
+ * sistema 5 prohibe el literal fuera de aqui, y tenia razon: el enlace con el DOM lo tenia
+ * escrito a mano, y escrito MAL.
+ *
+ * @param {EventoActivacion} evento
+ * @param {boolean} barridoActivo
+ * @returns {EventoActivacion}
+ */
+export function conModoDeAcceso(evento, barridoActivo) {
+  if (!barridoActivo) return evento;
+  if (evento.modo !== 'teclado') return evento;
+  return { ...evento, modo: 'pulsador' };
+}

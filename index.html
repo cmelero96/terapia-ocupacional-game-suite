@@ -242,7 +242,8 @@
   /* La limitación vive DENTRO del mismo contenedor que el valor, no en un pie. */
   .metrica-limitacion { color: var(--frame-ink-soft); font-size: 0.9rem; max-width: 46rem; }
 
-  .aviso-contenido {
+  .aviso-provisional { grid-column: 1 / -1; }
+  .aviso-contenido, .aviso-provisional {
     margin: 0 1rem 0.5rem; padding: 0.5rem 0.75rem;
     border-left: 4px solid var(--frame-line);
     color: var(--frame-ink); font-size: 0.95rem;
@@ -284,7 +285,7 @@
 </div>
 
 <script type="module">
-  import { arrancar } from './src/plataforma/raiz.js';
+  import { crearSesionViva } from './src/plataforma/sesion-viva.js';
   import { BANCO_PROVISIONAL } from './src/banco-provisional.js';
   // Import ESTÁTICO a propósito. Con `await import()` el resto del script corre DESPUÉS
   // del evento `load`, así que cualquier cosa que dependa de que la página esté lista
@@ -351,10 +352,21 @@
   // Lo destapó una prueba de navegador con `c=100` sobre el banco de 32: sin este
   // try/catch, `arrancar` lanzaba y no se montaba ni el botón del panel, así que el
   // terapeuta se quedaba con una pantalla en blanco y sin forma de corregir nada.
+  // Configuración de acceso: de PACIENTE, no de ejercicio.
+  const acceso = {
+    barrido: params.get('barrido') === '1',
+    msVuelta: n('vuelta', 12000),
+    permanencia: params.get('dwell') === '1',
+    msPermanencia: n('ms', 800),
+  };
+
+  // Si la configuración no es realizable, el panel DEBE abrir mostrando el conflicto en
+  // lugar de que la página muera. Es el caso límite del GDD del sistema 11.
+  let viva = null;
   let estado = null;
   let arranqueFallido = null;
   try {
-    estado = arrancar({
+    viva = crearSesionViva({
       raiz: document.getElementById('tablero'),
       zonaObjetivo: document.getElementById('zona-objetivo'),
       zonaContenedores: document.getElementById('contenedores'),
@@ -362,8 +374,10 @@
       banco,
       config,
       nContenedores: n('nc', 3),
+      acceso,
       prefersReducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
     });
+    estado = viva.estado;
   } catch (err) {
     arranqueFallido = err instanceof Error ? err.message : String(err);
   }
@@ -383,34 +397,48 @@
   const panel = montarPanel({
     contenedor: document.getElementById('marco-panel'),
     // La frontera pausa la sesión de verdad, no solo la oculta.
-    alAbrir: () => { estado?.montado?.pausar(); },
-    alCerrar: () => { estado?.montado?.reanudar(); },
+    alAbrir: () => { viva?.estado?.montado?.pausar(); },
+    alCerrar: () => { viva?.estado?.montado?.reanudar(); },
     estado: estadoPanel,
     bancoActivo: banco.filter((e) => e.status === 'activo').length,
     anchoDisponible: () => document.getElementById('tablero').clientWidth || 1280,
     prefersReducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
-    progreso: () => estado === null
+    progreso: () => viva === null
       ? { tableros: 0, intentos: 0, aciertos: 0 }
       : {
-          tableros: estado.instrumento.tableroNumero - 1,
-          intentos: estado.instrumento.intentos.length,
-          aciertos: estado.instrumento.intentos.filter((i) => i.correcto).length,
+          tableros: viva.sesion.tableros.length,
+          intentos: viva.estado.instrumento.intentos.length,
+          aciertos: viva.estado.instrumento.intentos.filter((i) => i.correcto).length,
         },
-    sesion: () => estado?.sesionConTableros?.() ?? null,
+    sesion: () => viva?.sesionConTableros?.() ?? null,
     ultimoTablero: () => {
-      const t = estado?.instrumento?.tablero;
+      const t = viva?.estado?.instrumento?.tablero;
       return t === undefined ? null : { svPedida: t.svPedida, svEfectiva: t.svEfectiva };
     },
-    alAplicar: (nueva) => {
-      // Aplicar surte efecto en el tablero SIGUIENTE, no en el que estaba a medias: un
-      // tablero cuya configuración cambió a mitad no es un dato interpretable.
-      const url = new URL(location.href);
-      url.searchParams.set('t', String(nueva.t));
-      url.searchParams.set('c', String(nueva.C));
-      url.searchParams.set('sv', String(nueva.sv));
-      url.searchParams.set('ss', String(nueva.ss));
-      url.searchParams.set('j', tipo);
-      location.href = url.toString();
+    alAplicar: (nueva, accesoNuevo) => {
+      // **SIN RECARGAR.** Era el bloqueante S1: `location.href` destruía la sesión entera.
+      // Aplicar surte efecto en el tablero siguiente, no en una sesión siguiente.
+      if (viva === null) {
+        // El arranque había fallado: la única vía es recargar con la configuración nueva.
+        const url = new URL(location.href);
+        url.searchParams.set('t', String(nueva.t));
+        url.searchParams.set('c', String(nueva.C));
+        url.searchParams.set('sv', String(nueva.sv));
+        url.searchParams.set('ss', String(nueva.ss));
+        url.searchParams.set('j', tipo);
+        location.href = url.toString();
+        return;
+      }
+      estado = viva.reconfigurar({
+        config: nueva,
+        acceso: {
+          barrido: accesoNuevo?.barrido ?? acceso.barrido,
+          msVuelta: accesoNuevo?.msVuelta ?? acceso.msVuelta,
+          permanencia: acceso.permanencia,
+          msPermanencia: acceso.msPermanencia,
+        },
+      });
+      globalThis.__busca = { viva, estado, config: nueva, panel, estadoPanel };
     },
   });
 
@@ -423,6 +451,26 @@
     document.getElementById('juegos').after(av);
   }
 
+  // Cuatro de los nueve juegos usan contenido que escribió el desarrollador, no un
+  // clínico. Mientras nadie con la titulación lo firme, la página lo dice a la cara: un
+  // aviso que no se ve equivale a no haberlo puesto.
+  const CON_CONTENIDO_PROVISIONAL = ['rellenar', 'simbolos', 'precios', 'ordenar', 'tresEnRaya'];
+  if (CON_CONTENIDO_PROVISIONAL.includes(tipo)) {
+    const nota = document.createElement('p');
+    // Clase PROPIA: el aviso de caducidad de los precios es otra cosa, y un test comprueba
+    // que ese sale solo en precio justo. Compartir la clase los hacia indistinguibles.
+    nota.className = 'aviso-provisional';
+    nota.append(
+      document.createTextNode('⚠ Contenido PROVISIONAL, sin revisar por un terapeuta. '),
+    );
+    const enlace = document.createElement('a');
+    enlace.href = 'docs/revision-contenido.md';
+    enlace.textContent = 'Hoja de revisión';
+    nota.append(enlace);
+    nota.append(document.createTextNode('.'));
+    document.getElementById('juegos').after(nota);
+  }
+
   // Si el arranque falló, el panel se abre solo: no hay nada que hacer en la pantalla del
   // paciente hasta que la configuración sea realizable.
   if (arranqueFallido !== null) {
@@ -432,7 +480,7 @@
   }
 
   // Superficie mínima para las pruebas de navegador. No es API de producto.
-  globalThis.__busca = { estado, config, panel, estadoPanel, arranqueFallido };
+  globalThis.__busca = { viva, estado, config, panel, estadoPanel, arranqueFallido };
 </script>
 </body>
 </html>

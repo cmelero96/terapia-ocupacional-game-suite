@@ -51,18 +51,29 @@ import { validarConfiguracion, ejesAcoplados, dm, dp } from '../dificultad/model
  * @param {{ t: number, C: number, sv: number, ss: number }} entrada.config
  * @param {number} [entrada.nContenedores]
  * @param {boolean} [entrada.prefersReducedMotion]
+ * @param {import('../instrumentos/instrumento-dom.js').Acceso} [entrada.acceso]
+ * @param {{ registro: import('../registro/sesion.js').Registro, sesion: import('../registro/sesion.js').Sesion }} [entrada.existente]
+ *   La sesion que hay que CONSERVAR al reconfigurar. Sin esto, reconfigurar crearia una
+ *   sesion nueva y los tableros cerrados irian a la que se descarta — que es exactamente
+ *   el bloqueante S1 del informe cruzado, reintroducido por la puerta de atras.
  */
 export function arrancar({
   raiz, zonaObjetivo, zonaContenedores, tipo, banco, config,
   nContenedores = 3, prefersReducedMotion = false,
+  acceso = { barrido: false, msVuelta: 12000, permanencia: false, msPermanencia: 800 },
+  existente,
 }) {
   validarConfiguracion(config);
 
   const resolucion = medirResolucionReloj();
-  const registro = new Registro();
-  const sesion = registro.abrirSesion({
+  const registro = existente?.registro ?? new Registro();
+  const sesion = existente?.sesion ?? registro.abrirSesion({
     relojPared, resolucion, ejesAcoplados: ejesAcoplados(config.t),
   });
+  // Al reconfigurar, si la configuracion NUEVA acopla los ejes, la marca se endurece y no
+  // se relaja: una sesion en la que en algun momento `t < 44` tiene la medicion perceptiva
+  // contaminada, aunque despues se suba el tamaño.
+  if (ejesAcoplados(config.t)) sesion.ejesAcoplados = true;
   const politica = politicaPresentacion(CONFIGURACION_POR_DEFECTO, prefersReducedMotion);
 
   /**
@@ -149,7 +160,8 @@ export function arrancar({
 
     const montadoSimple = montarInstrumento({
       raiz, zonaObjetivo, zonaContenedores, tipo, instrumento: inst,
-      reloj: relojMonotono, politica, programador: programadorReal, alAvanzar: cerrar,
+      reloj: relojMonotono, politica, programador: programadorReal, acceso,
+      alAvanzar: cerrar,
     });
 
     return {
@@ -242,7 +254,7 @@ export function arrancar({
 
   const montado = montarInstrumento({
     raiz, zonaObjetivo, zonaContenedores, tipo, instrumento,
-    reloj: relojMonotono, politica, programador: programadorReal,
+    reloj: relojMonotono, politica, programador: programadorReal, acceso,
     alAvanzar: cerrarTablero,
   });
 

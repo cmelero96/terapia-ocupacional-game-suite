@@ -325,7 +325,32 @@ export function montarPanel({
     labSilencio.textContent = 'Silencio — no hay audio en esta versión';
     silencio.append(chkSilencio, labSilencio);
 
-    seccionAcceso.append(grupo('Presentación', [reducido, silencio]));
+    // --- Las dos vias de acceso que el sistema 5 diseño y no estaban conectadas.
+    const chkBarrido = document.createElement('input');
+    chkBarrido.type = 'checkbox';
+    chkBarrido.id = 'perilla-barrido';
+    chkBarrido.checked = borradorAcceso.barrido;
+    chkBarrido.addEventListener('change', () => {
+      borradorAcceso.barrido = chkBarrido.checked;
+      refrescarAvisos();
+    });
+    const labBarrido = document.createElement('label');
+    labBarrido.htmlFor = 'perilla-barrido';
+    labBarrido.textContent = 'Barrido por pulsador — el foco avanza solo';
+    const filaBarrido = document.createElement('div');
+    filaBarrido.className = 'fila';
+    filaBarrido.append(chkBarrido, labBarrido);
+
+    const filaVuelta = deslizador({
+      id: 'perilla-vuelta', etiqueta: 'Tiempo de una vuelta', valor: borradorAcceso.msVuelta,
+      min: 3000, max: 60000, paso: 1000, unidad: ' ms',
+      alCambiar: (v) => { borradorAcceso.msVuelta = v; refrescarAvisos(); },
+    });
+
+    seccionAcceso.append(
+      grupo('Vía de acceso', [filaBarrido, filaVuelta]),
+      grupo('Presentación', [reducido, silencio]),
+    );
 
     cuerpo.append(seccionEjercicio, seccionAcceso, zonaAvisos, seccionResultados(), zonaProgreso);
     refrescarAvisos();

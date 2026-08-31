@@ -1,24 +1,38 @@
 /**
- * Enlace con el DOM para los TRES instrumentos. Sistemas 10, 21 y 24.
+ * Enlace con el DOM para los NUEVE instrumentos.
  *
- * Sustituye a `busca-dom.js`, que solo servia a uno. Un elemento por objeto, con
- * `role="button"`, nombre accesible y foco real — ADR-0005.
+ * Un elemento por objeto, con `role="button"`, nombre accesible y foco real — ADR-0005.
  *
- * Las tres diferencias entre instrumentos son de PRESENTACION, no de logica:
+ * Y aqui viven las **cinco vias de acceso** del sistema 5. Las tres primeras las da el
+ * navegador; las dos ultimas se construyen sobre el foco y el reloj inyectado:
  *
- *   | Instrumento  | Zona de referencia        | Contenedores |
- *   |--------------|---------------------------|--------------|
- *   | busca        | glifo + nombre            | no           |
- *   | denominar    | **solo el nombre**        | no           |
- *   | clasificar   | glifo + nombre del objeto | **si**       |
+ *   tactil · raton · teclado      →  eventos de puntero y tecla
+ *   pulsador por barrido          →  el foco AVANZA solo, y una tecla activa
+ *   activacion por permanencia    →  mantener el puntero sobre un objeto activa
+ *
+ * **El barrido mueve el FOCO, no un cursor propio.** Lo fija ADR-0005: el foco ya existe,
+ * ya es visible con `:focus-visible` y ya lo anuncia el lector de pantalla. Un cursor
+ * propio seria un segundo modelo de foco que hay que mantener de acuerdo con el primero.
  */
 
 import { conectar } from '../entrada/borde-eventos.js';
 import { disposicion } from './busca.js';
 import { latencia } from '../registro/sesion.js';
+import { Permanencia, cadenciaBarrido, pxTolerancia, conModoDeAcceso } from '../entrada/adaptador.js';
 
 /** El acuse existe antes de que el tablero cambie. Ver el GDD del sistema 10. */
 const MS_ACUSE = 120;
+
+/** Cada cuanto se muestrea la permanencia. Es un muestreo, no un limite de tiempo. */
+const MS_TICK_PERMANENCIA = 50;
+
+/**
+ * @typedef {object} Acceso
+ * @property {boolean} barrido
+ * @property {number} msVuelta
+ * @property {boolean} permanencia
+ * @property {number} msPermanencia
+ */
 
 /**
  * @param {object} entrada
@@ -30,16 +44,19 @@ const MS_ACUSE = 120;
  * @param {import('../plataforma/esquema.js').RelojMonotono} entrada.reloj
  * @param {import('../presentacion/estimulo.js').PoliticaPresentacion} entrada.politica
  * @param {import('../entrada/adaptador.js').Programador} entrada.programador
+ * @param {Acceso} [entrada.acceso]
  * @param {() => void} [entrada.alAvanzar] Cierra el tablero en el registro ANTES de repintar
- * @returns {{ pintar: () => void, desconectar: () => void, pausar: () => void, reanudar: () => void, estaPausado: () => boolean }}
  */
 export function montarInstrumento({
   raiz, zonaObjetivo, zonaContenedores, tipo, instrumento, reloj, politica, programador,
+  acceso = { barrido: false, msVuelta: 12000, permanencia: false, msPermanencia: 800 },
   alAvanzar,
 }) {
   let pausado = false;
   /** @type {number | null} */
   let tInicio = null;
+  /** @type {number} */
+  let iBarrido = -1;
 
   raiz.dataset['sinMovimiento'] = politica.sinMovimiento ? 'si' : 'no';
   raiz.dataset['instrumento'] = tipo;
@@ -65,15 +82,37 @@ export function montarInstrumento({
     return b;
   }
 
+  /** @returns {HTMLElement[]} Los objetos alcanzables, en orden de recorrido */
+  function alcanzables() {
+    /** @type {HTMLElement[]} */
+    const salida = [];
+    for (const e of raiz.querySelectorAll('.celda')) {
+      if (e instanceof HTMLElement) salida.push(e);
+    }
+    if (!zonaContenedores.hidden) {
+      for (const e of zonaContenedores.querySelectorAll('.contenedor:not([disabled])')) {
+        if (e instanceof HTMLElement) salida.push(e);
+      }
+    }
+    return salida;
+  }
+
+  /** @param {number} i */
+  function enfocarBarrido(i) {
+    const lista = alcanzables();
+    if (lista.length === 0) return;
+    iBarrido = ((i % lista.length) + lista.length) % lista.length;
+    lista[iBarrido]?.focus();
+  }
+
   function pintar() {
     const objetivo = instrumento.objetivo();
 
     // --- Zona de referencia. FUERA del tablero y no activable: si el paciente pudiera
     // activarla, la tarea cambia.
     zonaObjetivo.replaceChildren();
-    // Denominacion NO muestra el glifo. Si lo mostrara, la tarea volveria a ser Busca.
-    // Denominacion NUNCA muestra glifo. Los instrumentos de texto lo muestran solo si su
-    // estimulo tiene uno: un simbolo si, una palabra con hueco no.
+    // Denominacion NUNCA muestra glifo. Los de texto lo muestran solo si su estimulo tiene
+    // uno: un simbolo si, una palabra con hueco no.
     if (tipo !== 'denominar' && objetivo.glifo !== '') {
       const g = document.createElement('span');
       g.className = 'objetivo-glifo';
@@ -88,7 +127,7 @@ export function montarInstrumento({
 
     // --- Tablero.
     const celdas = instrumento.celdas();
-    const { columnas, sep } = disposicion(celdas.length, instrumento.t);
+    const { columnas, sep } = disposicion(Math.max(celdas.length, 2), instrumento.t);
     raiz.style.setProperty('--t', `${instrumento.t}px`);
     raiz.style.setProperty('--cols', String(columnas));
     raiz.style.setProperty('--sep', `${sep}px`);
@@ -100,8 +139,8 @@ export function montarInstrumento({
     raiz.replaceChildren();
     for (const c of celdas) {
       const b = boton(c, 'celda', esTexto ? 'celda-texto' : '');
-      // La seleccion NO es el foco: el foco lo usa el barrido para recorrer, y la
-      // seleccion sobrevive a su movimiento. Se distinguen por FORMA ademas de color.
+      // La seleccion NO es el foco: el foco lo usa el barrido para recorrer, y la seleccion
+      // sobrevive a su movimiento. Se distinguen por FORMA ademas de color.
       if (tipo === 'clasificar' && instrumento.seleccionado === c.id) {
         b.dataset['seleccionado'] = 'si';
         b.setAttribute('aria-pressed', 'true');
@@ -139,59 +178,187 @@ export function montarInstrumento({
     }
 
     tInicio = reloj.now();
+    if (acceso.barrido) enfocarBarrido(0);
   }
 
-  const desconectar = conectar({
+  // ---------------------------------------------------------------- activacion comun
+
+  /**
+   * Una sola via de activacion para las cinco entradas. El instrumento no sabe —y no puede
+   * saber— si vino de un dedo, una tecla, un pulsador o una permanencia.
+   *
+   * @param {import('../entrada/adaptador.js').EventoActivacion} eventoEntrada
+   */
+  function procesar(eventoEntrada) {
+    const { idObjetivo, tActivacion, origenTiempo } = eventoEntrada;
+    if (pausado) return;
+
+    const lat = tInicio === null
+      ? /** @type {import('../registro/sesion.js').Latencia} */ (
+          { ms: undefined, motivo: 'relojRetrocedio' })
+      : latencia(tInicio, tActivacion, 'reloj', origenTiempo);
+
+    const elemento = document.querySelector(`[data-id="${CSS.escape(idObjetivo)}"]`);
+    const clase = elemento instanceof HTMLElement
+      ? (elemento.dataset['clase'] ?? 'objeto')
+      : 'objeto';
+
+    // ACUSE DE RECIBO. Identico para acierto y para fallo: el elemento no sabe cual fue.
+    if (elemento instanceof HTMLElement) {
+      elemento.dataset['acuse'] = 'si';
+      elemento.addEventListener(
+        'transitionend', () => { delete elemento.dataset['acuse']; }, { once: true },
+      );
+    }
+
+    // **El modo NO se fabrica aqui.** Viene de la capa de entrada, que es la unica que
+    // sabe por que via llego la activacion. Antes esto decia `modo: 'tactil'` a mano, y
+    // registraba una via falsa para cada paciente que usara pulsador o permanencia.
+    const evento = conModoDeAcceso(eventoEntrada, acceso.barrido);
+    const r = tipo === 'clasificar'
+      ? instrumento.activar(evento, lat, /** @type {'objeto'|'contenedor'} */ (clase))
+      : instrumento.activar(evento, lat);
+
+    // En clasificar, la primera activacion solo SELECCIONA: hay que repintar para que el
+    // indicador aparezca, pero NADA se ha registrado.
+    if (tipo === 'clasificar' && r.registrado === false) {
+      programador.programar(() => { pintar(); }, MS_ACUSE);
+      return;
+    }
+    if (r.avanza) {
+      // El tablero se cierra en el registro ANTES de pintar el siguiente: si no, sus
+      // intentos se atribuirian a la dificultad del tablero nuevo.
+      if (alAvanzar !== undefined) alAvanzar();
+      programador.programar(() => { pintar(); }, MS_ACUSE);
+    }
+  }
+
+  const desconectarPuntero = conectar({
     contenedor: document.body,
     t: instrumento.t,
     reloj,
     alActivar: (evento) => {
-      if (pausado) return;
-
-      const lat = tInicio === null
-        ? /** @type {import('../registro/sesion.js').Latencia} */ (
-            { ms: undefined, motivo: 'relojRetrocedio' })
-        : latencia(tInicio, evento.tActivacion, 'reloj', evento.origenTiempo);
-
-      const elemento = document.querySelector(`[data-id="${CSS.escape(evento.idObjetivo)}"]`);
-      const clase = elemento instanceof HTMLElement
-        ? (elemento.dataset['clase'] ?? 'objeto')
-        : 'objeto';
-
-      // ACUSE DE RECIBO. Identico para acierto y para fallo: el elemento no sabe cual fue.
-      if (elemento instanceof HTMLElement) {
-        elemento.dataset['acuse'] = 'si';
-        elemento.addEventListener(
-          'transitionend',
-          () => { delete elemento.dataset['acuse']; },
-          { once: true },
-        );
-      }
-
-      const r = tipo === 'clasificar'
-        ? instrumento.activar(evento, lat, /** @type {'objeto'|'contenedor'} */ (clase))
-        : instrumento.activar(evento, lat);
-
-      // En clasificar, la primera activacion solo SELECCIONA: hay que repintar para que el
-      // indicador aparezca, pero NADA se ha registrado.
-      if (tipo === 'clasificar' && r.registrado === false) {
-        programador.programar(() => { pintar(); }, MS_ACUSE);
-        return;
-      }
-      if (r.avanza) {
-        // El tablero se cierra en el registro ANTES de que el instrumento pinte el
-        // siguiente: si no, sus intentos se atribuirian a la dificultad del tablero nuevo.
-        if (alAvanzar !== undefined) alAvanzar();
-        programador.programar(() => { pintar(); }, MS_ACUSE);
-      }
+      procesar(evento);
     },
   });
 
+  // ---------------------------------------------------------------- barrido por pulsador
+
+  /** @type {number | null} */
+  let tareaBarrido = null;
+
+  function cadencia() {
+    if (!acceso.barrido) return null;
+    return cadenciaBarrido(Math.max(alcanzables().length, 3), acceso.msVuelta);
+  }
+
+  function arrancarBarrido() {
+    const c = cadencia();
+    if (c === null) return;
+    const paso = () => {
+      // **Sin limite de vueltas.** Un limite seria presion de tiempo por la puerta de
+      // atras: que la cadencia expire solo puede producir "todavia no", nunca un fallo.
+      if (!pausado) enfocarBarrido(iBarrido + 1);
+      tareaBarrido = programador.programar(paso, c.msPorPaso);
+    };
+    tareaBarrido = programador.programar(paso, c.msPorPaso);
+  }
+
+  // ---------------------------------------------------------------- permanencia
+
+  /** @type {Permanencia | null} */
+  const permanencia = acceso.permanencia
+    ? new Permanencia(acceso.msPermanencia, reloj)
+    : null;
+  /** @type {number | null} */
+  let tareaPermanencia = null;
+  /** @type {HTMLElement | null} */
+  let sobre = null;
+  /** @type {{ x: number, y: number } | null} */
+  let ancla = null;
+
+  function salirDeObjeto() {
+    if (permanencia === null) return;
+    // Salir REINICIA la cuenta, no la pausa: pausar haria que dos toques accidentales
+    // separados por un minuto activaran algo.
+    permanencia.salir();
+    if (sobre !== null) sobre.style.removeProperty('--dwell');
+    sobre = null;
+    ancla = null;
+  }
+
+  /** @param {Event} e */
+  function entrarEnObjeto(e) {
+    if (permanencia === null || pausado) return;
+    const destino = e.target;
+    if (!(destino instanceof Element)) return;
+    const objeto = destino.closest('[data-id]');
+    if (!(objeto instanceof HTMLElement)) return;
+    const id = objeto.dataset['id'];
+    if (id === undefined) return;
+    sobre = objeto;
+    if (e instanceof PointerEvent) ancla = { x: e.clientX, y: e.clientY };
+    permanencia.entrar(id);
+  }
+
+  /** @param {Event} e */
+  function moverSobreObjeto(e) {
+    if (permanencia === null || sobre === null || ancla === null) return;
+    if (!(e instanceof PointerEvent)) return;
+    // Un movimiento por debajo de la tolerancia NO reinicia la cuenta. Sin esta zona, la
+    // permanencia es inservible para quien tiene temblor, que es buena parte de quien la
+    // necesita.
+    if (Math.hypot(e.clientX - ancla.x, e.clientY - ancla.y) > pxTolerancia(instrumento.t)) {
+      salirDeObjeto();
+    }
+  }
+
+  function arrancarPermanencia() {
+    if (permanencia === null) return;
+    const tick = () => {
+      if (!pausado && sobre !== null) {
+        // El progreso es VISIBLE y no viola el pilar 2: muestra "te estoy escuchando", no
+        // "vas bien". Y NO se anuncia por lector de pantalla: un anuncio por fotograma
+        // seria insoportable, y con sensibilidad sensorial confirmada, perjudicial.
+        sobre.style.setProperty('--dwell', String(permanencia.progreso()));
+        const activacion = permanencia.comprobar();
+        if (activacion !== null) {
+          const objeto = sobre;
+          salirDeObjeto();
+          objeto.style.removeProperty('--dwell');
+          procesar(activacion);
+        }
+      }
+      tareaPermanencia = programador.programar(tick, MS_TICK_PERMANENCIA);
+    };
+    tareaPermanencia = programador.programar(tick, MS_TICK_PERMANENCIA);
+    document.body.addEventListener('pointerover', entrarEnObjeto);
+    document.body.addEventListener('pointermove', moverSobreObjeto);
+    document.body.addEventListener('pointerout', salirDeObjeto);
+  }
+
+  // ---------------------------------------------------------------- ciclo de vida
+
   pintar();
+  if (acceso.barrido) arrancarBarrido();
+  if (acceso.permanencia) arrancarPermanencia();
+
   return {
     pintar,
-    desconectar,
-    pausar: () => { pausado = true; if (tipo === 'clasificar') instrumento.limpiarSeleccion(); },
+    cadencia,
+    desconectar: () => {
+      desconectarPuntero();
+      if (tareaBarrido !== null) programador.cancelar(tareaBarrido);
+      if (tareaPermanencia !== null) programador.cancelar(tareaPermanencia);
+      document.body.removeEventListener('pointerover', entrarEnObjeto);
+      document.body.removeEventListener('pointermove', moverSobreObjeto);
+      document.body.removeEventListener('pointerout', salirDeObjeto);
+    },
+    pausar: () => {
+      pausado = true;
+      salirDeObjeto();
+      if (typeof instrumento.limpiarSeleccion === 'function') instrumento.limpiarSeleccion();
+    },
     reanudar: () => { pausado = false; pintar(); },
     estaPausado: () => pausado,
   };
