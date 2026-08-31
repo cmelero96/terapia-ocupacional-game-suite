@@ -33,7 +33,7 @@ const MS_ACUSE = 120;
  * @param {import('../presentacion/estimulo.js').PoliticaPresentacion} entrada.politica
  * @param {import('../entrada/adaptador.js').Programador} entrada.programador
  * @param {(intento: { correcto: boolean, latencia: import('../registro/sesion.js').Latencia }) => void} [entrada.alRegistrar]
- * @returns {{ pintar: () => void, desconectar: () => void }}
+ * @returns {{ pintar: () => void, desconectar: () => void, pausar: () => void, reanudar: () => void, estaPausado: () => boolean }}
  */
 export function montarBusca({ raiz, zonaObjetivo, instrumento, reloj, politica, programador, alRegistrar }) {
   const { columnas, sep } = disposicion(
@@ -45,6 +45,18 @@ export function montarBusca({ raiz, zonaObjetivo, instrumento, reloj, politica, 
   raiz.style.setProperty('--sep', `${sep}px`);
   raiz.style.setProperty('--cols', String(columnas));
   raiz.dataset['sinMovimiento'] = politica.sinMovimiento ? 'si' : 'no';
+
+  /**
+   * La pausa es LOGICA, no solo presentacional.
+   *
+   * Ocultar el tablero con CSS no basta: los escuchadores siguen conectados, y un evento
+   * programatico —o un lector de pantalla, o un dispositivo de asistencia que no respete
+   * `pointer-events`— llegaria a registrarse. Lo destapo una prueba de navegador que
+   * despachaba el evento a mano.
+   *
+   * @type {boolean}
+   */
+  let pausado = false;
 
   /** @type {number | null} */
   let tInicioBusqueda = null;
@@ -96,6 +108,11 @@ export function montarBusca({ raiz, zonaObjetivo, instrumento, reloj, politica, 
     t: instrumento.t,
     reloj,
     alActivar: (evento) => {
+      // Con la sesion pausada NADA se registra. Un intento hecho mientras el terapeuta
+      // cambia la configuracion entraria al registro bajo una configuracion que ya no es
+      // la que se estaba usando.
+      if (pausado) return;
+
       // Latencia: entre el inicio de la ronda y la activacion. Si los origenes no
       // coinciden, el sistema 9 devuelve `undefined` en lugar de restar dos cosas que no
       // son comparables.
@@ -125,5 +142,13 @@ export function montarBusca({ raiz, zonaObjetivo, instrumento, reloj, politica, 
   });
 
   pintar();
-  return { pintar, desconectar };
+  return {
+    pintar,
+    desconectar,
+    pausar: () => { pausado = true; },
+    // Al reanudar se pinta un tablero NUEVO, no el que estaba a medias: un tablero cuya
+    // configuracion cambio a mitad no es un dato interpretable.
+    reanudar: () => { pausado = false; pintar(); },
+    estaPausado: () => pausado,
+  };
 }

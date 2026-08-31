@@ -83,6 +83,84 @@
   }
   .celda { transition: border-color 90ms linear, border-width 90ms linear; }
 
+  /* FRONTERA DE MODO. Con el panel abierto el tablero no es alcanzable: ni por puntero ni
+     por teclado. Si el paciente lo viera, seguiría intentando resolverlo mientras el
+     terapeuta cambia la configuración, y esos intentos entrarían al registro bajo una
+     configuración que ya no es la que se estaba usando. */
+  body[data-panel-abierto='si'] .board-root,
+  body[data-panel-abierto='si'] .objetivo {
+    visibility: hidden;
+  }
+  body[data-panel-abierto='si'] .celda {
+    pointer-events: none;
+  }
+
+  .abridor {
+    justify-self: end;
+    margin: 0.75rem 1rem;
+    min-block-size: 44px;
+    padding: 0 1rem;
+    font: inherit;
+    background: var(--frame-bg);
+    color: var(--frame-ink);
+    border: 2px solid var(--frame-line);
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .abridor:focus-visible { outline: 3px solid var(--frame-accent); outline-offset: 2px; }
+
+  /* OPACO, y cubre el tablero por completo. No una superposición semitransparente. */
+  .panel {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    /* Opacidad total: es el requisito, no una preferencia estética. */
+    background: var(--frame-bg);
+    color: var(--frame-ink);
+    display: grid;
+    grid-template-rows: 1fr auto;
+    overflow: auto;
+  }
+  /* `display: grid` en `.panel` sobrescribe el `display: none` que el atributo `hidden`
+     aplica por defecto, porque una clase gana a un selector de atributo. Sin esta regla el
+     panel OCULTO cubre e intercepta toda la página, y la aplicación es inusable. */
+  .panel[hidden] { display: none; }
+
+  .panel-cuerpo { padding: 1.5rem; max-width: 60rem; }
+  .panel h2 { font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
+  .panel h2:first-child { margin-top: 0; }
+
+  /* Los dos ejes separados por un separador VISIBLE con rótulo, no solo por espacio. */
+  .grupo {
+    border: 2px solid var(--frame-line);
+    border-radius: 8px;
+    padding: 0.75rem 1rem 1rem;
+    margin: 0 0 1rem;
+  }
+  .grupo legend { padding: 0 0.5rem; font-weight: 600; }
+
+  .fila { display: grid; grid-template-columns: 14rem 1fr 5rem; gap: 0.75rem; align-items: center; margin: 0.5rem 0; }
+  .fila input[type='range'] { inline-size: 100%; }
+  .fila input[type='checkbox'] { inline-size: 24px; block-size: 24px; }
+  .valor { font-variant-numeric: tabular-nums; text-align: right; }
+  .nota { color: var(--frame-ink-soft); font-size: 0.9rem; margin: 0.25rem 0 0; }
+
+  /* La distinción entre bloqueo y aviso es de PALABRA, no de tono: un terapeuta con
+     daltonismo tiene que poder distinguirlas. El borde ayuda; el texto decide. */
+  .mensaje { border-left: 4px solid var(--frame-line); padding: 0.5rem 0.75rem; margin: 0.5rem 0; }
+  .mensaje.bloqueo { border-left-color: var(--frame-ink); font-weight: 600; }
+  .progreso { color: var(--frame-ink-soft); margin-top: 1.5rem; }
+
+  .acciones { display: flex; gap: 0.75rem; padding: 1rem 1.5rem; border-top: 2px solid var(--frame-line); }
+  .accion {
+    min-block-size: 44px; padding: 0 1.25rem; font: inherit; cursor: pointer;
+    background: var(--frame-bg); color: var(--frame-ink);
+    border: 2px solid var(--frame-line); border-radius: 8px;
+  }
+  .accion.primaria { border-color: var(--frame-accent); font-weight: 600; }
+  .accion:disabled { color: var(--frame-ink-soft); cursor: not-allowed; }
+  .accion:focus-visible { outline: 3px solid var(--frame-accent); outline-offset: 2px; }
+
   /* Estímulo reducido: ni una transición, ni un desvanecimiento. Instantáneo significa
      instantáneo. El acuse pierde el movimiento y CONSERVA la existencia. */
   .board-root[data-sin-movimiento='si'] .celda { transition: none; }
@@ -93,6 +171,10 @@
 </head>
 <body>
 <div class="frame-root">
+  <!-- El panel vive en el ámbito del MARCO. `.frame-root` y `.board-root` son contenedores
+       hermanos que nunca se anidan: es lo que impide que un token del marco se filtre al
+       tablero, donde el umbral de contraste es clínico y no estético. -->
+  <div id="marco-panel"></div>
   <div class="objetivo" id="zona-objetivo"></div>
   <div class="board-root" id="tablero" role="group" aria-label="Tablero de búsqueda"></div>
 </div>
@@ -100,6 +182,10 @@
 <script type="module">
   import { arrancar } from './src/plataforma/raiz.js';
   import { BANCO_PROVISIONAL, resolverProvisional } from './src/banco-provisional.js';
+  // Import ESTÁTICO a propósito. Con `await import()` el resto del script corre DESPUÉS
+  // del evento `load`, así que cualquier cosa que dependa de que la página esté lista
+  // —una prueba de navegador, o un lector de pantalla— ve la página a medias.
+  import { montarPanel } from './src/panel/panel-dom.js';
 
   const params = new URLSearchParams(location.search);
   const n = (clave, porDefecto) => {
@@ -130,17 +216,82 @@
       ).flat();
   const resolver = (id) => resolverProvisional(id.split('~')[0]);
 
-  const estado = arrancar({
-    raiz: document.getElementById('tablero'),
-    zonaObjetivo: document.getElementById('zona-objetivo'),
-    banco,
-    resolver,
-    config,
+  // Si la configuración no es realizable, el panel DEBE abrir mostrando el conflicto en
+  // lugar de que la página muera. Es el caso límite del GDD: "si la configuración guardada
+  // ya no es válida, el panel abre mostrando el conflicto y sin permitir empezar".
+  //
+  // Lo destapó una prueba de navegador con `c=100` sobre el banco de 32: sin este
+  // try/catch, `arrancar` lanzaba y no se montaba ni el botón del panel, así que el
+  // terapeuta se quedaba con una pantalla en blanco y sin forma de corregir nada.
+  let estado = null;
+  let arranqueFallido = null;
+  try {
+    estado = arrancar({
+      raiz: document.getElementById('tablero'),
+      zonaObjetivo: document.getElementById('zona-objetivo'),
+      banco,
+      resolver,
+      config,
+      prefersReducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
+    });
+  } catch (err) {
+    arranqueFallido = err instanceof Error ? err.message : String(err);
+  }
+
+  // ---- Panel del terapeuta y frontera de modo ----
+  const estadoPanel = {
+    abierto: false,
+    config: { ...config },
+    acceso: {
+      barrido: false,
+      msVuelta: 12000,
+      estimuloReducido: false,
+      limitaciones: params.get('lim') ? params.get('lim').split(',') : [],
+    },
+  };
+
+  const panel = montarPanel({
+    contenedor: document.getElementById('marco-panel'),
+    // La frontera pausa la sesión de verdad, no solo la oculta.
+    alAbrir: () => { estado?.montado?.pausar(); },
+    alCerrar: () => { estado?.montado?.reanudar(); },
+    estado: estadoPanel,
+    bancoActivo: banco.filter((e) => e.status === 'activo').length,
+    anchoDisponible: () => document.getElementById('tablero').clientWidth || 1280,
     prefersReducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
+    progreso: () => estado === null
+      ? { tableros: 0, intentos: 0, aciertos: 0 }
+      : {
+          tableros: estado.instrumento.tableroNumero - 1,
+          intentos: estado.instrumento.intentos.length,
+          aciertos: estado.instrumento.intentos.filter((i) => i.correcto).length,
+        },
+    ultimoTablero: () => {
+      const t = estado?.instrumento?.tablero;
+      return t === undefined ? null : { svPedida: t.svPedida, svEfectiva: t.svEfectiva };
+    },
+    alAplicar: (nueva) => {
+      // Aplicar surte efecto en el tablero SIGUIENTE, no en el que estaba a medias: un
+      // tablero cuya configuración cambió a mitad no es un dato interpretable.
+      const url = new URL(location.href);
+      url.searchParams.set('t', String(nueva.t));
+      url.searchParams.set('c', String(nueva.C));
+      url.searchParams.set('sv', String(nueva.sv));
+      url.searchParams.set('ss', String(nueva.ss));
+      location.href = url.toString();
+    },
   });
 
+  // Si el arranque falló, el panel se abre solo: no hay nada que hacer en la pantalla del
+  // paciente hasta que la configuración sea realizable.
+  if (arranqueFallido !== null) {
+    document.getElementById('zona-objetivo').textContent =
+      'Configuración no realizable. Corrígela en el panel del terapeuta.';
+    panel.abrir();
+  }
+
   // Superficie mínima para las pruebas de navegador. No es API de producto.
-  globalThis.__busca = { estado, config };
+  globalThis.__busca = { estado, config, panel, estadoPanel, arranqueFallido };
 </script>
 </body>
 </html>

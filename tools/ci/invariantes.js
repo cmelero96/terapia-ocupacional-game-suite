@@ -166,6 +166,39 @@ function sinComentarios(codigo) {
   return salida;
 }
 
+/**
+ * Vacia el CONTENIDO de las cadenas, conservando las comillas y los saltos de linea.
+ *
+ * Existe porque un patron de IDENTIFICADOR no puede vivir dentro de una cadena: un rotulo
+ * de interfaz como `'Eje perceptivo-cognitivo — dificultad de encontrar'` no es un control
+ * escalar de dificultad, y marcarlo es el falso positivo que hace que alguien desactive la
+ * barrera por molesta.
+ *
+ * Se aplica SOLO a los patrones de identificador (AC-13 y AC-14). Las listas de literales
+ * de AC-1 y AC-2b siguen mirando el texto con cadenas, porque ahi el literal ES lo que se
+ * busca.
+ *
+ * @param {string} codigo Ya sin comentarios
+ * @returns {string}
+ */
+function sinCadenas(codigo) {
+  let salida = '';
+  let i = 0;
+  let delim = '';
+  while (i < codigo.length) {
+    const c = codigo[i];
+    if (delim === '') {
+      if (c === '"' || c === "'" || c === '`') { delim = c; salida += c; i++; continue; }
+      salida += c; i++; continue;
+    }
+    if (c === '\\') { salida += '  '; i += 2; continue; }
+    if (c === delim) { delim = ''; salida += c; i++; continue; }
+    salida += c === '\n' ? '\n' : ' ';
+    i++;
+  }
+  return salida;
+}
+
 /** @param {string} dir @returns {string[]} */
 function archivosJs(dir) {
   /** @type {string[]} */
@@ -228,10 +261,14 @@ if (archivos.some((f) => rel(f) === RAIZ_COMPOSICION) && marcados.includes(RAIZ_
 for (const archivo of archivos) {
   const r = rel(archivo);
   const permitidos = BORDES[r] ?? [];
-  const lineas = sinComentarios(readFileSync(archivo, 'utf8')).split('\n');
+  const texto = sinComentarios(readFileSync(archivo, 'utf8'));
+  const lineas = texto.split('\n');
+  // Los patrones de IDENTIFICADOR se aplican sobre el codigo tambien sin cadenas.
+  const lineasSinCadenas = sinCadenas(texto).split('\n');
 
   lineas.forEach((linea, idx) => {
     const n = idx + 1;
+    const codigoDesnudo = lineasSinCadenas[idx] ?? '';
 
     // AC-1 — cada borde solo puede tocar lo que su razon de existir justifica.
     for (const literal of PROHIBIDOS) {
@@ -265,7 +302,7 @@ for (const archivo of archivos) {
     // escalar, y marcarla seria el falso positivo que desactiva una barrera por molesta.
     const esRutaDeModulo = /\bfrom\s+['"]/.test(linea) || /^\s*import\s+['"]/.test(linea);
     for (const patron of esRutaDeModulo ? [] : ESCALARES_PROHIBIDOS) {
-      if (patron.test(linea)) {
+      if (patron.test(codigoDesnudo)) {
         fallos.push({
           barrera: 'AC-13',
           mensaje: `${r}:${n} — dificultad escalar configurable: ${patron.source}`,
@@ -274,7 +311,7 @@ for (const archivo of archivos) {
     }
     if (r.startsWith('src/dificultad/')) {
       for (const patron of TIEMPO_EN_DIFICULTAD) {
-        if (patron.test(linea)) {
+        if (patron.test(codigoDesnudo)) {
           fallos.push({
             barrera: 'AC-14',
             mensaje: `${r}:${n} — perilla con unidades de tiempo en dificultad: ${patron.source}`,
