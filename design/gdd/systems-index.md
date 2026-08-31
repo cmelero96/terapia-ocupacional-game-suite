@@ -97,10 +97,10 @@ reglas que declara dejan de estar vigiladas.
 | 18 | Persistencia local | Registro | Vertical Slice | Not Started | — | 9 |
 | 19 | Biblioteca portable del terapeuta (sincronización) | Registro | Vertical Slice | Not Started | — | 16, 18 |
 | 20 | Vista de evolución longitudinal | UI | Vertical Slice | Not Started | — | 18 |
-| 21 | Instrumento: clasificar por categorías | Instrumento | Alpha | Not Started | — | 1, 5, 8, 9 |
+| 21 | Instrumento: clasificar por categorías | Instrumento | **MVP** (adelantado) | **Designed** · **implementado** | [instrumentos-clasificar-y-denominar.md](instrumentos-clasificar-y-denominar.md) | 1, 5, 8, 9, 11 |
 | 22 | Instrumento: transcribir símbolos | Instrumento | Alpha | Not Started | — | 3, 5, 9 |
 | 23 | Instrumento: precio justo | Instrumento | Alpha | Not Started | — | 1, 5, 9 |
-| 24 | Instrumento: denominación de objetos | Instrumento | Alpha | Not Started | — | 1, 5, 9 |
+| 24 | Instrumento: denominación de objetos | Instrumento | **MVP** (adelantado) | **Designed** · **implementado** | [instrumentos-clasificar-y-denominar.md](instrumentos-clasificar-y-denominar.md) | 1, 5, 9, 10 |
 | 25 | Composición de sesiones | Clínico | Full Vision | Not Started | — | 16, 17 |
 | 26 | Informes para el terapeuta | UI | Full Vision | Not Started | — | 20 |
 | 27 | Práctica en casa (cuentas, servidor, RGPD) | Registro | Full Vision | Not Started | — | 18, 19 |
@@ -294,9 +294,9 @@ bloqueado es el Nivel 1, y hay 13 GDD que escribir antes de llegar ahí.
 | Sistemas identificados | 27 |
 | GDD empezados | 3 |
 | GDD revisados | 3 |
-| GDD diseñados sin revisar | 8 |
+| GDD diseñados sin revisar | 9 |
 | GDD provisionales sin validar | 1 (sistema 15) |
-| Sistemas con código en `src/` | **11** (2 parcial, 3, 4, 5, 6, 7, 8, 9, 10, 11 y 12) |
+| Sistemas con código en `src/` | **13** (2 parcial, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 21 y 24) |
 | GDD aprobados | 0 |
 | Sistemas MVP diseñados | 3 / 14 |
 | Sistemas Vertical Slice diseñados | 0 / 6 |
