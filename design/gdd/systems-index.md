@@ -34,6 +34,17 @@ trabajos es la propuesta de valor central del producto, no una función secundar
 
 ---
 
+> **REVISIÓN CRUZADA DEL 2026-08-26: veredicto FAIL.** Trece bloqueantes, nueve ya en el
+> código. Informe completo en
+> [`gdd-cross-review-2026-08-26.md`](gdd-cross-review-2026-08-26.md).
+>
+> Siete sistemas marcados `Needs Revision`: 1, 2, 4, 5, 8, 9 y 11. Y dos decisiones que no
+> corresponden a un revisor: botón contra gesto para abrir el panel, y sliders contra
+> controles discretos.
+>
+> **Antes de encargar una sola imagen del banco**, resolver C4: `clusterMin` está derivada de
+> una fórmula que el código no usa, así que el banco puede ser de 416 elementos y no 384.
+
 ## Alcance revisado tras la sesión 2 con el colaborador (2026-08-26)
 
 Las respuestas de `production/therapist-session-2.md` cambian el alcance de la primera
@@ -77,17 +88,17 @@ reglas que declara dejan de estar vigiladas.
 
 | # | Sistema | Categoría | Prioridad | Estado | Design Doc | Depende de |
 |---|---------|-----------|-----------|--------|------------|------------|
-| 1 | Manifiesto del banco de imágenes | Core | MVP | **Revisado** (NEEDS REVISION, cambios aplicados) | [manifiesto-banco-imagenes.md](manifiesto-banco-imagenes.md) | 3 *(solo tipos)* |
-| 2 | Tokens de tema y contraste | Core | MVP | **Revisado** (NEEDS REVISION, cambios aplicados) | [tokens-tema-contraste.md](tokens-tema-contraste.md) | — |
+| 1 | Manifiesto del banco de imágenes | Core | MVP | Needs Revision | [manifiesto-banco-imagenes.md](manifiesto-banco-imagenes.md) | 3 *(solo tipos)* |
+| 2 | Tokens de tema y contraste | Core | MVP | Needs Revision | [tokens-tema-contraste.md](tokens-tema-contraste.md) | — |
 | 3 | Inyección de no determinismo (aleatoriedad y reloj) *(inferido)* | Core | MVP | **Revisado** (NEEDS REVISION, cambios aplicados) | [inyeccion-no-determinismo.md](inyeccion-no-determinismo.md) | — |
-| 4 | Modelo de dificultad: dos ejes, cuatro perillas | Clínico | MVP | **Designed** (pendiente de revisión) · **implementado** | [modelo-dificultad.md](modelo-dificultad.md) | — |
-| 5 | Capa de adaptación de entrada | Adaptación | MVP | **Designed** (pendiente de revisión) · **implementado** (lógica pura) | [capa-adaptacion-entrada.md](capa-adaptacion-entrada.md) | 2, 3, 4 |
+| 4 | Modelo de dificultad: dos ejes, cuatro perillas | Clínico | MVP | Needs Revision | [modelo-dificultad.md](modelo-dificultad.md) | — |
+| 5 | Capa de adaptación de entrada | Adaptación | MVP | Needs Revision | [capa-adaptacion-entrada.md](capa-adaptacion-entrada.md) | 2, 3, 4 |
 | 6 | Modo de estímulo reducido *(inferido)* | Adaptación | MVP | **Designed** · **implementado** | [estimulo-reducido-y-silencio.md](estimulo-reducido-y-silencio.md) | 2, 5 |
 | 7 | Control de silencio y volumen *(inferido)* | Adaptación | MVP | **Designed** · **implementado** — se reduce a un contrato reservado | [estimulo-reducido-y-silencio.md](estimulo-reducido-y-silencio.md) | 6 |
-| 8 | Generación de tableros | Instrumento | MVP | **Designed** (pendiente de revisión) · **implementado** | [generacion-tableros.md](generacion-tableros.md) | 1, 2, 3, 4 |
-| 9 | Registro de rendimiento | Registro | MVP | **Designed** (pendiente de revisión) · **implementado** | [registro-rendimiento.md](registro-rendimiento.md) | 1, 3, 4, 5, **8** |
+| 8 | Generación de tableros | Instrumento | MVP | Needs Revision | [generacion-tableros.md](generacion-tableros.md) | 1, 2, 3, 4 |
+| 9 | Registro de rendimiento | Registro | MVP | Needs Revision | [registro-rendimiento.md](registro-rendimiento.md) | 1, 3, 4, 5, **8** |
 | 10 | Instrumento: Busca (búsqueda visual) — **posee la raíz de composición del MVP** | Instrumento | MVP | **Designed** · **implementado y ejecutable** | [instrumento-busca.md](instrumento-busca.md) | 2, 3, 4, 5, 6, 8, 9 |
-| 11 | Frontera de modo y panel del terapeuta | UI | MVP | **Designed** · **implementado y ejecutable** | [panel-terapeuta.md](panel-terapeuta.md) | 2, 4, 5, 6, 7, 8, 9, 10 |
+| 11 | Frontera de modo y panel del terapeuta | UI | MVP | Needs Revision | [panel-terapeuta.md](panel-terapeuta.md) | 2, 4, 5, 6, 7, 8, 9, 10 |
 | 12 | Pantalla de resultados de sesión | UI | MVP | **Designed** · **implementado y ejecutable** | [resultados-sesion.md](resultados-sesion.md) | 2, 4, 9, 11 |
 | 13 | Herramientas del banco: validador, importador de lote, reexportador, galería de clusters, diff, normalización *(inferido)* | Meta | MVP | Not Started | — | 1, 2 |
 | 14 | Invariantes como barreras de CI: analizadores estáticos + tokenizador de CSS + **detección de fuente aleatoria o reloj constante fuera de `tests/`** *(inferido)* | Meta | MVP | Not Started | — | 1, 2, 3, 5, 9 |
@@ -100,7 +111,7 @@ reglas que declara dejan de estar vigiladas.
 | 21 | Instrumento: clasificar por categorías | Instrumento | **MVP** (adelantado) | **Designed** · **implementado** | [instrumentos-clasificar-y-denominar.md](instrumentos-clasificar-y-denominar.md) | 1, 5, 8, 9, 11 |
 | 22 | Instrumento: transcribir símbolos | Instrumento | Alpha | Not Started | — | 3, 5, 9 |
 | 23 | Instrumento: precio justo | Instrumento | Alpha | Not Started | — | 1, 5, 9 |
-| 24 | Instrumento: denominación de objetos | Instrumento | **MVP** (adelantado) | **Designed** · **implementado** | [instrumentos-clasificar-y-denominar.md](instrumentos-clasificar-y-denominar.md) | 1, 5, 9, 10 |
+| 24 | Instrumento: denominación de objetos | Instrumento | **MVP** (adelantado) | **Designed** · **implementado** | [instrumentos-clasificar-y-denominar.md](instrumentos-clasificar-y-denominar.md) | 1, 5, **8**, 9, 10 |
 | 25 | Composición de sesiones | Clínico | Full Vision | Not Started | — | 16, 17 |
 | 26 | Informes para el terapeuta | UI | Full Vision | Not Started | — | 20 |
 | 27 | Práctica en casa (cuentas, servidor, RGPD) | Registro | Full Vision | Not Started | — | 18, 19 |
@@ -264,7 +275,7 @@ No hay más ciclos en el grafo.
 | Sistema | Tipo de riesgo | Descripción | Mitigación |
 |---------|----------------|-------------|------------|
 | **Capa de adaptación de entrada** | Técnico | Cuatro modos de activación con un solo código. El barrido por pulsador y la permanencia no tienen biblioteca estándar: son trabajo propio. Y la coexistencia con el clic por permanencia del sistema operativo (seguimiento ocular) está sin verificar: dos temporizadores apilados duplicarían la espera real | Prototipo específico de modos de entrada **antes** del Nivel 1. El prototipo de concepto cortó teclado y pulsador a propósito, así que esta hipótesis sigue entera |
-| **Manifiesto del banco de imágenes** | Alcance | Es el coste real del proyecto, no el código. La regla de distribución exige 23-30 elementos por grupo visual, unos 400 en total. Mal distribuido, se rehace cuatro veces | No producir contenido hasta que el colaborador confirme que la similitud visual es un eje que usa. Si dice que no, el banco baja a ~130 |
+| **Manifiesto del banco de imágenes** | Alcance | Es el coste real del proyecto, no el código. La regla de distribución exige `clusterMin` elementos por grupo visual. **OJO: el valor publicado (24) está derivado de una fórmula muerta — ver C4 del informe cruzado del 2026-08-26. El valor correcto es 26 y el banco 416, no 384.** Mal distribuido, se rehace cuatro veces | No producir contenido hasta que el colaborador confirme que la similitud visual es un eje que usa. Si dice que no, el banco baja a ~130 |
 | **Taxonomía de perfiles funcionales** | Diseño — **BLOQUEADO** | Es el emparejamiento paciente↔instrumento, o sea la pieza central del producto. Hoy solo hay etiquetas diagnósticas (gente mayor, autismo, TDAH), no perfiles funcionales | Sesión con el colaborador: qué capacidad entrena cada instrumento y para qué limitación sirve. Sigue pendiente tras la sesión del 2026-08-24 |
 | **Dificultad adaptativa** | Diseño | El controlador está sin especificar: ventana de cálculo, arranque en frío, `mínimo == máximo`, división por cero. Y con ventana por tablero el objetivo del 80% es inalcanzable y el controlador oscila | Ventana sobre ≥20 objetivos acumulados, no por tablero. Especificar los cuatro casos límite antes de escribir código |
 | **Registro de rendimiento** | Diseño — validez de medición | Si no distingue **ruido motor**, **error de memoria del objetivo** y **error de búsqueda**, todo lo que el terapeuta vea está contaminado. Y sin instrumentación de habituación, la mejora aparente puede ser memorización | El esquema de datos lo decide todo. Diseñarlo antes del instrumento, no después |
