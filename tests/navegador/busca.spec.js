@@ -68,7 +68,7 @@ test('AC-5 — la separación renderizada es separacion(t)', async ({ page }) =>
   const casos = [[24, 8], [60, 10.8], [140, 25.2]];
   for (const [t, esperado] of casos) {
     await page.goto(url(t, 9));
-    const gap = await page.locator('.board-root').evaluate((el) =>
+    const gap = await page.locator('.rejilla').evaluate((el) =>
       getComputedStyle(el).columnGap,
     );
     const valor = Number.parseFloat(gap);

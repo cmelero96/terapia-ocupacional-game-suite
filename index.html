@@ -42,6 +42,12 @@
      tablero se declaran aquí y no heredan del marco. */
   .board-root {
     display: grid;
+    grid-template-rows: 1fr auto;
+    align-content: start;
+  }
+
+  .rejilla {
+    display: grid;
     grid-template-columns: repeat(var(--cols, 4), var(--t, 60px));
     gap: var(--sep, 10.8px);
     justify-content: center;
@@ -83,6 +89,47 @@
   }
   .celda { transition: border-color 90ms linear, border-width 90ms linear; }
 
+  /* Selector de instrumento. Vive en el marco, fuera del tablero. */
+  .juegos { display: flex; gap: 0.5rem; padding: 0.75rem 1rem; align-items: center; }
+  .juegos a {
+    min-block-size: 44px; padding: 0 1rem; display: grid; place-items: center;
+    font: inherit; text-decoration: none;
+    background: var(--frame-bg); color: var(--frame-ink);
+    border: 2px solid var(--frame-line); border-radius: 8px;
+  }
+  .juegos a[aria-current='page'] { border-color: var(--frame-accent); font-weight: 600; }
+  .juegos a:focus-visible { outline: 3px solid var(--frame-accent); outline-offset: 2px; }
+
+  /* Contenedores de destino de Clasificar. Activables como cualquier objeto: mismo
+     tamaño mínimo, mismo acuse de recibo, mismo tratamiento en el barrido. */
+  .contenedores {
+    display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;
+    padding: 1rem 1.5rem; border-top: 2px solid var(--board-line);
+  }
+  .contenedor {
+    min-inline-size: max(var(--t, 60px), 7rem);
+    min-block-size: var(--t, 60px);
+    display: grid; place-items: center; padding: 0 1rem;
+    font: inherit;
+    background: var(--board-bg); color: var(--board-ink);
+    border: 3px dashed var(--board-line); border-radius: 10px;
+    cursor: pointer; touch-action: none;
+  }
+  .contenedor:focus-visible { outline: 3px solid var(--board-scan-cursor); outline-offset: 2px; }
+  .contenedor[data-acuse='si'] { border-style: solid; border-color: var(--board-ink); }
+  .contenedor-etiqueta { font-size: 1rem; }
+
+  /* La SELECCIÓN no es el foco. Se distingue por FORMA además de color —un escalón en la
+     esquina— para que sobreviva en escala de grises, que es lo que necesita un paciente
+     con daltonismo usando barrido. */
+  .celda[data-seleccionado='si'] {
+    border-width: 4px;
+    border-color: var(--board-ink);
+    border-start-start-radius: 0;
+    border-end-end-radius: 0;
+    transform: translateY(-4px);
+  }
+
   /* FRONTERA DE MODO. Con el panel abierto el tablero no es alcanzable: ni por puntero ni
      por teclado. Si el paciente lo viera, seguiría intentando resolverlo mientras el
      terapeuta cambia la configuración, y esos intentos entrarían al registro bajo una
@@ -91,7 +138,8 @@
   body[data-panel-abierto='si'] .objetivo {
     visibility: hidden;
   }
-  body[data-panel-abierto='si'] .celda {
+  body[data-panel-abierto='si'] .celda,
+  body[data-panel-abierto='si'] .contenedor {
     pointer-events: none;
   }
 
@@ -173,7 +221,7 @@
 
   /* Estímulo reducido: ni una transición, ni un desvanecimiento. Instantáneo significa
      instantáneo. El acuse pierde el movimiento y CONSERVA la existencia. */
-  .board-root[data-sin-movimiento='si'] .celda { transition: none; }
+  .rejilla[data-sin-movimiento='si'] .celda { transition: none; }
   @media (prefers-reduced-motion: reduce) {
     .celda { transition: none; }
   }
@@ -184,14 +232,21 @@
   <!-- El panel vive en el ámbito del MARCO. `.frame-root` y `.board-root` son contenedores
        hermanos que nunca se anidan: es lo que impide que un token del marco se filtre al
        tablero, donde el umbral de contraste es clínico y no estético. -->
+  <nav class="juegos" id="juegos" aria-label="Instrumento"></nav>
   <div id="marco-panel"></div>
   <div class="objetivo" id="zona-objetivo"></div>
-  <div class="board-root" id="tablero" role="group" aria-label="Tablero de búsqueda"></div>
+  <!-- UN solo `.board-root`: es el ámbito que declara los tokens del tablero, y
+       declararlos dos veces en elementos hermanos sería redundante y ambiguo. -->
+  <div class="board-root" id="ambito-tablero">
+    <div class="rejilla" id="tablero" role="group" aria-label="Tablero"></div>
+    <div class="contenedores" id="contenedores" role="group"
+         aria-label="Contenedores de destino" hidden></div>
+  </div>
 </div>
 
 <script type="module">
   import { arrancar } from './src/plataforma/raiz.js';
-  import { BANCO_PROVISIONAL, resolverProvisional } from './src/banco-provisional.js';
+  import { BANCO_PROVISIONAL } from './src/banco-provisional.js';
   // Import ESTÁTICO a propósito. Con `await import()` el resto del script corre DESPUÉS
   // del evento `load`, así que cualquier cosa que dependa de que la página esté lista
   // —una prueba de navegador, o un lector de pantalla— ve la página a medias.
@@ -202,6 +257,25 @@
     const v = params.get(clave);
     return v === null ? porDefecto : Number(v);
   };
+
+  // --- Selector de instrumento. Los tres comparten TODA la infraestructura.
+  const JUEGOS = [
+    ['busca', 'Busca'],
+    ['clasificar', 'Clasificar'],
+    ['denominar', 'Denominación'],
+  ];
+  const tipo = JUEGOS.some(([id]) => id === params.get('j')) ? params.get('j') : 'busca';
+
+  const nav = document.getElementById('juegos');
+  for (const [id, etiqueta] of JUEGOS) {
+    const a = document.createElement('a');
+    const u = new URL(location.href);
+    u.searchParams.set('j', id);
+    a.href = u.toString();
+    a.textContent = etiqueta;
+    if (id === tipo) a.setAttribute('aria-current', 'page');
+    nav.append(a);
+  }
 
   const config = {
     t: n('t', 60),
@@ -224,7 +298,6 @@
     : Array.from({ length: rep }, (_, k) =>
         BANCO_PROVISIONAL.map((e) => ({ ...e, id: k === 0 ? e.id : `${e.id}~${k}` })),
       ).flat();
-  const resolver = (id) => resolverProvisional(id.split('~')[0]);
 
   // Si la configuración no es realizable, el panel DEBE abrir mostrando el conflicto en
   // lugar de que la página muera. Es el caso límite del GDD: "si la configuración guardada
@@ -239,9 +312,11 @@
     estado = arrancar({
       raiz: document.getElementById('tablero'),
       zonaObjetivo: document.getElementById('zona-objetivo'),
+      zonaContenedores: document.getElementById('contenedores'),
+      tipo,
       banco,
-      resolver,
       config,
+      nContenedores: n('nc', 3),
       prefersReducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
     });
   } catch (err) {
@@ -289,6 +364,7 @@
       url.searchParams.set('c', String(nueva.C));
       url.searchParams.set('sv', String(nueva.sv));
       url.searchParams.set('ss', String(nueva.ss));
+      url.searchParams.set('j', tipo);
       location.href = url.toString();
     },
   });

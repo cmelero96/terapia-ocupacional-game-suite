@@ -97,7 +97,7 @@ reglas que declara dejan de estar vigiladas.
 | 7 | Control de silencio y volumen *(inferido)* | Adaptación | MVP | **Designed** · **implementado** — se reduce a un contrato reservado | [estimulo-reducido-y-silencio.md](estimulo-reducido-y-silencio.md) | 6 |
 | 8 | Generación de tableros | Instrumento | MVP | Needs Revision | [generacion-tableros.md](generacion-tableros.md) | 1, 2, 3, 4 |
 | 9 | Registro de rendimiento | Registro | MVP | Needs Revision | [registro-rendimiento.md](registro-rendimiento.md) | 1, 3, 4, 5, **8** |
-| 10 | Instrumento: Busca (búsqueda visual) — **posee la raíz de composición del MVP** | Instrumento | MVP | **Designed** · **implementado y ejecutable** | [instrumento-busca.md](instrumento-busca.md) | 2, 3, 4, 5, 6, 8, 9 |
+| 10 | Instrumento: Busca (búsqueda visual) — **posee la raíz de composición del MVP** | Instrumento | MVP | **JUGABLE** | [instrumento-busca.md](instrumento-busca.md) | 2, 3, 4, 5, 6, 8, 9 |
 | 11 | Frontera de modo y panel del terapeuta | UI | MVP | Needs Revision | [panel-terapeuta.md](panel-terapeuta.md) | 2, 4, 5, 6, 7, 8, 9, 10 |
 | 12 | Pantalla de resultados de sesión | UI | MVP | **Designed** · **implementado y ejecutable** | [resultados-sesion.md](resultados-sesion.md) | 2, 4, 9, 11 |
 | 13 | Herramientas del banco: validador, importador de lote, reexportador, galería de clusters, diff, normalización *(inferido)* | Meta | MVP | Not Started | — | 1, 2 |
@@ -108,10 +108,10 @@ reglas que declara dejan de estar vigiladas.
 | 18 | Persistencia local | Registro | Vertical Slice | Not Started | — | 9 |
 | 19 | Biblioteca portable del terapeuta (sincronización) | Registro | Vertical Slice | Not Started | — | 16, 18 |
 | 20 | Vista de evolución longitudinal | UI | Vertical Slice | Not Started | — | 18 |
-| 21 | Instrumento: clasificar por categorías | Instrumento | **MVP** (adelantado) | **Designed** · **implementado** | [instrumentos-clasificar-y-denominar.md](instrumentos-clasificar-y-denominar.md) | 1, 5, 8, 9, 11 |
+| 21 | Instrumento: clasificar por categorías | Instrumento | **MVP** (adelantado) | **JUGABLE** | [instrumentos-clasificar-y-denominar.md](instrumentos-clasificar-y-denominar.md) | 1, 5, 8, 9, 11 |
 | 22 | Instrumento: transcribir símbolos | Instrumento | Alpha | Not Started | — | 3, 5, 9 |
 | 23 | Instrumento: precio justo | Instrumento | Alpha | Not Started | — | 1, 5, 9 |
-| 24 | Instrumento: denominación de objetos | Instrumento | **MVP** (adelantado) | **Designed** · **implementado** | [instrumentos-clasificar-y-denominar.md](instrumentos-clasificar-y-denominar.md) | 1, 5, **8**, 9, 10 |
+| 24 | Instrumento: denominación de objetos | Instrumento | **MVP** (adelantado) | **JUGABLE** | [instrumentos-clasificar-y-denominar.md](instrumentos-clasificar-y-denominar.md) | 1, 5, **8**, 9, 10 |
 | 25 | Composición de sesiones | Clínico | Full Vision | Not Started | — | 16, 17 |
 | 26 | Informes para el terapeuta | UI | Full Vision | Not Started | — | 20 |
 | 27 | Práctica en casa (cuentas, servidor, RGPD) | Registro | Full Vision | Not Started | — | 18, 19 |
