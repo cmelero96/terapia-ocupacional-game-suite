@@ -10,6 +10,11 @@
  */
 
 import { conflictos, esAplicable, avisos, describirRango } from './conflictos.js';
+import {
+  presentarPrecision, presentarLatencia, presentarDificultadTolerada,
+} from '../resultados/presentar.js';
+import { resumenSesion } from '../registro/sesion.js';
+import { dificultadTolerada } from '../dificultad/modelo.js';
 import { T_MIN, T_MAX, C_MIN, C_MAX, T_AAA } from '../dificultad/constantes.js';
 
 /**
@@ -82,6 +87,7 @@ function deslizador({ id, etiqueta, valor, min, max, paso, unidad, alCambiar }) 
  * @param {() => number} entrada.anchoDisponible
  * @param {boolean} entrada.prefersReducedMotion
  * @param {() => { tableros: number, intentos: number, aciertos: number }} entrada.progreso
+ * @param {() => import('../registro/sesion.js').Sesion | null} [entrada.sesion]
  * @param {() => { svPedida: number, svEfectiva: number } | null} entrada.ultimoTablero
  * @param {(config: EstadoPanel['config'], acceso: EstadoPanel['acceso']) => void} entrada.alAplicar
  * @param {() => void} [entrada.alAbrir] Pausa la sesion. LOGICA, no solo presentacional
@@ -90,7 +96,7 @@ function deslizador({ id, etiqueta, valor, min, max, paso, unidad, alCambiar }) 
  */
 export function montarPanel({
   contenedor, estado, bancoActivo, anchoDisponible, prefersReducedMotion,
-  progreso, ultimoTablero, alAplicar, alAbrir, alCerrar,
+  progreso, ultimoTablero, alAplicar, alAbrir, alCerrar, sesion,
 }) {
   // Borrador: se edita aqui y solo pasa a `estado` al aplicar. Cerrar sin aplicar no
   // cambia nada.
@@ -158,6 +164,77 @@ export function montarPanel({
     }
 
     aplicar.disabled = !esAplicable(lista);
+  }
+
+  /**
+   * Pinta una metrica. **La limitacion va DENTRO del mismo contenedor que el valor**, no en
+   * un pie ni en un `title`: un numero sin su limitacion adyacente es un numero que se va a
+   * sobreinterpretar.
+   *
+   * Y una metrica sin dato **no se atenua**: "no se pudo medir" es informacion clinica, y a
+   * menudo mas importante que el numero.
+   *
+   * @param {import('../resultados/presentar.js').Presentado} m
+   * @returns {HTMLElement}
+   */
+  function metrica(m) {
+    const bloque = document.createElement('div');
+    bloque.className = 'metrica';
+    bloque.dataset['tieneDato'] = m.tieneDato ? 'si' : 'no';
+
+    const dt = document.createElement('span');
+    dt.className = 'metrica-etiqueta';
+    dt.textContent = m.etiqueta;
+
+    const dd = document.createElement('span');
+    dd.className = 'metrica-valor';
+    dd.textContent = m.valor;
+
+    bloque.append(dt, dd);
+
+    if (m.limitacion !== undefined) {
+      const lim = document.createElement('span');
+      lim.className = 'metrica-limitacion';
+      lim.textContent = m.limitacion;
+      bloque.append(lim);
+    }
+    return bloque;
+  }
+
+  /** @returns {HTMLElement} */
+  function seccionResultados() {
+    const sec = document.createElement('section');
+    sec.className = 'seccion resultados';
+    const h = document.createElement('h2');
+    h.textContent = 'Resultados de la sesión';
+    sec.append(h);
+
+    const s = sesion === undefined ? null : sesion();
+    if (s === null || s.tableros.length === 0) {
+      const p = document.createElement('p');
+      p.className = 'metrica-valor';
+      p.textContent = 'La sesión no llegó a empezar.';
+      sec.append(p);
+      return sec;
+    }
+
+    const res = resumenSesion(s);
+    sec.append(metrica(presentarPrecision(res)));
+    sec.append(metrica(presentarLatencia(res, {
+      resolucionMs: s.resolucionMs, fiableParaPresupuesto: s.fiableParaPresupuesto,
+    })));
+
+    /** @type {import('../dificultad/modelo.js').Observacion[]} */
+    const obsPerceptivo = [];
+    for (const t of s.tableros) {
+      for (const i of t.intentos) obsPerceptivo.push({ d: t.dp, acierto: i.correcto });
+    }
+    sec.append(metrica(presentarDificultadTolerada(
+      dificultadTolerada(obsPerceptivo, { acoplados: s.ejesAcoplados }),
+      'perceptivo',
+    )));
+
+    return sec;
   }
 
   function construir() {
@@ -250,7 +327,7 @@ export function montarPanel({
 
     seccionAcceso.append(grupo('Presentación', [reducido, silencio]));
 
-    cuerpo.append(seccionEjercicio, seccionAcceso, zonaAvisos, zonaProgreso);
+    cuerpo.append(seccionEjercicio, seccionAcceso, zonaAvisos, seccionResultados(), zonaProgreso);
     refrescarAvisos();
   }
 

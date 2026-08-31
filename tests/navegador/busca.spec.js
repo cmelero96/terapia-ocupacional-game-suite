@@ -79,6 +79,12 @@ test('AC-5 — la separación renderizada es separacion(t)', async ({ page }) =>
 // ---------------------------------------------------------------- AC-2, AC-3
 
 test('AC-2 — el acuse de recibo es IDÉNTICO para acierto y para fallo', async ({ page }) => {
+  // Con movimiento reducido no hay transición, así que la lectura es DETERMINISTA.
+  //
+  // Sin esto el test medía el reloj de la animación y no el estilo: el borde va de
+  // `--board-line` a `--board-ink`, y dos lecturas a distinta altura de la transición dan
+  // colores distintos aunque el estado final sea el mismo.
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto(url(60, 12));
 
   /** Devuelve los estilos del acuse tras activar la celda indicada. */
@@ -118,6 +124,39 @@ test('AC-2 — el acuse de recibo es IDÉNTICO para acierto y para fallo', async
   expect(fallo?.grosor).toBe(acierto?.grosor);
   expect(fallo?.clases).toBe(acierto?.clases);
   expect(fallo?.atributos).toBe(acierto?.atributos);
+});
+
+test('AC-2b — ninguna regla de CSS puede distinguir un acierto de un fallo', async ({ page }) => {
+  await page.goto(url(60, 12));
+
+  // El invariante ESTRUCTURAL, más fuerte que comparar dos estilos: el DOM no lleva la
+  // información de si la activación fue correcta, así que ningún selector puede
+  // ramificar por ella aunque quiera.
+  const reglas = await page.evaluate(() => {
+    /** @type {string[]} */
+    const salida = [];
+    for (const hoja of document.styleSheets) {
+      try {
+        for (const r of hoja.cssRules) salida.push(r.cssText);
+      } catch { /* hoja de otro origen */ }
+    }
+    return salida;
+  });
+  const sospechosas = reglas.filter((r) => /correcto|acierto|fallo|error/i.test(r));
+  expect(sospechosas).toEqual([]);
+
+  // Y el atributo del acuse no lleva la información tampoco.
+  const celda = page.locator('.celda').first();
+  const caja = await celda.boundingBox();
+  await page.mouse.move((caja?.x ?? 0) + 5, (caja?.y ?? 0) + 5);
+  await page.mouse.down();
+  await page.mouse.up();
+  const atributos = await celda.evaluate(
+    (el) => [...el.attributes].map((a) => `${a.name}=${a.value}`),
+  );
+  for (const a of atributos) {
+    expect(a).not.toMatch(/correcto|acierto|fallo/i);
+  }
 });
 
 test('AC-3 — activar un distractor no produce ningún anuncio', async ({ page }) => {

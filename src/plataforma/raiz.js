@@ -23,7 +23,7 @@ import { Busca } from '../instrumentos/busca.js';
 import { montarBusca } from '../instrumentos/busca-dom.js';
 import { Registro } from '../registro/sesion.js';
 import { politicaPresentacion, CONFIGURACION_POR_DEFECTO } from '../presentacion/estimulo.js';
-import { validarConfiguracion, ejesAcoplados } from '../dificultad/modelo.js';
+import { validarConfiguracion, ejesAcoplados, dm, dp } from '../dificultad/modelo.js';
 
 /**
  * @param {object} entrada
@@ -75,5 +75,29 @@ export function arrancar({
     },
   });
 
-  return { instrumento, registro, sesion, resolucion, programador: programadorReal, montado };
+  /**
+   * La sesion con los tableros que el instrumento ha acumulado.
+   *
+   * El instrumento ESCRIBE y no LEE: acumula sus intentos, y es aqui donde se vuelcan al
+   * registro. La pantalla de resultados lee del registro, nunca del instrumento.
+   */
+  const sesionConTableros = () => {
+    const d = { dm: dm(config.t), dp: dp(config.C, instrumento.tablero.svEfectiva, instrumento.tablero.ssEfectiva) };
+    sesion.tableros = instrumento.intentos.length === 0 ? [] : [{
+      objetivo: instrumento.tablero.objetivo,
+      distractores: instrumento.tablero.distractores,
+      semilla: instrumento.tablero.semilla,
+      schemaVersion: 'provisional',
+      dm: d.dm,
+      dp: d.dp,
+      dpPedida: dp(config.C, instrumento.tablero.svPedida, instrumento.tablero.ssPedida),
+      intentos: instrumento.intentos,
+    }];
+    return sesion;
+  };
+
+  return {
+    instrumento, registro, sesion, resolucion, programador: programadorReal, montado,
+    sesionConTableros,
+  };
 }

@@ -88,7 +88,7 @@ reglas que declara dejan de estar vigiladas.
 | 9 | Registro de rendimiento | Registro | MVP | **Designed** (pendiente de revisión) · **implementado** | [registro-rendimiento.md](registro-rendimiento.md) | 1, 3, 4, 5, **8** |
 | 10 | Instrumento: Busca (búsqueda visual) — **posee la raíz de composición del MVP** | Instrumento | MVP | **Designed** · **implementado y ejecutable** | [instrumento-busca.md](instrumento-busca.md) | 2, 3, 4, 5, 6, 8, 9 |
 | 11 | Frontera de modo y panel del terapeuta | UI | MVP | **Designed** · **implementado y ejecutable** | [panel-terapeuta.md](panel-terapeuta.md) | 2, 4, 5, 6, 7, 8, 9, 10 |
-| 12 | Pantalla de resultados de sesión | UI | MVP | Not Started | — | 2, 9 |
+| 12 | Pantalla de resultados de sesión | UI | MVP | **Designed** · **implementado y ejecutable** | [resultados-sesion.md](resultados-sesion.md) | 2, 4, 9, 11 |
 | 13 | Herramientas del banco: validador, importador de lote, reexportador, galería de clusters, diff, normalización *(inferido)* | Meta | MVP | Not Started | — | 1, 2 |
 | 14 | Invariantes como barreras de CI: analizadores estáticos + tokenizador de CSS + **detección de fuente aleatoria o reloj constante fuera de `tests/`** *(inferido)* | Meta | MVP | Not Started | — | 1, 2, 3, 5, 9 |
 | 15 | Taxonomía de perfiles funcionales | Clínico | Vertical Slice | **Provisional** — andamio de ingeniería, SIN validar clínicamente | [taxonomia-perfiles-funcionales.md](taxonomia-perfiles-funcionales.md) | — |
@@ -294,9 +294,9 @@ bloqueado es el Nivel 1, y hay 13 GDD que escribir antes de llegar ahí.
 | Sistemas identificados | 27 |
 | GDD empezados | 3 |
 | GDD revisados | 3 |
-| GDD diseñados sin revisar | 7 |
+| GDD diseñados sin revisar | 8 |
 | GDD provisionales sin validar | 1 (sistema 15) |
-| Sistemas con código en `src/` | **10** (2 parcial, 3, 4, 5, 6, 7, 8, 9, 10 y 11) |
+| Sistemas con código en `src/` | **11** (2 parcial, 3, 4, 5, 6, 7, 8, 9, 10, 11 y 12) |
 | GDD aprobados | 0 |
 | Sistemas MVP diseñados | 3 / 14 |
 | Sistemas Vertical Slice diseñados | 0 / 6 |

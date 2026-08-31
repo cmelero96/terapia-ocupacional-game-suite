@@ -151,6 +151,16 @@
   .mensaje.bloqueo { border-left-color: var(--frame-ink); font-weight: 600; }
   .progreso { color: var(--frame-ink-soft); margin-top: 1.5rem; }
 
+  /* Una métrica SIN dato no se atenúa: "no se pudo medir" es información clínica, y a
+     menudo más importante que el número. Mismo color y misma opacidad que las que sí
+     tienen dato. */
+  .metrica { display: grid; gap: 0.15rem; margin: 0 0 1rem; }
+  .metrica-etiqueta { font-weight: 600; }
+  .metrica-valor { color: var(--frame-ink); opacity: 1; }
+  .metrica[data-tiene-dato='no'] .metrica-valor { color: var(--frame-ink); opacity: 1; }
+  /* La limitación vive DENTRO del mismo contenedor que el valor, no en un pie. */
+  .metrica-limitacion { color: var(--frame-ink-soft); font-size: 0.9rem; max-width: 46rem; }
+
   .acciones { display: flex; gap: 0.75rem; padding: 1rem 1.5rem; border-top: 2px solid var(--frame-line); }
   .accion {
     min-block-size: 44px; padding: 0 1.25rem; font: inherit; cursor: pointer;
@@ -266,6 +276,7 @@
           intentos: estado.instrumento.intentos.length,
           aciertos: estado.instrumento.intentos.filter((i) => i.correcto).length,
         },
+    sesion: () => estado?.sesionConTableros?.() ?? null,
     ultimoTablero: () => {
       const t = estado?.instrumento?.tablero;
       return t === undefined ? null : { svPedida: t.svPedida, svEfectiva: t.svEfectiva };

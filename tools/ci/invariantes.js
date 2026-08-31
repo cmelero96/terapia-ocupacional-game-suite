@@ -13,6 +13,8 @@
  *   AC-14  (sist. 4)  ninguna perilla de dificultad tiene unidades de tiempo
  *   AC-2   (sist. 5)  ningun instrumento ramifica por modo de entrada
  *   AC-6   (sist. 6)  no existe ninguna API de audio en src/
+ *   AC-9   (sist. 10) la raiz de composicion no esta exenta
+ *   AC-7   (sist. 12) la pantalla de resultados no emite juicios
  *
  * Uso:  node tools/ci/invariantes.js
  * Sale con codigo 1 si alguna barrera falla.
@@ -112,6 +114,18 @@ const AUDIO_PROHIBIDO = [
   'HTMLAudioElement',
   'speechSynthesis',
   'SpeechSynthesisUtterance',
+];
+
+/**
+ * Sistema 12, AC-7 — la pantalla de resultados no emite ningun juicio.
+ *
+ * Un juicio automatico sobre una escala sin calibrar es peor que ningun juicio, y nueve de
+ * las trece constantes de este proyecto no tienen validacion empirica. Se muestran numeros
+ * y su procedencia; la interpretacion es del profesional.
+ */
+const JUICIOS_PROHIBIDOS = [
+  /\bmejora/i, /\bempeora/i, /\bbien\b/i, /\bmal\b/i, /\besperado\b/i,
+  /\benhorabuena/i, /\bfelicidades/i, /\bexcelente/i,
 ];
 
 /**
@@ -320,6 +334,20 @@ for (const archivo of archivos) {
       }
     }
 
+    // AC-7 del sistema 12 — la pantalla de resultados no juzga. Se aplica sobre el TEXTO
+    // completo, con cadenas: aqui lo que se vigila es la copia de interfaz, no un
+    // identificador.
+    if (r.startsWith('src/resultados/')) {
+      for (const patron of JUICIOS_PROHIBIDOS) {
+        if (patron.test(linea)) {
+          fallos.push({
+            barrera: 'AC-7/s12',
+            mensaje: `${r}:${n} — juicio en la pantalla de resultados: ${patron.source}`,
+          });
+        }
+      }
+    }
+
     // AC-6 de los sistemas 6 y 7 — nada de audio en src/.
     for (const literal of AUDIO_PROHIBIDO) {
       if (linea.includes(literal)) {
@@ -359,6 +387,7 @@ console.log(`  AC-14  sin perillas de tiempo ..... ${marca('AC-14')}`);
 console.log(`  AC-2   sin ramificar por modo ..... ${marca('AC-2/s5')}`);
 console.log(`  AC-6   sin APIs de audio ........... ${marca('AC-6/s6')}`);
 console.log(`  AC-9   raiz sin exencion ........... ${marca('AC-9/s10')}`);
+console.log(`  AC-7   resultados sin juicios ...... ${marca('AC-7/s12')}`);
 
 const noCreados = declarados.filter((d) => !declaradosExistentes.includes(d));
 if (noCreados.length > 0) {
