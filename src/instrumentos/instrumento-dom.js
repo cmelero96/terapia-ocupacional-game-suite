@@ -94,7 +94,7 @@ export function montarInstrumento({
     raiz.style.setProperty('--sep', `${sep}px`);
 
     const esTexto = tipo === 'rellenar' || tipo === 'simbolos'
-      || tipo === 'precios' || tipo === 'ordenar';
+      || tipo === 'precios' || tipo === 'ordenar' || tipo === 'tresEnRaya';
     raiz.dataset['texto'] = esTexto ? 'si' : 'no';
 
     raiz.replaceChildren();
@@ -111,10 +111,22 @@ export function montarInstrumento({
       raiz.append(b);
     }
 
-    // --- Contenedores, solo en clasificar.
+    // --- Zona de destino: contenedores de clasificar, o el tablero 3x3.
     zonaContenedores.replaceChildren();
-    zonaContenedores.hidden = tipo !== 'clasificar';
-    if (tipo === 'clasificar') {
+    zonaContenedores.hidden = tipo !== 'clasificar' && tipo !== 'tresEnRaya';
+    zonaContenedores.dataset['rejilla3'] = tipo === 'tresEnRaya' ? 'si' : 'no';
+
+    if (tipo === 'tresEnRaya') {
+      zonaContenedores.style.setProperty('--t', `${instrumento.t}px`);
+      for (const c of instrumento.contenedoresTablero()) {
+        const b = boton(c, 'contenedor', 'casilla');
+        b.dataset['dueno'] = c.dueño ?? 'libre';
+        // Con la operacion sin acertar, las casillas no son alcanzables: colocar sin
+        // resolver saltaria la tarea entera.
+        b.disabled = !instrumento.puedeColocar || c.dueño !== null;
+        zonaContenedores.append(b);
+      }
+    } else if (tipo === 'clasificar') {
       zonaContenedores.style.setProperty('--t', `${instrumento.t}px`);
       for (const cat of instrumento.contenedores) {
         const b = boton({ id: cat, nombre: cat, glifo: '' }, 'contenedor');

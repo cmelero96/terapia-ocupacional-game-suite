@@ -134,6 +134,24 @@
   .contenedor[data-acuse='si'] { border-style: solid; border-color: var(--board-ink); }
   .contenedor-etiqueta { font-size: 1rem; }
 
+  /* El tablero 3x3 del tres en raya. Es el ÚNICO instrumento donde la posición importa,
+     así que su zona de destino es una rejilla fija de tres columnas, no una fila. */
+  .contenedores[data-rejilla3='si'] {
+    display: grid;
+    grid-template-columns: repeat(3, var(--t, 60px));
+    gap: 0.5rem;
+    justify-content: center;
+  }
+  .casilla {
+    min-inline-size: var(--t, 60px);
+    inline-size: var(--t, 60px);
+    block-size: var(--t, 60px);
+    padding: 0;
+    border-style: solid;
+    font-size: calc(var(--t, 60px) * 0.5);
+  }
+  .casilla:disabled { cursor: not-allowed; }
+
   /* La SELECCIÓN no es el foco. Se distingue por FORMA además de color —un escalón en la
      esquina— para que sobreviva en escala de grises, que es lo que necesita un paciente
      con daltonismo usando barrido. */
@@ -288,6 +306,8 @@
     ['ordenar', 'Ordenar palabras'],
     ['simbolos', 'Símbolos'],
     ['precios', 'Precio justo'],
+    ['comprar', 'Comprar'],
+    ['tresEnRaya', 'Tres en raya'],
   ];
   const tipo = JUEGOS.some(([id]) => id === params.get('j')) ? params.get('j') : 'busca';
 

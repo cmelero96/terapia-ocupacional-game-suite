@@ -14,14 +14,72 @@ const url = (j, extra = {}) => {
   return `/index.html?${p.toString()}`;
 };
 
-test('los tres instrumentos arrancan y se pueden elegir', async ({ page }) => {
-  for (const j of ['busca', 'clasificar', 'denominar']) {
+/** Los siete instrumentos jugables de la lista de Carlos. */
+const TODOS = [
+  'busca', 'clasificar', 'denominar', 'rellenar', 'ordenar',
+  'simbolos', 'precios', 'comprar', 'tresEnRaya',
+];
+
+test('los NUEVE instrumentos arrancan y se pueden elegir', async ({ page }) => {
+  for (const j of TODOS) {
     await page.goto(url(j));
-    await expect(page.locator('.celda')).toHaveCount(9);
-    await expect(page.locator(`.juegos a[aria-current="page"]`)).toHaveCount(1);
-    // Y hay tres enlaces, uno por instrumento.
-    await expect(page.locator('.juegos a')).toHaveCount(3);
+    // Cada uno pinta celdas activables, sea imagen o texto.
+    await expect(page.locator('.celda').first()).toBeVisible();
+    await expect(page.locator('.juegos a[aria-current="page"]')).toHaveCount(1);
+    await expect(page.locator('.juegos a')).toHaveCount(TODOS.length);
   }
+});
+
+test('los nueve respetan el tamaño mínimo de objetivo de WCAG 2.5.8', async ({ page }) => {
+  for (const j of TODOS) {
+    await page.goto(url(j, { t: 24 }));
+    const cajas = await page.locator('.celda').evaluateAll((els) =>
+      els.map((el) => {
+        const r = el.getBoundingClientRect();
+        return { w: r.width, h: r.height };
+      }),
+    );
+    expect(cajas.length).toBeGreaterThan(0);
+    for (const c of cajas) {
+      // Las celdas de texto crecen a lo ancho, pero el ALTO es el tamaño de objetivo.
+      expect(c.h, `${j}: alto`).toBeGreaterThanOrEqual(24);
+      expect(c.w, `${j}: ancho`).toBeGreaterThanOrEqual(24);
+    }
+  }
+});
+
+test('el aviso de caducidad sale SOLO en precio justo', async ({ page }) => {
+  await page.goto(url('precios'));
+  await expect(page.locator('.aviso-contenido')).toContainText('caducan');
+  for (const j of ['busca', 'rellenar', 'simbolos', 'ordenar']) {
+    await page.goto(url(j));
+    await expect(page.locator('.aviso-contenido')).toHaveCount(0);
+  }
+});
+
+test('ordenar construye la frase paso a paso y no marca el fallo', async ({ page }) => {
+  await page.goto(url('ordenar', { c: 3 }));
+  const refInicial = await page.locator('#zona-objetivo').textContent();
+  expect(refInicial).toContain('ordena');
+
+  for (let paso = 0; paso < 3; paso++) {
+    const correcta = await page.evaluate(
+      () => /** @type {any} */ (globalThis).__busca.estado.instrumento.siguientePalabra(),
+    );
+    const n = await page.locator('.celda').count();
+    for (let i = 0; i < n; i++) {
+      if ((await page.locator('.celda').nth(i).getAttribute('aria-label')) === correcta) {
+        await page.locator('.celda').nth(i).click();
+        break;
+      }
+    }
+    await page.waitForTimeout(220);
+  }
+  // Frase completa: vuelve a empezar con otra.
+  await expect(page.locator('#zona-objetivo')).toContainText('ordena');
+  expect(await page.evaluate(
+    () => /** @type {any} */ (globalThis).__busca.estado.instrumento.tableroNumero,
+  )).toBe(2);
 });
 
 test('denominación NO muestra el glifo de referencia; los otros dos SÍ', async ({ page }) => {
@@ -143,4 +201,92 @@ test('el instrumento elegido sobrevive a aplicar una configuración', async ({ p
   // Sigue siendo denominación, no vuelve a Busca.
   await expect(page.locator('.juegos a[aria-current="page"]')).toHaveText('Denominación');
   await expect(page.locator('#zona-objetivo .objetivo-glifo')).toHaveCount(0);
+});
+
+// ---------------------------------------------------------------- juegos 1 y 7
+
+test('tres en raya: no se puede colocar sin acertar la operación', async ({ page }) => {
+  await page.goto(url('tresEnRaya', { c: 4 }));
+  // Las nueve casillas bloqueadas: colocar sin resolver saltaría la tarea entera.
+  await expect(page.locator('.casilla:disabled')).toHaveCount(9);
+
+  const correcta = await page.evaluate(
+    () => `r:${/** @type {any} */ (globalThis).__busca.estado.instrumento.reto.resultado}`,
+  );
+  await page.locator(`.celda[data-id="${correcta}"]`).click();
+  await page.waitForTimeout(250);
+  await expect(page.locator('.casilla:not(:disabled)')).toHaveCount(9);
+
+  await page.locator('.casilla:not(:disabled)').first().click();
+  await page.waitForTimeout(250);
+  await expect(page.locator('.casilla[data-dueno="paciente"]')).toHaveCount(1);
+  // Y la máquina responde.
+  await expect(page.locator('.casilla[data-dueno="maquina"]')).toHaveCount(1);
+});
+
+test('tres en raya: el resultado de la partida NO llega a la pantalla', async ({ page }) => {
+  await page.goto(url('tresEnRaya', { c: 4 }));
+  // Jugar hasta cerrar una partida.
+  for (let i = 0; i < 40; i++) {
+    const cerradas = await page.evaluate(
+      () => /** @type {any} */ (globalThis).__busca.estado.instrumento.tableroNumero,
+    );
+    if (cerradas >= 2) break;
+    const puede = await page.evaluate(
+      () => /** @type {any} */ (globalThis).__busca.estado.instrumento.puedeColocar,
+    );
+    if (!puede) {
+      const correcta = await page.evaluate(
+        () => `r:${/** @type {any} */ (globalThis).__busca.estado.instrumento.reto.resultado}`,
+      );
+      await page.locator(`.celda[data-id="${correcta}"]`).click();
+      await page.waitForTimeout(180);
+      continue;
+    }
+    const libres = page.locator('.casilla:not(:disabled)');
+    if (await libres.count() === 0) break;
+    await libres.first().click();
+    await page.waitForTimeout(180);
+  }
+
+  // El registro sabe quién hizo raya; la pantalla del paciente no.
+  const texto = (await page.locator('.frame-root').evaluate((el) => {
+    const clon = /** @type {HTMLElement} */ (el.cloneNode(true));
+    clon.querySelector('.panel')?.remove();
+    return clon.textContent ?? '';
+  })).toLowerCase();
+  for (const palabra of ['ganas', 'pierdes', 'has ganado', 'empate', 'victoria', 'derrota']) {
+    expect(texto).not.toContain(palabra);
+  }
+});
+
+test('comprar: la lista queda visible y un fallo no retira nada', async ({ page }) => {
+  await page.goto(url('comprar', { c: 6 }));
+  const lista = await page.evaluate(
+    () => /** @type {any} */ (globalThis).__busca.estado.instrumento.compra.lista,
+  );
+  const fuera = await page.evaluate(
+    () => {
+      const i = /** @type {any} */ (globalThis).__busca.estado.instrumento;
+      return i.compra.lineal.find((/** @type {string} */ id) => !i.compra.lista.includes(id));
+    },
+  );
+
+  const pendientesAntes = await page.evaluate(
+    () => /** @type {any} */ (globalThis).__busca.estado.instrumento.pendientes().length,
+  );
+
+  if (fuera !== undefined) {
+    await page.locator(`.celda[data-id="${fuera}"]`).click();
+    await page.waitForTimeout(250);
+    // El fallo no retira nada de la lista: tachar lo no cogido sería marcar el fallo.
+    expect(await page.evaluate(
+      () => /** @type {any} */ (globalThis).__busca.estado.instrumento.pendientes().length,
+    )).toBe(pendientesAntes);
+  }
+
+  // Y coger lo pedido sí lo marca, con un punto.
+  await page.locator(`.celda[data-id="${lista[0]}"]`).click();
+  await page.waitForTimeout(250);
+  await expect(page.locator('#zona-objetivo')).toContainText('•');
 });

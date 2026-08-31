@@ -27,6 +27,8 @@ import {
   Elegir, fuenteRellenar, fuenteSimbolos, fuentePrecios,
 } from '../instrumentos/elegir.js';
 import { Ordenar } from '../instrumentos/ordenar.js';
+import { TresEnRaya } from '../instrumentos/tres-en-raya.js';
+import { Comprar } from '../instrumentos/comprar.js';
 import {
   PALABRAS_CON_HUECO, SIMBOLOS, PRECIOS_2026, PRECIOS_FECHA, FRASES,
 } from '../contenido/provisional.js';
@@ -44,7 +46,7 @@ import { validarConfiguracion, ejesAcoplados, dm, dp } from '../dificultad/model
  * @param {HTMLElement} entrada.raiz
  * @param {HTMLElement} entrada.zonaObjetivo
  * @param {HTMLElement} entrada.zonaContenedores
- * @param {'busca' | 'denominar' | 'clasificar' | 'rellenar' | 'simbolos' | 'precios' | 'ordenar'} entrada.tipo
+ * @param {'busca'|'denominar'|'clasificar'|'rellenar'|'simbolos'|'precios'|'ordenar'|'tresEnRaya'|'comprar'} entrada.tipo
  * @param {EntradaBanco[]} entrada.banco
  * @param {{ t: number, C: number, sv: number, ss: number }} entrada.config
  * @param {number} [entrada.nContenedores]
@@ -89,9 +91,30 @@ export function arrancar({
     : tipo === 'precios' ? fuentePrecios(PRECIOS_2026, PRECIOS_FECHA)
     : null;
 
-  if (fuenteDeRondas !== null || tipo === 'ordenar') {
+  const sinBanco = fuenteDeRondas !== null
+    || tipo === 'ordenar' || tipo === 'tresEnRaya' || tipo === 'comprar';
+
+  if (sinBanco) {
     /** @type {any} */
-    const inst = fuenteDeRondas !== null
+    const inst = tipo === 'tresEnRaya'
+      ? new TresEnRaya({
+          t: config.t,
+          // Enum de CONTENIDO, no escala de dificultad. La aritmetica no cabe en los dos
+          // ejes del sistema 4, y ese tercer eje nadie lo ha decidido.
+          tipoOperacion: 'sumaHasta10',
+          nOpciones: Math.min(Math.max(config.C, 2), 6),
+          nuevaFuente: crearFuenteDeProduccion,
+        })
+      : tipo === 'comprar'
+      ? new Comprar({
+          t: config.t,
+          catalogo: PRECIOS_2026,
+          C: config.C,
+          // La lista es un tercio del lineal, al menos dos articulos.
+          nLista: Math.max(2, Math.round(config.C / 3)),
+          nuevaFuente: crearFuenteDeProduccion,
+        })
+      : fuenteDeRondas !== null
       ? new Elegir({
           t: config.t,
           fuente: fuenteDeRondas,
