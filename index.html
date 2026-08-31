@@ -75,6 +75,21 @@
     user-select: none;
   }
 
+  /* Las celdas de TEXTO no son cuadradas: una palabra no cabe en un cuadrado de 60 px, y
+     forzarla lo haría ilegible. Se conserva el ALTO como tamaño de objetivo —que es lo que
+     WCAG 2.5.8 mide junto al ancho— y el ancho crece con la palabra. */
+  .rejilla[data-texto='si'] { grid-template-columns: repeat(var(--cols, 4), auto); }
+  .celda-texto {
+    inline-size: auto;
+    min-inline-size: max(var(--t, 60px), 4.5rem);
+    padding: 0 0.75rem;
+    font-size: clamp(1rem, calc(var(--t, 60px) * 0.3), 2rem);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* El estímulo de un instrumento de texto puede ser largo: no se recorta. */
+  .objetivo { flex-wrap: wrap; }
+
   /* El indicador de foco ES el cursor de barrido. No hay un segundo modelo de foco. */
   .celda:focus-visible {
     outline: 3px solid var(--board-scan-cursor);
@@ -90,7 +105,7 @@
   .celda { transition: border-color 90ms linear, border-width 90ms linear; }
 
   /* Selector de instrumento. Vive en el marco, fuera del tablero. */
-  .juegos { display: flex; gap: 0.5rem; padding: 0.75rem 1rem; align-items: center; }
+  .juegos { display: flex; gap: 0.5rem; padding: 0.75rem 1rem; align-items: center; flex-wrap: wrap; }
   .juegos a {
     min-block-size: 44px; padding: 0 1rem; display: grid; place-items: center;
     font: inherit; text-decoration: none;
@@ -209,6 +224,12 @@
   /* La limitación vive DENTRO del mismo contenedor que el valor, no en un pie. */
   .metrica-limitacion { color: var(--frame-ink-soft); font-size: 0.9rem; max-width: 46rem; }
 
+  .aviso-contenido {
+    margin: 0 1rem 0.5rem; padding: 0.5rem 0.75rem;
+    border-left: 4px solid var(--frame-line);
+    color: var(--frame-ink); font-size: 0.95rem;
+  }
+
   .acciones { display: flex; gap: 0.75rem; padding: 1rem 1.5rem; border-top: 2px solid var(--frame-line); }
   .accion {
     min-block-size: 44px; padding: 0 1.25rem; font: inherit; cursor: pointer;
@@ -260,9 +281,13 @@
 
   // --- Selector de instrumento. Los tres comparten TODA la infraestructura.
   const JUEGOS = [
-    ['busca', 'Busca'],
+    ['busca', 'Busca / Lince'],
     ['clasificar', 'Clasificar'],
     ['denominar', 'Denominación'],
+    ['rellenar', 'Rellenar palabras'],
+    ['ordenar', 'Ordenar palabras'],
+    ['simbolos', 'Símbolos'],
+    ['precios', 'Precio justo'],
   ];
   const tipo = JUEGOS.some(([id]) => id === params.get('j')) ? params.get('j') : 'busca';
 
@@ -368,6 +393,15 @@
       location.href = url.toString();
     },
   });
+
+  // Aviso de contenido: los precios caducan, y el terapeuta tiene que saberlo ANTES de
+  // interpretar un resultado.
+  if (estado !== null && estado.avisoContenido !== undefined) {
+    const av = document.createElement('p');
+    av.className = 'aviso-contenido';
+    av.textContent = `⚠ ${estado.avisoContenido}`;
+    document.getElementById('juegos').after(av);
+  }
 
   // Si el arranque falló, el panel se abre solo: no hay nada que hacer en la pantalla del
   // paciente hasta que la configuración sea realizable.

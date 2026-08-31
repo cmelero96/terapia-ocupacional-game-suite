@@ -25,7 +25,7 @@ const MS_ACUSE = 120;
  * @param {HTMLElement} entrada.raiz
  * @param {HTMLElement} entrada.zonaObjetivo
  * @param {HTMLElement} entrada.zonaContenedores
- * @param {'busca' | 'denominar' | 'clasificar'} entrada.tipo
+ * @param {string} entrada.tipo
  * @param {any} entrada.instrumento
  * @param {import('../plataforma/esquema.js').RelojMonotono} entrada.reloj
  * @param {import('../presentacion/estimulo.js').PoliticaPresentacion} entrada.politica
@@ -72,7 +72,9 @@ export function montarInstrumento({
     // activarla, la tarea cambia.
     zonaObjetivo.replaceChildren();
     // Denominacion NO muestra el glifo. Si lo mostrara, la tarea volveria a ser Busca.
-    if (tipo !== 'denominar') {
+    // Denominacion NUNCA muestra glifo. Los instrumentos de texto lo muestran solo si su
+    // estimulo tiene uno: un simbolo si, una palabra con hueco no.
+    if (tipo !== 'denominar' && objetivo.glifo !== '') {
       const g = document.createElement('span');
       g.className = 'objetivo-glifo';
       g.textContent = objetivo.glifo;
@@ -91,9 +93,13 @@ export function montarInstrumento({
     raiz.style.setProperty('--cols', String(columnas));
     raiz.style.setProperty('--sep', `${sep}px`);
 
+    const esTexto = tipo === 'rellenar' || tipo === 'simbolos'
+      || tipo === 'precios' || tipo === 'ordenar';
+    raiz.dataset['texto'] = esTexto ? 'si' : 'no';
+
     raiz.replaceChildren();
     for (const c of celdas) {
-      const b = boton(c, 'celda');
+      const b = boton(c, 'celda', esTexto ? 'celda-texto' : '');
       // La seleccion NO es el foco: el foco lo usa el barrido para recorrer, y la
       // seleccion sobrevive a su movimiento. Se distinguen por FORMA ademas de color.
       if (tipo === 'clasificar' && instrumento.seleccionado === c.id) {

@@ -23,6 +23,13 @@ import {
   Clasificar, contenedores, puedeSerObjetivo as puedeClasificar,
 } from '../instrumentos/clasificar.js';
 import { montarInstrumento } from '../instrumentos/instrumento-dom.js';
+import {
+  Elegir, fuenteRellenar, fuenteSimbolos, fuentePrecios,
+} from '../instrumentos/elegir.js';
+import { Ordenar } from '../instrumentos/ordenar.js';
+import {
+  PALABRAS_CON_HUECO, SIMBOLOS, PRECIOS_2026, PRECIOS_FECHA, FRASES,
+} from '../contenido/provisional.js';
 import { crearFuenteAleatoria } from './aleatoriedad.js';
 import { Registro } from '../registro/sesion.js';
 import { politicaPresentacion, CONFIGURACION_POR_DEFECTO } from '../presentacion/estimulo.js';
@@ -37,7 +44,7 @@ import { validarConfiguracion, ejesAcoplados, dm, dp } from '../dificultad/model
  * @param {HTMLElement} entrada.raiz
  * @param {HTMLElement} entrada.zonaObjetivo
  * @param {HTMLElement} entrada.zonaContenedores
- * @param {'busca' | 'denominar' | 'clasificar'} entrada.tipo
+ * @param {'busca' | 'denominar' | 'clasificar' | 'rellenar' | 'simbolos' | 'precios' | 'ordenar'} entrada.tipo
  * @param {EntradaBanco[]} entrada.banco
  * @param {{ t: number, C: number, sv: number, ss: number }} entrada.config
  * @param {number} [entrada.nContenedores]
@@ -70,6 +77,66 @@ export function arrancar({
     }
     return { id: e.id, nombre: e.nombre, glifo: e.glifo, categories: e.categories };
   };
+
+  // --- Los instrumentos que NO usan el banco de imagenes.
+  //
+  // Su contenido es texto, simbolo o numero, y viene de `src/contenido/provisional.js`.
+  // No necesitan generacion de tableros: no hay pool visual ni semantico que muestrear.
+  /** @type {import('../instrumentos/elegir.js').FuenteDeRondas | null} */
+  const fuenteDeRondas =
+    tipo === 'rellenar' ? fuenteRellenar(PALABRAS_CON_HUECO)
+    : tipo === 'simbolos' ? fuenteSimbolos(SIMBOLOS)
+    : tipo === 'precios' ? fuentePrecios(PRECIOS_2026, PRECIOS_FECHA)
+    : null;
+
+  if (fuenteDeRondas !== null || tipo === 'ordenar') {
+    /** @type {any} */
+    const inst = fuenteDeRondas !== null
+      ? new Elegir({
+          t: config.t,
+          fuente: fuenteDeRondas,
+          // La cantidad de opciones sale de `C`, acotada: mas de 6 opciones de texto no
+          // caben en una linea legible al tamaño de objetivo del rango clinico.
+          nOpciones: Math.min(Math.max(config.C, 2), 6),
+          nuevaFuente: crearFuenteDeProduccion,
+        })
+      : new Ordenar({
+          t: config.t, frases: FRASES, C: config.C, nuevaFuente: crearFuenteDeProduccion,
+        });
+
+    /** @type {number} */
+    let cerrados = 0;
+    const cerrar = () => {
+      const intentos = inst.intentos.slice(cerrados);
+      if (intentos.length === 0) return;
+      cerrados = inst.intentos.length;
+      sesion.tableros.push({
+        objetivo: inst.tablero.objetivo,
+        distractores: inst.tablero.distractores,
+        semilla: inst.tablero.semilla,
+        schemaVersion: 'provisional',
+        dm: dm(config.t),
+        // Estos instrumentos no tienen similitud visual ni semantica, asi que `dp` sale
+        // solo de la cantidad. Es una escala mas pobre, y decirlo importa.
+        dp: dp(Math.min(Math.max(config.C, 3), 100), 0, 0),
+        dpPedida: dp(Math.min(Math.max(config.C, 3), 100), 0, 0),
+        intentos,
+      });
+    };
+
+    const montadoSimple = montarInstrumento({
+      raiz, zonaObjetivo, zonaContenedores, tipo, instrumento: inst,
+      reloj: relojMonotono, politica, programador: programadorReal, alAvanzar: cerrar,
+    });
+
+    return {
+      instrumento: inst, registro, sesion, resolucion, montado: montadoSimple, tipo,
+      programador: programadorReal,
+      avisoContenido: fuenteDeRondas?.aviso,
+      sesionConTableros: () => { cerrar(); return sesion; },
+      cerrarTablero: cerrar,
+    };
+  }
 
   // Cada instrumento excluye del sorteo lo que no puede presentar: denominacion necesita
   // nombre, y clasificar necesita al menos una categoria.
@@ -159,6 +226,7 @@ export function arrancar({
   return {
     instrumento, registro, sesion, resolucion, montado, tipo,
     programador: programadorReal,
+    avisoContenido: undefined,
     sesionConTableros: () => { cerrarTablero(); return sesion; },
     cerrarTablero,
   };
