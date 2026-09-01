@@ -164,7 +164,17 @@ funciona**.
 
 **De entrada:** 2, 4, 5, 6, 7, 8, 10 — todas duras. Y 9 para el progreso de la sesión.
 
-**Dependen de este:** 12, y el 16 cuando llegue.
+**Dependen de este:** 12, **los nueve instrumentos** —10, 21, 24, y los seis documentados el
+2026-09-01: 22, 23, 28, 29, 30 y 31—, y el 16 cuando llegue.
+
+**Y el 32, que le añadió un control.** El eje de contenido aparece en el panel **sólo** en los
+instrumentos que declaran variantes, que hoy es uno: el tres en raya. Un control desactivado
+en los otros ocho le diría al terapeuta que hay algo que configurar cuando no lo hay.
+
+Los seis instrumentos nuevos añadieron además dos avisos que no existían, los dos del pilar 3:
+que el contenido puede servir **menos opciones de las pedidas** —rellenar da 4 aunque se pidan
+6, medido en 300 de 300 rondas— y que en los instrumentos sin banco **el eje perceptivo no
+mide progreso**, porque su rango accesible es de 2,1 puntos sobre 100.
 
 ## Tuning Knobs
 

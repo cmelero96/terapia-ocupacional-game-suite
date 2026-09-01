@@ -207,6 +207,9 @@ function deslizador({ id, etiqueta, valor, min, max, paso, unidad, alCambiar }) 
  * @param {() => { tableros: number, intentos: number, aciertos: number }} entrada.progreso
  * @param {() => import('../registro/sesion.js').Sesion | null} [entrada.sesion]
  * @param {() => { svPedida: number, svEfectiva: number } | null} entrada.ultimoTablero
+ * @param {(C: number) => { pedidas: number, servidas: number }} [entrada.opciones]
+ *   Solo los instrumentos de elección lo pasan. Su ausencia significa "este instrumento no
+ *   tiene opciones", que no es lo mismo que "sirve todas las pedidas"
  * @param {(config: EstadoPanel['config'], acceso: EstadoPanel['acceso'], varianteContenido?: string) => void} entrada.alAplicar
  * @param {() => void} [entrada.alAbrir] Pausa la sesion. LOGICA, no solo presentacional
  * @param {() => void} [entrada.alCerrar] Reanuda con un tablero nuevo
@@ -214,7 +217,7 @@ function deslizador({ id, etiqueta, valor, min, max, paso, unidad, alCambiar }) 
  */
 export function montarPanel({
   contenedor, estado, bancoActivo, anchoDisponible, prefersReducedMotion,
-  progreso, ultimoTablero, alAplicar, alAbrir, alCerrar, sesion,
+  progreso, ultimoTablero, opciones, alAplicar, alAbrir, alCerrar, sesion,
 }) {
   // Borrador: se edita aqui y solo pasa a `estado` al aplicar. Cerrar sin aplicar no
   // cambia nada.
@@ -263,6 +266,7 @@ export function montarPanel({
       config: borrador,
       prefersReducedMotion,
       ultimoTablero: ultimoTablero(),
+      opciones: opciones === undefined ? null : opciones(borrador.C),
     });
 
     zonaAvisos.replaceChildren();

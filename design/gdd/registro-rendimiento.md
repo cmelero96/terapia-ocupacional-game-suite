@@ -185,7 +185,12 @@ Y se guardan también `dpPedida`, `svPedida` y `ssPedida`. La diferencia entre `
 **Dependencias de entrada:** 1 (dura), 3 (dura), 4 (dura), 5 (dura), 8 (dura). Es el sistema
 con más dependencias del MVP, y es esperable: es el sumidero.
 
-**Sistemas que dependen de este:** 12, 17, 18, 20 y los tres instrumentos.
+**Sistemas que dependen de este:** 12, 17, 18, 20 y **los nueve instrumentos** — 10, 21,
+24, y los seis documentados el 2026-09-01: 22, 23, 28, 29, 30, 31 y 32.
+
+El **32** es el que más lo cambió: añadió `contenido` a `TableroRegistrado` y `contenido.id`
+a la clave de agrupación del progreso. Y el 2026-09-01 se añadió también `incompleto`,
+que era el bloqueante S4.
 
 ## Tuning Knobs
 

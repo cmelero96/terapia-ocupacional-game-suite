@@ -199,18 +199,51 @@ test('test_ordenar_la_frase_en_curso_no_sobrevive_a_la_pausa', () => {
 
 test('test_las_operaciones_de_los_tres_tipos_dan_resultados_validos', () => {
   for (const tipo of TIPOS_OPERACION) {
-    for (let s = 1; s <= 300; s++) {
+    for (let s = 1; s <= 2000; s++) {
       const { enunciado, resultado } = operacion(tipo, crearFuenteAleatoria(s));
       assert.ok(Number.isInteger(resultado), `${tipo} s=${s}: ${resultado}`);
-      if (tipo === 'sumaHasta10') {
-        assert.ok(resultado <= 10 && resultado >= 2, `sumaHasta10: ${resultado}`);
-      }
-      if (tipo === 'sumaRestaHasta20') {
-        assert.ok(resultado >= 0, `resta negativa: ${enunciado}`);
-      }
+      assert.ok(resultado >= 0, `${tipo} s=${s}: negativo en '${enunciado}'`);
       assert.match(enunciado, /[+−×]/);
     }
   }
+});
+
+test('test_la_ETIQUETA_no_miente_sobre_el_techo', () => {
+  // La etiqueta que lee el terapeuta es una promesa clinica: «sumar y restar hasta 20»
+  // significa que NINGUN numero de la operacion pasa de 20.
+  //
+  // La version anterior sorteaba `a` en [1,19] y `b` en [1,a-1], asi que la suma llegaba a
+  // **37**: «19 + 18». Y este test lo dejaba pasar porque solo comprobaba `resultado >= 0`
+  // — comprobaba lo que no fallaba.
+  //
+  // Se comprueban los OPERANDOS y el resultado, no solo el resultado: «25 - 5 = 20» cumple
+  // el techo en el resultado y lo rompe en el enunciado.
+  /** @type {Record<string, number>} */
+  const TECHO = { sumaHasta10: 10, sumaRestaHasta20: 20 };
+  for (const [tipo, techo] of Object.entries(TECHO)) {
+    for (let s = 1; s <= 2000; s++) {
+      const { enunciado, resultado } = operacion(
+        /** @type {any} */ (tipo), crearFuenteAleatoria(s),
+      );
+      assert.ok(resultado <= techo, `${tipo} s=${s}: resultado ${resultado} pasa de ${techo}`);
+      for (const m of enunciado.match(/\d+/g) ?? []) {
+        assert.ok(
+          Number(m) <= techo,
+          `${tipo} s=${s}: el operando ${m} de '${enunciado}' pasa de ${techo}`,
+        );
+      }
+    }
+  }
+});
+
+test('test_las_dos_RAMAS_de_suma_y_resta_aparecen_las_dos', () => {
+  // Acotar mal una rama podria dejarla imposible sin que nada fallara.
+  const enunciados = [];
+  for (let s = 1; s <= 500; s++) {
+    enunciados.push(operacion('sumaRestaHasta20', crearFuenteAleatoria(s)).enunciado);
+  }
+  assert.ok(enunciados.some((e) => e.includes('+')), 'falta la rama de suma');
+  assert.ok(enunciados.some((e) => e.includes('−')), 'falta la rama de resta');
 });
 
 test('test_el_tipo_de_operacion_es_un_ENUM_no_una_escala', () => {

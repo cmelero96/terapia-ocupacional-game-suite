@@ -332,7 +332,8 @@ haría que dos toques accidentales separados por un minuto activaran algo.
 | 4 · Modelo de dificultad | **dura** | `t` y la marca `ejesAcoplados` |
 | 2 · Tokens | **dura** | Los dos tokens reservados del cursor y del progreso |
 
-**Sistemas que dependen de este:** 6, 7, 9, 10, 11, 21, 22, 23, 24 y 14. Es el sistema con
+**Sistemas que dependen de este:** 6, 7, 9, 10, 11, 14, 21, 24 y los seis documentados el
+2026-09-01: 22, 23, 28, 29, 30, 31 y 32. Es el sistema con
 más consumidores del proyecto, y por eso su interfaz tiene que ser pequeña: **un tipo de
 evento y una configuración**.
 

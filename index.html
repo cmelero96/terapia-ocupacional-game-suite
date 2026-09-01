@@ -445,6 +445,17 @@
           aciertos: viva.estado.instrumento.intentos.filter((i) => i.correcto).length,
         },
     sesion: () => viva?.sesionConTableros?.() ?? null,
+    // Solo los instrumentos de elección: cuántas opciones pide la configuración y cuántas
+    // sirve el contenido de verdad. Rellenar tiene 4 por palabra, así que pedir 6 sirve 4.
+    ...(['rellenar', 'simbolos', 'precios'].includes(tipo)
+      ? {
+          opciones: (/** @type {number} */ C) => ({
+            pedidas: Math.min(Math.max(C, 2), 6),
+            servidas: viva?.estado?.instrumento?.ronda?.opciones?.length
+              ?? Math.min(Math.max(C, 2), 6),
+          }),
+        }
+      : {}),
     ultimoTablero: () => {
       const t = viva?.estado?.instrumento?.tablero;
       return t === undefined ? null : { svPedida: t.svPedida, svEfectiva: t.svEfectiva };

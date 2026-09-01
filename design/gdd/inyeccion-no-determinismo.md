@@ -637,7 +637,12 @@ de diseño.
 | 8 · Generación de tableros | MVP | Fuente aleatoria y barajado |
 | 9 · Registro | MVP | Los dos relojes, más la semilla |
 | 14 · Invariantes de CI | MVP | Las reglas 1 y 4, para hacerlas cumplir |
-| 22 · Transcribir símbolos | Alpha | Fuente aleatoria |
+| 22 · Transcribir símbolos | MVP | Fuente aleatoria |
+| 23 · Precio justo | MVP | Fuente aleatoria |
+| 28 · Rellenar palabras | MVP | Fuente aleatoria |
+| 29 · Ordenar palabras | MVP | Fuente aleatoria y barajado |
+| 30 · Juego de comprar | MVP | Fuente aleatoria y barajado |
+| 31 · Tres en raya | MVP | Fuente aleatoria, **también para las jugadas de la máquina** |
 
 | 1 · Manifiesto | MVP | **Dependencia de tipos, no dura**: el typedef `FuenteAleatoria` |
 | 10 · Instrumento Busca | MVP | **La raíz de composición.** Construye la fábrica y reparte los valores |
@@ -645,6 +650,11 @@ de diseño.
 **Consistencia bidireccional: comprobada ejecutando la comprobación, no afirmada.** Los
 sistemas 5, 8, 9 y 22 ya declaraban el 3. El **14 no lo declaraba** y debía — corregido
 en el índice. El **12 tampoco, y es correcto**: consume vía el 9.
+
+**Actualizado el 2026-09-01** al documentar los seis instrumentos que faltaban. Los seis
+declaran el 3, y el 22 se corrige de Alpha a MVP: está jugable. El **32** no aparece en esta
+tabla y es correcto — el eje de contenido no lee ninguna fuente no determinista: recibe el
+identificador de la variante como parámetro.
 
 **Y la comprobación tenía un punto ciego que la revisión encontró.** Preguntaba "quién
 consume" y nunca "quién construye y reparte". Con la raíz de composición adjudicada al

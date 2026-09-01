@@ -141,6 +141,15 @@ pensarlo: mirar dos pacientes.
 
 **Dependen de este:** ninguno en el primer hito. El 20 cuando llegue.
 
+**Actualizado el 2026-09-01.** Dos entradas nuevas, y las dos son limitaciones que viajan
+junto al número en lugar de en un texto aparte:
+
+- **`incompleto`** (bloqueante S4): la precisión dice cuántos intentos vienen de tableros sin
+  terminar, y **en qué dirección** sesgan — más baja que la real, porque truncar un tablero
+  quita el acierto que lo habría cerrado.
+- **`contenido`** (sistema 32): cuando la sesión tiene más de una variante, se dice que los
+  números de variantes distintas no se suman.
+
 ## Tuning Knobs
 
 **Ninguna.** Una pantalla de resultados con perillas sería una pantalla que se puede

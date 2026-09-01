@@ -117,9 +117,14 @@ export function esAplicable(lista) {
  * @param {{ t: number }} entrada.config
  * @param {boolean} entrada.prefersReducedMotion
  * @param {{ svPedida: number, svEfectiva: number } | null} [entrada.ultimoTablero]
+ * @param {{ pedidas: number, servidas: number } | null} [entrada.opciones]
+ *   Para los instrumentos de elección: cuántas opciones pidió la configuración y cuántas
+ *   sirvió el contenido. Ver el aviso `opcionesNoAlcanzadas`
  * @returns {Aviso[]}
  */
-export function avisos({ config, prefersReducedMotion, ultimoTablero = null }) {
+export function avisos({
+  config, prefersReducedMotion, ultimoTablero = null, opciones = null,
+}) {
   /** @type {Aviso[]} */
   const salida = [];
 
@@ -154,6 +159,41 @@ export function avisos({ config, prefersReducedMotion, ultimoTablero = null }) {
           `${ultimoTablero.svPedida.toFixed(2)}.`,
       });
     }
+  }
+
+  // Instrumentos de eleccion: `C` pide opciones, y el CONTENIDO puede no darlas. Rellenar
+  // palabras tiene cuatro opciones por palabra, asi que pedir seis sirve cuatro — medido,
+  // en 300 de 300 rondas.
+  //
+  // Sin este aviso el terapeuta configura una dificultad y el paciente recibe otra, que es
+  // exactamente lo que el pilar 3 protege. Y no es un error del codigo: es una limitacion
+  // del contenido, asi que se DICE en lugar de corregirse en silencio.
+  if (opciones !== null && opciones.servidas < opciones.pedidas) {
+    salida.push({
+      codigo: 'opcionesNoAlcanzadas',
+      mensaje:
+        `El contenido no da para las ${opciones.pedidas} opciones pedidas: el paciente ve `
+        + `${opciones.servidas}. La configuracion es valida, la dificultad es la de `
+        + `${opciones.servidas} opciones.`,
+    });
+  }
+
+  // La medicion de progreso perceptivo NO funciona en estos instrumentos, y decirlo importa
+  // mas que cualquier otro aviso de esta lista.
+  //
+  // `dp` se normaliza contra C_MAX = 60. Con `C` acotada a [2, 6], el rango accesible es de
+  // 2,1 puntos sobre 100 — medido. Busca accede a los 100. Un cambio de 0 a 2,1 en el eje
+  // tolerado es ruido, no progreso.
+  //
+  // Lo que SI mide en estos instrumentos: la precision y la latencia a configuracion fija.
+  if (opciones !== null) {
+    salida.push({
+      codigo: 'ejePerceptivoPlano',
+      mensaje:
+        'En este ejercicio la dificultad perceptiva apenas varia: la cantidad de opciones '
+        + 'llega a 6, y la escala esta pensada para tableros de hasta 60. Mira la precision '
+        + 'y la latencia, no el eje tolerado.',
+    });
   }
 
   return salida;

@@ -111,16 +111,16 @@ reglas que declara dejan de estar vigiladas.
 | 19 | Biblioteca portable del terapeuta (sincronización) | Registro | Vertical Slice | Not Started | — | 16, 18 |
 | 20 | Vista de evolución longitudinal | UI | Vertical Slice | Not Started | — | 18 |
 | 21 | Instrumento: clasificar por categorías | Instrumento | **MVP** (adelantado) | **JUGABLE** | [instrumentos-clasificar-y-denominar.md](instrumentos-clasificar-y-denominar.md) | 1, 5, 8, 9, 11 |
-| 22 | Instrumento: transcribir símbolos | Instrumento | **MVP** | **JUGABLE** — sin GDD | — | 3, 5, 9 |
-| 23 | Instrumento: precio justo | Instrumento | **MVP** | **JUGABLE** — sin GDD | — | 3, 5, 9 |
+| 22 | Instrumento: transcribir símbolos | Instrumento | **MVP** | **JUGABLE** | [instrumentos-de-eleccion.md](instrumentos-de-eleccion.md) | 3, 5, 9, 11, 12, 32 |
+| 23 | Instrumento: precio justo | Instrumento | **MVP** | **JUGABLE** | [instrumentos-de-eleccion.md](instrumentos-de-eleccion.md) | 3, 5, 9, 11, 12, 32 |
 | 24 | Instrumento: denominación de objetos | Instrumento | **MVP** (adelantado) | **JUGABLE** | [instrumentos-clasificar-y-denominar.md](instrumentos-clasificar-y-denominar.md) | 1, 5, **8**, 9, 10 |
 | 25 | Composición de sesiones | Clínico | Full Vision | Not Started | — | 16, 17 |
 | 26 | Informes para el terapeuta | UI | Full Vision | Not Started | — | 20 |
 | 27 | Práctica en casa (cuentas, servidor, RGPD) | Registro | Full Vision | Not Started | — | 18, 19 |
-| 28 | Instrumento: rellenar palabras | Instrumento | **MVP** | **JUGABLE** — sin GDD | — | 3, 5, 9 |
-| 29 | Instrumento: ordenar palabras | Instrumento | **MVP** | **JUGABLE** — sin GDD | — | 3, 5, 9 |
-| 30 | Instrumento: juego de comprar | Instrumento | **MVP** | **JUGABLE** — sin GDD | — | 3, 5, 9 |
-| 31 | Instrumento: tres en raya con cálculo | Instrumento | **MVP** | **JUGABLE** — sin GDD. Tercer eje **RESUELTO**: sistema 32 | — | 3, 5, 9 |
+| 28 | Instrumento: rellenar palabras | Instrumento | **MVP** | **JUGABLE** | [instrumentos-de-eleccion.md](instrumentos-de-eleccion.md) | 3, 5, 9, 11, 12, 32 |
+| 29 | Instrumento: ordenar palabras | Instrumento | **MVP** | **JUGABLE** | [instrumentos-de-secuencia.md](instrumentos-de-secuencia.md) | 3, 5, 9, 11, 12, 32 |
+| 30 | Instrumento: juego de comprar | Instrumento | **MVP** | **JUGABLE** | [instrumentos-de-secuencia.md](instrumentos-de-secuencia.md) | 3, 5, 9, 11, 12, 32 |
+| 31 | Instrumento: tres en raya con cálculo | Instrumento | **MVP** | **JUGABLE**. Tercer eje **RESUELTO**: sistema 32 | [instrumento-tres-en-raya.md](instrumento-tres-en-raya.md) | 3, 5, 9, 11, 12, **32** |
 | 32 | **Eje de contenido** — la dificultad que no es motora ni perceptiva | Clínico | **MVP** | **Designed** · **implementado y ejecutable** | [eje-contenido.md](eje-contenido.md) | 4, 9, 11 |
 
 ---
@@ -309,14 +309,14 @@ bloqueado es el Nivel 1, y hay 13 GDD que escribir antes de llegar ahí.
 
 | Métrica | Cuenta |
 |---------|--------|
-| Sistemas identificados | 27 |
+| Sistemas identificados | **32** |
 | GDD empezados | 3 |
 | GDD revisados | 3 |
-| GDD diseñados sin revisar | 9 |
+| GDD diseñados sin revisar | **13** |
 | GDD provisionales sin validar | 1 (sistema 15) |
 | Instrumentos JUGABLES | **9 de 9 de la lista** |
-| Instrumentos con GDD | 5 de 9 |
-| Sistemas con código en `src/` | **13** (2 parcial, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 21 y 24) |
+| Instrumentos con GDD | **9 de 9** — completado el 2026-09-01 |
+| Sistemas con código en `src/` | **20** (2 parcial, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 21, 22, 23, 24, 28, 29, 30, 31 y 32) |
 | GDD aprobados | 0 |
 | Sistemas MVP diseñados | 3 / 14 |
 | Sistemas Vertical Slice diseñados | 0 / 6 |

@@ -160,11 +160,24 @@ export function operacion(tipo, fuenteAleatoria) {
     return { enunciado: `${a} + ${b}`, resultado: a + b };
   }
   if (tipo === 'sumaRestaHasta20') {
-    const a = ent(19);
-    const b = ent(a - 1 > 0 ? a - 1 : 1);
-    return fuenteAleatoria() < 0.5
-      ? { enunciado: `${a} + ${b}`, resultado: a + b }
-      : { enunciado: `${a} − ${b}`, resultado: a - b };
+    // **El techo de 20 es una promesa de la ETIQUETA, no un detalle.** El terapeuta elige
+    // «sumar y restar hasta 20» y eso significa que ningun numero de la operacion pasa de 20.
+    //
+    // La version anterior sorteaba `a` en [1, 19] y `b` en [1, a - 1], asi que la suma
+    // llegaba a **37**: «19 + 18». El test lo dejaba pasar porque comprobaba `resultado >= 0`
+    // y nunca el techo — comprobaba lo que no fallaba.
+    //
+    // Las dos ramas se acotan por separado, porque el limite no es el mismo:
+    //   suma:  a ∈ [1, 19], b ∈ [1, 20 − a]   ->  resultado ∈ [2, 20]
+    //   resta: a ∈ [2, 20], b ∈ [1, a − 1]    ->  resultado ∈ [1, 19]
+    if (fuenteAleatoria() < 0.5) {
+      const a = ent(19);
+      const b = ent(20 - a);
+      return { enunciado: `${a} + ${b}`, resultado: a + b };
+    }
+    const a = 1 + ent(19);
+    const b = ent(a - 1);
+    return { enunciado: `${a} − ${b}`, resultado: a - b };
   }
   const a = ent(9);
   const b = ent(9);

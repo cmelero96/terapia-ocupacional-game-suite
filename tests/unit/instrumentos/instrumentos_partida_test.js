@@ -244,3 +244,30 @@ test('test_el_total_pedido_suma_los_precios_de_la_lista', () => {
   }, 0);
   assert.ok(Math.abs(c.totalPedido() - esperado) < 1e-9);
 });
+
+test('test_el_derecho_a_colocar_NO_sobrevive_a_la_pausa', () => {
+  // AC-15 del sistema 31. Conservarlo a traves de una pausa de duracion desconocida
+  // significaria que el paciente coloca ficha por una operacion que resolvio antes de que el
+  // terapeuta se pusiera a hablar, y la latencia de esa jugada mediria la conversacion.
+  const t = nuevoTres();
+  t.activar(ev(`r:${t.reto.resultado}`), lat);
+  assert.equal(t.puedeColocar, true);
+
+  t.limpiarSeleccion();
+  assert.equal(t.puedeColocar, false, 'la pausa descarta el derecho');
+
+  // Y la casilla no se coloca al reanudar.
+  const r = t.activar(ev('c:4'), lat);
+  assert.equal(r.registrado, false);
+  assert.equal(t.casillas[4], null);
+});
+
+test('test_la_compra_en_curso_NO_sobrevive_a_la_pausa', () => {
+  const c = nuevaCompra(33, 6, 3);
+  c.activar(ev(/** @type {string} */ (c.compra.lista[0])), lat);
+  assert.equal(c.cogidos.length, 1);
+  c.limpiarSeleccion();
+  assert.deepStrictEqual(c.cogidos, [], 'lo cogido se descarta');
+  // La lista sigue siendo la misma: la pausa no sortea otra compra.
+  assert.equal(c.pendientes().length, c.compra.lista.length);
+});
