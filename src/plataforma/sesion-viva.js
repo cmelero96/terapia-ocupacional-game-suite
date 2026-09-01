@@ -49,7 +49,9 @@ export function crearSesionViva(entradaInicial) {
   function reconfigurar(cambios) {
     // Cierra el tablero en curso ANTES de cambiar nada: sus intentos pertenecen a la
     // configuracion con la que se jugaron, no a la nueva.
-    actual.cerrarTablero();
+    // El tablero en curso NO está resuelto: si lo estuviera, se habría cerrado solo al
+    // avanzar. Sus intentos se conservan marcados como incompletos — bloqueante S4.
+    actual.cerrarTablero({ resuelto: false });
     actual.montado.desconectar();
 
     entrada = {
@@ -72,7 +74,7 @@ export function crearSesionViva(entradaInicial) {
     reconfigurar,
     /** La sesion con TODOS los tableros cerrados, incluido el que esta en curso. */
     sesionConTableros: () => {
-      actual.cerrarTablero();
+      actual.cerrarTablero({ resuelto: false });
       return sesion;
     },
   };

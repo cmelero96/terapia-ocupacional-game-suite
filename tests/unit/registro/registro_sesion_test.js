@@ -43,7 +43,7 @@ function tableroConIntentos(n, aciertos, sinDato) {
   }
   return {
     objetivo: 'obj', distractores: [], semilla: 1, schemaVersion: 'v1',
-    dm: 48, dp: 20, dpPedida: 20, intentos,
+    dm: 48, dp: 20, dpPedida: 20, intentos, incompleto: false,
   };
 }
 

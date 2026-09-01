@@ -76,11 +76,24 @@ export function presentarPrecision(resumen) {
       tieneDato: false,
     };
   }
+  // La limitación viaja JUNTO al número, en el mismo texto. Es la misma regla que la de la
+  // latencia y la de la limitación de escala: dos textos separados se leen por separado, y
+  // el que matiza se pierde.
+  //
+  // Y el sesgo tiene DIRECCIÓN, así que se dice. El último intento de un tablero completo
+  // es, por construcción, el acierto que lo cerró; truncar quita ese acierto y deja los
+  // fallos. La precisión de una sesión con tableros incompletos sale más BAJA que la real.
+  const nota = resumen.tablerosIncompletos > 0
+    ? ` · incluye ${resumen.intentosIncompletos} de ${resumen.tablerosIncompletos} `
+      + `tablero${resumen.tablerosIncompletos === 1 ? '' : 's'} sin terminar, así que este `
+      + 'porcentaje es más bajo que el real'
+    : '';
+
   return {
     etiqueta: 'Aciertos',
     valor:
       `${Math.round(resumen.precision * 100)} % — ${resumen.aciertos} de ` +
-      `${resumen.intentos} activaciones`,
+      `${resumen.intentos} activaciones${nota}`,
     tieneDato: true,
   };
 }

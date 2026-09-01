@@ -16,6 +16,7 @@
 import {
   relojMonotono, relojPared, crearFuenteDeProduccion, medirResolucionReloj, programadorReal,
 } from './borde-impuro.js';
+import { C_MIN, C_MAX } from '../dificultad/constantes.js';
 import { generarTablero } from '../tablero/generador.js';
 import { Busca } from '../instrumentos/busca.js';
 import { Denominar, puedeSerObjetivo as puedeDenominar } from '../instrumentos/denominar.js';
@@ -140,10 +141,17 @@ export function arrancar({
 
     /** @type {number} */
     let cerrados = 0;
-    const cerrar = () => {
+    /** @param {{ resuelto: boolean }} cierre */
+    const cerrar = (cierre) => {
+      if (typeof cierre?.resuelto !== 'boolean') {
+        throw new TypeError('cerrar: hace falta { resuelto: boolean }');
+      }
       const intentos = inst.intentos.slice(cerrados);
       if (intentos.length === 0) return;
       cerrados = inst.intentos.length;
+      // El techo es C_MAX, no un 100 escrito a mano: ADR-0006 lo bajó a 60, y una guarda
+      // con el número antiguo dejaría pasar una C que el panel ya no permite pedir.
+      const cAcotada = Math.min(Math.max(config.C, C_MIN), C_MAX);
       sesion.tableros.push({
         objetivo: inst.tablero.objetivo,
         distractores: inst.tablero.distractores,
@@ -152,9 +160,10 @@ export function arrancar({
         dm: dm(config.t),
         // Estos instrumentos no tienen similitud visual ni semantica, asi que `dp` sale
         // solo de la cantidad. Es una escala mas pobre, y decirlo importa.
-        dp: dp(Math.min(Math.max(config.C, 3), 100), 0, 0),
-        dpPedida: dp(Math.min(Math.max(config.C, 3), 100), 0, 0),
+        dp: dp(cAcotada, 0, 0),
+        dpPedida: dp(cAcotada, 0, 0),
         intentos,
+        incompleto: !cierre.resuelto,
       });
     };
 
@@ -168,7 +177,7 @@ export function arrancar({
       instrumento: inst, registro, sesion, resolucion, montado: montadoSimple, tipo,
       programador: programadorReal,
       avisoContenido: fuenteDeRondas?.aviso,
-      sesionConTableros: () => { cerrar(); return sesion; },
+      sesionConTableros: () => { cerrar({ resuelto: false }); return sesion; },
       cerrarTablero: cerrar,
     };
   }
@@ -235,7 +244,19 @@ export function arrancar({
    */
   let intentosCerrados = 0;
 
-  const cerrarTablero = () => {
+  /**
+   * Cierra el tablero en curso y lo mete en la sesión.
+   *
+   * `resuelto` es **obligatorio**, sin valor por defecto. Un defecto sería marcar como
+   * completo un tablero truncado, o al contrario, y las dos direcciones falsean la medida.
+   * Un dato ausente falla; no se sustituye por el que parece razonable.
+   *
+   * @param {{ resuelto: boolean }} cierre
+   */
+  const cerrarTablero = (cierre) => {
+    if (typeof cierre?.resuelto !== 'boolean') {
+      throw new TypeError('cerrarTablero: hace falta { resuelto: boolean }');
+    }
     const t = instrumento.tablero;
     const intentos = instrumento.intentos.slice(intentosCerrados);
     if (intentos.length === 0) return;
@@ -249,6 +270,7 @@ export function arrancar({
       dp: dp(config.C, t.svEfectiva, t.ssEfectiva),
       dpPedida: dp(config.C, t.svPedida, t.ssPedida),
       intentos,
+      incompleto: !cierre.resuelto,
     });
   };
 
@@ -262,7 +284,9 @@ export function arrancar({
     instrumento, registro, sesion, resolucion, montado, tipo,
     programador: programadorReal,
     avisoContenido: undefined,
-    sesionConTableros: () => { cerrarTablero(); return sesion; },
+    // Al terminar la sesión, el tablero en curso NO está resuelto: si lo estuviera, se
+    // habría cerrado solo al avanzar.
+    sesionConTableros: () => { cerrarTablero({ resuelto: false }); return sesion; },
     cerrarTablero,
   };
 }

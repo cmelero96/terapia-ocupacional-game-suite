@@ -45,7 +45,14 @@ const MS_TICK_PERMANENCIA = 50;
  * @param {import('../presentacion/estimulo.js').PoliticaPresentacion} entrada.politica
  * @param {import('../entrada/adaptador.js').Programador} entrada.programador
  * @param {Acceso} [entrada.acceso]
- * @param {() => void} [entrada.alAvanzar] Cierra el tablero en el registro ANTES de repintar
+ * @param {(cierre: { resuelto: boolean }) => void} [entrada.alAvanzar]
+ *   Cierra el tablero en el registro ANTES de repintar.
+ *
+ *   `resuelto` es el dato que hacía falta para el bloqueante S4. Un tablero avanza por dos
+ *   motivos distintos y hasta ahora se registraban igual: el paciente lo resolvió, o el
+ *   instrumento pasó al siguiente sin que lo resolviera —el tres en raya sortea otra
+ *   operación cuando se falla la anterior—. Sin distinguirlos, un tablero fallado se
+ *   registra como uno completado.
  */
 export function montarInstrumento({
   raiz, zonaObjetivo, zonaContenedores, tipo, instrumento, reloj, politica, programador,
@@ -57,6 +64,13 @@ export function montarInstrumento({
   let tInicio = null;
   /** @type {number} */
   let iBarrido = -1;
+  /**
+   * El número de tablero visto por última vez. Es el criterio para saber si un tablero
+   * TERMINÓ, en lugar de `r.avanza`, que también es verdadero al avanzar dentro del tablero.
+   *
+   * @type {number}
+   */
+  let ultimoTableroNumero = instrumento.tableroNumero;
 
   raiz.dataset['sinMovimiento'] = politica.sinMovimiento ? 'si' : 'no';
   raiz.dataset['instrumento'] = tipo;
@@ -225,10 +239,37 @@ export function montarInstrumento({
       programador.programar(() => { pintar(); }, MS_ACUSE);
       return;
     }
-    if (r.avanza) {
+    // ¿Ha cambiado el TABLERO, o solo se ha avanzado dentro de él?
+    //
+    // `r.avanza` no sirve para decidirlo, y esto se midió en el navegador: `Ordenar`
+    // devuelve `avanza: true` en CADA palabra colocada, y `Comprar` en cada artículo
+    // cogido. Con `r.avanza` como criterio, una frase de cuatro palabras producía cuatro
+    // registros de tablero con el mismo objetivo y la misma semilla, y una compra
+    // completada producía tres. Medido: `ordenar` daba 2 registros con la frase todavía
+    // sin acabar, y `comprar` 3 registros para 1 compra.
+    //
+    // Y con el campo `incompleto` del bloqueante S4 dejaba de ser solo un recuento
+    // inflado: cada palabra cerraba un registro marcado como COMPLETO, así que el campo
+    // nuevo era falso justo en los dos instrumentos de varios pasos.
+    //
+    // El criterio correcto es `tableroNumero`, que los nueve instrumentos ya exponen y
+    // que **solo** cambia cuando el tablero de verdad termina.
+    //
+    // LIMITACIÓN DECLARADA — tres en raya: su `tableroNumero` cuenta PARTIDAS, mientras
+    // que su `tablero` describe la operación en curso. El registro de una partida lleva
+    // por tanto la última operación como objetivo, no todas. Es coherente con contar una
+    // partida como un tablero, pero los datos de reproducción de ese registro describen
+    // solo el último paso. Queda para el GDD del tercer eje de dificultad.
+    const tableroCambio = instrumento.tableroNumero !== ultimoTableroNumero;
+    if (tableroCambio) {
+      ultimoTableroNumero = instrumento.tableroNumero;
       // El tablero se cierra en el registro ANTES de pintar el siguiente: si no, sus
       // intentos se atribuirian a la dificultad del tablero nuevo.
-      if (alAvanzar !== undefined) alAvanzar();
+      // Y se resolvió si la activación que lo cerró fue CORRECTA: no basta con que haya
+      // avanzado, porque hay instrumentos que avanzan tras un fallo.
+      if (alAvanzar !== undefined) alAvanzar({ resuelto: r.correcto });
+    }
+    if (r.avanza) {
       programador.programar(() => { pintar(); }, MS_ACUSE);
     }
   }

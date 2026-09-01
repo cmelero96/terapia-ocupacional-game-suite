@@ -54,7 +54,7 @@ test('test_reconfigurar_CONSERVA_los_tableros_ya_cerrados', () => {
       { idObjetivo: inst.tablero.objetivo, tActivacion: 1, modo: 'tactil', origenTiempo: 'evento' },
       { ms: 300 },
     );
-    viva.estado.cerrarTablero();
+    viva.estado.cerrarTablero({ resuelto: true });
   }
   const antes = viva.sesion.tableros.length;
   assert.equal(antes, 2, 'preparacion: debe haber dos tableros cerrados');

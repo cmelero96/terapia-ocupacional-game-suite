@@ -39,6 +39,19 @@ export const MAX_SESIONES_EN_MEMORIA = 20;
  * @property {number} dp
  * @property {number} dpPedida
  * @property {Intento[]} intentos
+ * @property {boolean} incompleto
+ *   El tablero se cerró **sin que el paciente lo resolviera**: el terapeuta aplicó otra
+ *   configuración, o la sesión terminó a media búsqueda.
+ *
+ *   Era el bloqueante S4. `panel-terapeuta.md` prometía *"sus intentos parciales se
+ *   conservan marcados como incompletos"*, y no existía el campo.
+ *
+ *   **Los intentos se conservan, no se descartan: un fallo es un fallo.** Pero el tablero
+ *   truncado es una muestra SESGADA, y en una dirección concreta: el último intento de un
+ *   tablero completo es, por construcción, el acierto que lo cerró. Truncar quita ese
+ *   acierto y deja los fallos, así que la precisión de un tablero incompleto sale más baja
+ *   que la real. El sesgo va hacia SUBESTIMAR la capacidad, que es el lado prudente — pero
+ *   sigue siendo un sesgo, y el terapeuta tiene que verlo junto al número.
  */
 
 /**
@@ -98,6 +111,9 @@ export function dificultadRegistrada(tablero, config) {
  * @typedef {object} Resumen
  * @property {number} intentos
  * @property {number} aciertos
+ * @property {number} tableros
+ * @property {number} tablerosIncompletos Cerrados sin resolver. Ver `TableroRegistrado`
+ * @property {number} intentosIncompletos Intentos que viven en esos tableros
  * @property {number | undefined} precision
  * @property {number | undefined} latenciaMedia
  * @property {number} latenciasSinDato
@@ -121,6 +137,14 @@ export function resumenSesion(sesion) {
   const todos = [];
   for (const t of sesion.tableros) todos.push(...t.intentos);
 
+  // Los tableros truncados CUENTAN en la precisión: un fallo es un fallo, y descartarlos
+  // sería inventar un dato mejor del real. Lo que se hace es contarlos y publicar el
+  // recuento, para que la limitación viaje junto al número. Bloqueante S4.
+  const tablerosIncompletos = sesion.tableros.filter((t) => t.incompleto).length;
+  const intentosIncompletos = sesion.tableros
+    .filter((t) => t.incompleto)
+    .reduce((n, t) => n + t.intentos.length, 0);
+
   const intentos = todos.length;
   const aciertos = todos.filter((i) => i.correcto).length;
 
@@ -135,6 +159,9 @@ export function resumenSesion(sesion) {
   return {
     intentos,
     aciertos,
+    tableros: sesion.tableros.length,
+    tablerosIncompletos,
+    intentosIncompletos,
     precision: intentos === 0 ? undefined : aciertos / intentos,
     latenciaMedia:
       definidas.length === 0
