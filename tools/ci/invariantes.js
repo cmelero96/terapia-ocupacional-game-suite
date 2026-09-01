@@ -372,6 +372,46 @@ for (const archivo of archivos) {
   });
 }
 
+
+// ---------------------------------------------------------------- AC-3 (sist. 32)
+/**
+ * Sistema 32, AC-3 — sobre el ORDINAL del eje de contenido no se hace aritmetica.
+ *
+ * El ordinal tiene orden pero no distancia: nadie sabe si el salto de sumar a restar es "el
+ * mismo" que el de restar a multiplicar. Promediarlo, interpolarlo o convertirlo a
+ * porcentaje produce un numero con aspecto valido y sin significado, y meterlo en `dp` seria
+ * el control escalar que AC-13 prohibe.
+ *
+ * Lo que SI se permite: comparaciones (`===`, `<`, `>`) e indexado, que es ordenar y agrupar.
+ *
+ * La barrera busca el identificador `ordinal` inmediatamente antes o despues de un operador
+ * aritmetico. Limitacion aceptada: no detecta una copia a otra variable seguida de
+ * aritmetica sobre la copia. Ninguna barrera de este proyecto pretende ser un analizador
+ * semantico — ver ADR-0004.
+ */
+const ARITMETICA_SOBRE_ORDINAL = [
+  /\bordinal\b\s*[-+*/%]/,
+  /[-+*/%]\s*[\w.]*\bordinal\b/,
+  /\bordinal\b\s*\+\+/,
+  /\bordinal\b\s*--/,
+  /(?:reduce|Math\.(?:min|max|abs|round|floor|ceil))\([^)]*\bordinal\b/,
+];
+
+for (const ruta of archivos) {
+  const codigo = sinCadenas(sinComentarios(readFileSync(ruta, 'utf8')));
+  codigo.split(String.fromCharCode(10)).forEach((linea, i) => {
+    for (const patron of ARITMETICA_SOBRE_ORDINAL) {
+      if (patron.test(linea)) {
+        fallos.push({
+          barrera: 'AC-3/s32',
+          mensaje: `${rel(ruta)}:${i + 1} — aritmetica sobre el ordinal del eje de `
+            + `contenido: ${patron.source}`,
+        });
+      }
+    }
+  });
+}
+
 // ---------------------------------------------------------------- informe
 /** @param {string} b */
 const cuenta = (b) => fallos.filter((f) => f.barrera === b).length;
@@ -388,6 +428,7 @@ console.log(`  AC-2   sin ramificar por modo ..... ${marca('AC-2/s5')}`);
 console.log(`  AC-6   sin APIs de audio ........... ${marca('AC-6/s6')}`);
 console.log(`  AC-9   raiz sin exencion ........... ${marca('AC-9/s10')}`);
 console.log(`  AC-7   resultados sin juicios ...... ${marca('AC-7/s12')}`);
+console.log(`  AC-3   ordinal sin aritmetica ..... ${marca('AC-3/s32')}`);
 
 const noCreados = declarados.filter((d) => !declaradosExistentes.includes(d));
 if (noCreados.length > 0) {

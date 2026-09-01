@@ -156,7 +156,7 @@ test('S3 — con el panel abierto, el barrido NO mueve el foco', async ({ page }
 test('el aviso de contenido PROVISIONAL sale en los juegos que lo usan, y no en los demas', async ({ page }) => {
   // Un aviso que no se ve equivale a no haberlo puesto. Cuatro de los nueve juegos usan
   // contenido que escribio el desarrollador, no un clinico.
-  for (const j of ['rellenar', 'simbolos', 'precios', 'ordenar', 'tresEnRaya']) {
+  for (const j of ['rellenar', 'simbolos', 'precios', 'ordenar', 'tresEnRaya', 'comprar']) {
     await page.goto(`/index.html?j=${j}&t=60&c=6`);
     await expect(
       page.locator('.aviso-provisional'), `${j} debe avisar`,

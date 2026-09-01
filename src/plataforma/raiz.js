@@ -17,6 +17,7 @@ import {
   relojMonotono, relojPared, crearFuenteDeProduccion, medirResolucionReloj, programadorReal,
 } from './borde-impuro.js';
 import { C_MIN, C_MAX } from '../dificultad/constantes.js';
+import { resolverVariante } from '../dificultad/contenido.js';
 import { generarTablero } from '../tablero/generador.js';
 import { Busca } from '../instrumentos/busca.js';
 import { Denominar, puedeSerObjetivo as puedeDenominar } from '../instrumentos/denominar.js';
@@ -53,6 +54,9 @@ import { validarConfiguracion, ejesAcoplados, dm, dp } from '../dificultad/model
  * @param {number} [entrada.nContenedores]
  * @param {boolean} [entrada.prefersReducedMotion]
  * @param {import('../instrumentos/instrumento-dom.js').Acceso} [entrada.acceso]
+ * @param {string} [entrada.varianteContenido]
+ *   Identificador del nivel del eje de contenido — sistema 32. Un id que no existe LANZA;
+ *   la ausencia se resuelve al ordinal 1, que es el más fácil.
  * @param {{ registro: import('../registro/sesion.js').Registro, sesion: import('../registro/sesion.js').Sesion }} [entrada.existente]
  *   La sesion que hay que CONSERVAR al reconfigurar. Sin esto, reconfigurar crearia una
  *   sesion nueva y los tableros cerrados irian a la que se descarta — que es exactamente
@@ -62,9 +66,13 @@ export function arrancar({
   raiz, zonaObjetivo, zonaContenedores, tipo, banco, config,
   nContenedores = 3, prefersReducedMotion = false,
   acceso = { barrido: false, msVuelta: 12000, permanencia: false, msPermanencia: 800 },
+  varianteContenido,
   existente,
 }) {
   validarConfiguracion(config);
+  // Antes de construir nada: un nivel inválido es una configuración imposible, igual que
+  // una `C` que el banco no puede servir, y se trata igual.
+  const variante = resolverVariante(tipo, varianteContenido);
 
   const resolucion = medirResolucionReloj();
   const registro = existente?.registro ?? new Registro();
@@ -113,7 +121,9 @@ export function arrancar({
           t: config.t,
           // Enum de CONTENIDO, no escala de dificultad. La aritmetica no cabe en los dos
           // ejes del sistema 4, y ese tercer eje nadie lo ha decidido.
-          tipoOperacion: 'sumaHasta10',
+          // El nivel del eje de contenido, sistema 32. Ya no es un literal: el terapeuta lo
+          // elige, y el registro lo guarda.
+          tipoOperacion: /** @type {any} */ (variante?.id ?? 'sumaHasta10'),
           nOpciones: Math.min(Math.max(config.C, 2), 6),
           nuevaFuente: crearFuenteDeProduccion,
         })
@@ -163,6 +173,7 @@ export function arrancar({
         dp: dp(cAcotada, 0, 0),
         dpPedida: dp(cAcotada, 0, 0),
         intentos,
+        contenido: variante === null ? null : { id: variante.id, ordinal: variante.ordinal },
         incompleto: !cierre.resuelto,
       });
     };
@@ -270,6 +281,7 @@ export function arrancar({
       dp: dp(config.C, t.svEfectiva, t.ssEfectiva),
       dpPedida: dp(config.C, t.svPedida, t.ssPedida),
       intentos,
+      contenido: variante === null ? null : { id: variante.id, ordinal: variante.ordinal },
       incompleto: !cierre.resuelto,
     });
   };

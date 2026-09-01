@@ -6,8 +6,8 @@
 
 ## Para quién es esta hoja
 
-Para el terapeuta ocupacional. Cuatro de los nueve juegos usan contenido que escribió el
-desarrollador, no un clínico. Ese contenido **es** el estímulo: decide si el ejercicio
+Para el terapeuta ocupacional. **Seis** de los nueve juegos usan contenido que escribió
+el desarrollador, no un clínico. Ese contenido **es** el estímulo: decide si el ejercicio
 mide la capacidad que dice medir.
 
 Marca cada elemento que apruebes. Lo que no esté marcado no se usa con un paciente.
@@ -18,7 +18,7 @@ Marca cada elemento que apruebes. Lo que no esté marcado no se usa con un pacie
 | Símbolos | 12 | Transcribir símbolos | media |
 | Precios (2026) | 12 | Precio justo, Comprar | **ALTA — caducan** |
 | Frases | 12 | Ordenar palabras | media |
-| Tipos de operación | 3 | Tres en raya | media |
+| Tareas del tres en raya | 3 | Tres en raya | media |
 
 ---
 
@@ -135,17 +135,27 @@ Las dos preguntas de esta familia:
 | ☐ | 6 | mi hija viene a verme hoy | `f6-2` |
 | ☐ | 6 | tengo que ir al médico mañana | `f6-3` |
 
-## 5 · Tipos de operación del tres en raya
+## 5 · Tareas del tres en raya — el eje de contenido
 
-Es un **enum, no una escala**: la dificultad aritmética no es motora ni perceptiva, así
-que no cabe en los dos ejes del modelo de dificultad. Un tercer eje es una decisión de
-diseño que nadie ha tomado.
+La dificultad aritmética no es motora ni perceptiva, así que no cabe en los dos ejes del
+modelo de dificultad. **Ya tiene sitio: el eje de contenido, sistema 32.** Es ordinal, no
+una escala: hay orden pero no distancia, y sobre él no se hace aritmética.
 
-| ✓ | Tipo | Etiqueta que ve el terapeuta |
-|---|---|---|
-| ☐ | `sumaHasta10` | sumar hasta 10 |
-| ☐ | `sumaRestaHasta20` | sumar y restar hasta 20 |
-| ☐ | `multiplicar` | multiplicar |
+Las tres preguntas de esta familia:
+
+1. ¿Son estas tres las tareas que se trabajan en consulta, o falta alguna?
+2. ¿Está bien el ORDEN de dificultad? Hoy es sumar < sumar y restar < multiplicar, y lo
+   elegí yo. Con algunos pacientes, restar cuesta más que multiplicar.
+3. ¿La etiqueta es la que usaría el terapeuta al hablar con un colega?
+
+> El identificador **no se renombra nunca**: es la clave con la que queda registrado a qué
+> jugó un paciente. La etiqueta sí se puede cambiar.
+
+| ✓ | Identificador | Etiqueta que ve el terapeuta | Orden |
+|---|---|---|---|
+| ☐ | `sumaHasta10` | sumar hasta 10 | 1.º |
+| ☐ | `sumaRestaHasta20` | sumar y restar hasta 20 | 2.º |
+| ☐ | `multiplicar` | multiplicar | 3.º |
 
 ---
 

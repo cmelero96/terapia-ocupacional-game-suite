@@ -44,6 +44,7 @@ export function crearSesionViva(entradaInicial) {
    * @param {object} cambios
    * @param {{ t: number, C: number, sv: number, ss: number }} [cambios.config]
    * @param {import('../instrumentos/instrumento-dom.js').Acceso} [cambios.acceso]
+   * @param {string} [cambios.varianteContenido] Sistema 32
    * @param {Entrada['tipo']} [cambios.tipo]
    */
   function reconfigurar(cambios) {
@@ -58,6 +59,8 @@ export function crearSesionViva(entradaInicial) {
       ...entrada,
       ...(cambios.config === undefined ? {} : { config: cambios.config }),
       ...(cambios.acceso === undefined ? {} : { acceso: cambios.acceso }),
+      ...(cambios.varianteContenido === undefined
+        ? {} : { varianteContenido: cambios.varianteContenido }),
       ...(cambios.tipo === undefined ? {} : { tipo: cambios.tipo }),
     };
 

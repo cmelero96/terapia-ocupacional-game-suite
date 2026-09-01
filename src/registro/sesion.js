@@ -39,6 +39,15 @@ export const MAX_SESIONES_EN_MEMORIA = 20;
  * @property {number} dp
  * @property {number} dpPedida
  * @property {Intento[]} intentos
+ * @property {{ id: string, ordinal: number } | null} contenido
+ *   El nivel del **eje de contenido** con el que se jugó, o `null` si el instrumento no
+ *   tiene eje. Sistema 32.
+ *
+ *   Sin este campo, una sesión de tres en raya no dice a qué aritmética jugó el paciente, y
+ *   dos sesiones a dificultades aritméticas distintas se comparan como si fueran la misma.
+ *
+ *   **El `ordinal` es ORDINAL, no de intervalo**: sirve para ordenar y agrupar, y sobre él no
+ *   se hace aritmética. Ver `src/dificultad/contenido.js` y la barrera AC-3 del sistema 32.
  * @property {boolean} incompleto
  *   El tablero se cerró **sin que el paciente lo resolviera**: el terapeuta aplicó otra
  *   configuración, o la sesión terminó a media búsqueda.

@@ -120,7 +120,8 @@ reglas que declara dejan de estar vigiladas.
 | 28 | Instrumento: rellenar palabras | Instrumento | **MVP** | **JUGABLE** — sin GDD | — | 3, 5, 9 |
 | 29 | Instrumento: ordenar palabras | Instrumento | **MVP** | **JUGABLE** — sin GDD | — | 3, 5, 9 |
 | 30 | Instrumento: juego de comprar | Instrumento | **MVP** | **JUGABLE** — sin GDD | — | 3, 5, 9 |
-| 31 | Instrumento: tres en raya con cálculo | Instrumento | **MVP** | **JUGABLE** — sin GDD. **Necesita un TERCER eje de dificultad** | — | 3, 5, 9 |
+| 31 | Instrumento: tres en raya con cálculo | Instrumento | **MVP** | **JUGABLE** — sin GDD. Tercer eje **RESUELTO**: sistema 32 | — | 3, 5, 9 |
+| 32 | **Eje de contenido** — la dificultad que no es motora ni perceptiva | Clínico | **MVP** | **Designed** · **implementado y ejecutable** | [eje-contenido.md](eje-contenido.md) | 4, 9, 11 |
 
 ---
 

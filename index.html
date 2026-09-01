@@ -241,6 +241,8 @@
     border: 2px solid var(--frame-line); border-radius: 6px;
     cursor: pointer;
   }
+  /* Una variante del eje de contenido lleva ETIQUETA, no número: es más ancha. */
+  .escalon-texto { min-inline-size: auto; padding: 0 0.75rem; }
   .escalon[aria-checked='true'] {
     /* La marca NO es solo color: lleva grosor de borde y peso de texto. En escala de
        grises, y con colores forzados del sistema, sigue distinguiendose. */
@@ -402,6 +404,8 @@
       config,
       nContenedores: n('nc', 3),
       acceso,
+      // Eje de contenido, sistema 32. `undefined` resuelve a la variante más fácil.
+      ...(params.get('tarea') === null ? {} : { varianteContenido: params.get('tarea') }),
       prefersReducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
     });
     estado = viva.estado;
@@ -413,8 +417,11 @@
   const estadoPanel = {
     abierto: false,
     config: { ...config },
+    // El instrumento, para que el panel sepa si hay eje de contenido (sistema 32).
+    instrumento: tipo,
+    ...(params.get('tarea') === null ? {} : { varianteContenido: params.get('tarea') }),
     acceso: {
-      barrido: false,
+      barrido: acceso.barrido,
       msVuelta: 12000,
       estimuloReducido: false,
       limitaciones: params.get('lim') ? params.get('lim').split(',') : [],
@@ -442,7 +449,7 @@
       const t = viva?.estado?.instrumento?.tablero;
       return t === undefined ? null : { svPedida: t.svPedida, svEfectiva: t.svEfectiva };
     },
-    alAplicar: (nueva, accesoNuevo) => {
+    alAplicar: (nueva, accesoNuevo, variante) => {
       // **SIN RECARGAR.** Era el bloqueante S1: `location.href` destruía la sesión entera.
       // Aplicar surte efecto en el tablero siguiente, no en una sesión siguiente.
       if (viva === null) {
@@ -458,6 +465,7 @@
       }
       estado = viva.reconfigurar({
         config: nueva,
+        ...(variante === undefined ? {} : { varianteContenido: variante }),
         acceso: {
           barrido: accesoNuevo?.barrido ?? acceso.barrido,
           msVuelta: accesoNuevo?.msVuelta ?? acceso.msVuelta,
@@ -481,7 +489,10 @@
   // Cuatro de los nueve juegos usan contenido que escribió el desarrollador, no un
   // clínico. Mientras nadie con la titulación lo firme, la página lo dice a la cara: un
   // aviso que no se ve equivale a no haberlo puesto.
-  const CON_CONTENIDO_PROVISIONAL = ['rellenar', 'simbolos', 'precios', 'ordenar', 'tresEnRaya'];
+  // SEIS juegos, no cinco: 'comprar' usa el catálogo provisional de precios, y faltaba.
+  const CON_CONTENIDO_PROVISIONAL = [
+    'rellenar', 'simbolos', 'precios', 'ordenar', 'tresEnRaya', 'comprar',
+  ];
   if (CON_CONTENIDO_PROVISIONAL.includes(tipo)) {
     const nota = document.createElement('p');
     // Clase PROPIA: el aviso de caducidad de los precios es otra cosa, y un test comprueba

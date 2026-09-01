@@ -19,12 +19,15 @@ import { T_AAA } from '../dificultad/constantes.js';
 import {
   ESCALONES_T, ESCALONES_C, ESCALONES_PROPORCION, escalonMasCercano,
 } from '../dificultad/escalones.js';
+import { variantesDe, observacionesPorVariante } from '../dificultad/contenido.js';
 
 /**
  * @typedef {object} EstadoPanel
  * @property {boolean} abierto
  * @property {{ t: number, C: number, sv: number, ss: number }} config
  * @property {{ barrido: boolean, msVuelta: number, estimuloReducido: boolean, limitaciones: string[] }} acceso
+ * @property {string} [instrumento] Para saber si hay eje de contenido. Sistema 32
+ * @property {string} [varianteContenido] Identificador de la variante activa. Sistema 32
  */
 
 /** @param {string} etiqueta @param {HTMLElement[]} hijos @returns {HTMLFieldSetElement} */
@@ -204,7 +207,7 @@ function deslizador({ id, etiqueta, valor, min, max, paso, unidad, alCambiar }) 
  * @param {() => { tableros: number, intentos: number, aciertos: number }} entrada.progreso
  * @param {() => import('../registro/sesion.js').Sesion | null} [entrada.sesion]
  * @param {() => { svPedida: number, svEfectiva: number } | null} entrada.ultimoTablero
- * @param {(config: EstadoPanel['config'], acceso: EstadoPanel['acceso']) => void} entrada.alAplicar
+ * @param {(config: EstadoPanel['config'], acceso: EstadoPanel['acceso'], varianteContenido?: string) => void} entrada.alAplicar
  * @param {() => void} [entrada.alAbrir] Pausa la sesion. LOGICA, no solo presentacional
  * @param {() => void} [entrada.alCerrar] Reanuda con un tablero nuevo
  * @returns {{ abrir: () => void, cerrar: () => void, estaAbierto: () => boolean }}
@@ -217,6 +220,8 @@ export function montarPanel({
   // cambia nada.
   let borrador = aEscalones(estado.config);
   let borradorAcceso = { ...estado.acceso };
+  /** @type {string | undefined} */
+  let borradorVariante = estado.varianteContenido;
 
   const dialogo = document.createElement('div');
   dialogo.className = 'panel';
@@ -339,15 +344,32 @@ export function montarPanel({
       resolucionMs: s.resolucionMs, fiableParaPresupuesto: s.fiableParaPresupuesto,
     })));
 
+    // PARTIDO por variante de contenido (sistema 32, AC-4). Antes era una lista plana con
+    // los intentos de TODOS los tableros, y con dos variantes en la misma sesión eso
+    // mezclaba la precisión de sumar hasta 10 con la de multiplicar: el número no
+    // significaba nada.
+    //
+    // Se muestra la variante ACTIVA. Las demás siguen en el registro, y la vista
+    // longitudinal del sistema 20 las leerá cuando exista.
+    const porVariante = observacionesPorVariante(s, 'dp');
     /** @type {import('../dificultad/modelo.js').Observacion[]} */
-    const obsPerceptivo = [];
-    for (const t of s.tableros) {
-      for (const i of t.intentos) obsPerceptivo.push({ d: t.dp, acierto: i.correcto });
-    }
+    const obsPerceptivo = porVariante.get(estado.varianteContenido ?? null) ?? [];
+
     sec.append(metrica(presentarDificultadTolerada(
       dificultadTolerada(obsPerceptivo, { acoplados: s.ejesAcoplados }),
       'perceptivo',
     )));
+
+    // AC-9 — si la sesión tiene más de una variante, se DICE. Sin esto, el terapeuta ve un
+    // número calculado sobre una parte de la sesión y cree que es de toda.
+    if (porVariante.size > 1) {
+      const aviso = document.createElement('p');
+      aviso.className = 'nota';
+      aviso.textContent =
+        `Esta sesión tiene ${porVariante.size} tareas distintas. El número de arriba es solo `
+        + 'de la tarea activa: los de tareas distintas no se suman.';
+      sec.append(aviso);
+    }
 
     return sec;
   }
@@ -401,6 +423,74 @@ export function montarPanel({
     ejePerceptivo.setAttribute('aria-label', 'Eje perceptivo-cognitivo');
 
     seccionEjercicio.append(ejeMotor, ejePerceptivo);
+
+    // --- Eje de CONTENIDO (sistema 32). Solo si este instrumento declara variantes.
+    //
+    // **La lista vacía es el caso normal**, no un hueco por rellenar: hoy solo el tres en
+    // raya tiene variantes. Un control vacío o desactivado le diría al terapeuta que hay
+    // algo que configurar cuando no lo hay.
+    const variantes = variantesDe(estado.instrumento ?? '');
+    if (variantes.length > 0) {
+      const fila = document.createElement('div');
+      fila.className = 'fila fila-escalones';
+
+      const lab = document.createElement('span');
+      lab.className = 'etiqueta-escalones';
+      lab.id = 'perilla-contenido-etiqueta';
+      lab.textContent = 'Tarea';
+
+      const gr = document.createElement('div');
+      gr.className = 'escalones';
+      gr.id = 'perilla-contenido';
+      gr.setAttribute('role', 'radiogroup');
+      gr.setAttribute('aria-labelledby', lab.id);
+
+      /** @type {HTMLButtonElement[]} */
+      const botones = [];
+      /** @param {string} id */
+      const marcar = (id) => {
+        borradorVariante = id;
+        for (const b of botones) {
+          const activo = b.dataset['valor'] === id;
+          b.setAttribute('aria-checked', activo ? 'true' : 'false');
+          b.tabIndex = activo ? 0 : -1;
+        }
+      };
+      /** @param {number} delta */
+      const mover = (delta) => {
+        const i = variantes.findIndex((v) => v.id === borradorVariante);
+        const j = Math.min(Math.max((i === -1 ? 0 : i) + delta, 0), variantes.length - 1);
+        const v = variantes[j];
+        if (v === undefined) return;
+        marcar(v.id);
+        botones[j]?.focus();
+        refrescarAvisos();
+      };
+
+      variantes.forEach((v) => {
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'escalon escalon-texto';
+        b.setAttribute('role', 'radio');
+        b.dataset['valor'] = v.id;
+        // La ETIQUETA, nunca el ordinal. El ordinal sirve para ordenar y agrupar, no para
+        // que nadie lo lea como una puntuación.
+        b.textContent = v.etiqueta;
+        b.addEventListener('click', () => { marcar(v.id); refrescarAvisos(); });
+        b.addEventListener('keydown', (ev) => {
+          if (ev.key === 'ArrowRight' || ev.key === 'ArrowDown') { ev.preventDefault(); mover(1); }
+          if (ev.key === 'ArrowLeft' || ev.key === 'ArrowUp') { ev.preventDefault(); mover(-1); }
+        });
+        botones.push(b);
+        gr.append(b);
+      });
+      marcar(borradorVariante ?? /** @type {string} */ (variantes[0]?.id));
+      fila.append(lab, gr);
+
+      const ejeContenido = grupo('Eje de contenido — qué tarea, no cuánto cuesta verla', [fila]);
+      ejeContenido.setAttribute('aria-label', 'Eje de contenido');
+      seccionEjercicio.append(ejeContenido);
+    }
 
     // --- Acceso: del PACIENTE, no del ejercicio. Separado a proposito: si estan en la
     // misma pantalla, alguien cambiara el modo de acceso creyendo que ajusta la dificultad.
@@ -490,6 +580,7 @@ export function montarPanel({
   function abrir() {
     borrador = aEscalones(estado.config);
     borradorAcceso = { ...estado.acceso };
+    borradorVariante = estado.varianteContenido;
     const p = progreso();
     zonaProgreso.textContent =
       `Sesión: ${p.tableros} tableros, ${p.aciertos} de ${p.intentos} activaciones ` +
@@ -517,7 +608,8 @@ export function montarPanel({
     if (aplicar.disabled) return;
     estado.config = { ...borrador };
     estado.acceso = { ...borradorAcceso };
-    alAplicar(estado.config, estado.acceso);
+    if (borradorVariante !== undefined) estado.varianteContenido = borradorVariante;
+    alAplicar(estado.config, estado.acceso, borradorVariante);
     cerrar();
   });
   dialogo.addEventListener('keydown', (e) => {

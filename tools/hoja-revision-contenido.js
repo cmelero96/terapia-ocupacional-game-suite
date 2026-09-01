@@ -1,8 +1,10 @@
 /**
  * Genera la hoja de revisión del contenido provisional, para el terapeuta.
  *
- * **Por qué existe.** Nueve juegos son jugables y cuatro de ellos usan contenido que
- * escribí yo: palabras con hueco, símbolos, precios y frases. No soy terapeuta ocupacional,
+ * **Por qué existe.** Nueve juegos son jugables y SEIS de ellos usan contenido que escribí
+ * yo: palabras con hueco, símbolos, precios, frases y las tareas de aritmética. (Dije
+ * "cuatro" en una revisión anterior y estaba mal: `ordenar` usa las frases, `comprar` usa el
+ * catálogo de precios, y el tres en raya las tareas.) No soy terapeuta ocupacional,
  * y ese contenido es el estímulo clínico — la parte del producto que decide si un ejercicio
  * mide lo que dice medir. Hasta que alguien con la titulación lo firme, es provisional, y
  * "provisional" tiene que ser algo más que un comentario en un módulo.
@@ -51,8 +53,8 @@ w(
   '',
   '## Para quién es esta hoja',
   '',
-  'Para el terapeuta ocupacional. Cuatro de los nueve juegos usan contenido que escribió el',
-  'desarrollador, no un clínico. Ese contenido **es** el estímulo: decide si el ejercicio',
+  'Para el terapeuta ocupacional. **Seis** de los nueve juegos usan contenido que escribió',
+  'el desarrollador, no un clínico. Ese contenido **es** el estímulo: decide si el ejercicio',
   'mide la capacidad que dice medir.',
   '',
   'Marca cada elemento que apruebes. Lo que no esté marcado no se usa con un paciente.',
@@ -63,7 +65,7 @@ w(
   `| Símbolos | ${SIMBOLOS.length} | Transcribir símbolos | media |`,
   `| Precios (${PRECIOS_FECHA}) | ${PRECIOS_2026.length} | Precio justo, Comprar | **ALTA — caducan** |`,
   `| Frases | ${FRASES.length} | Ordenar palabras | media |`,
-  `| Tipos de operación | ${TIPOS_OPERACION.length} | Tres en raya | media |`,
+  `| Tareas del tres en raya | ${TIPOS_OPERACION.length} | Tres en raya | media |`,
   '',
   '---',
   '',
@@ -174,17 +176,29 @@ for (const f of FRASES) {
 
 w(
   '',
-  '## 5 · Tipos de operación del tres en raya',
+  '## 5 · Tareas del tres en raya — el eje de contenido',
   '',
-  'Es un **enum, no una escala**: la dificultad aritmética no es motora ni perceptiva, así',
-  'que no cabe en los dos ejes del modelo de dificultad. Un tercer eje es una decisión de',
-  'diseño que nadie ha tomado.',
+  'La dificultad aritmética no es motora ni perceptiva, así que no cabe en los dos ejes del',
+  'modelo de dificultad. **Ya tiene sitio: el eje de contenido, sistema 32.** Es ordinal, no',
+  'una escala: hay orden pero no distancia, y sobre él no se hace aritmética.',
   '',
-  '| ✓ | Tipo | Etiqueta que ve el terapeuta |',
-  '|---|---|---|',
+  'Las tres preguntas de esta familia:',
+  '',
+  '1. ¿Son estas tres las tareas que se trabajan en consulta, o falta alguna?',
+  '2. ¿Está bien el ORDEN de dificultad? Hoy es sumar < sumar y restar < multiplicar, y lo',
+  '   elegí yo. Con algunos pacientes, restar cuesta más que multiplicar.',
+  '3. ¿La etiqueta es la que usaría el terapeuta al hablar con un colega?',
+  '',
+  '> El identificador **no se renombra nunca**: es la clave con la que queda registrado a qué',
+  '> jugó un paciente. La etiqueta sí se puede cambiar.',
+  '',
+  '| ✓ | Identificador | Etiqueta que ve el terapeuta | Orden |',
+  '|---|---|---|---|',
 );
 
-for (const t of TIPOS_OPERACION) w(`| ☐ | ${cod(t)} | ${ETIQUETA_OPERACION[t]} |`);
+TIPOS_OPERACION.forEach((t, i) => {
+  w(`| ☐ | ${cod(t)} | ${ETIQUETA_OPERACION[t]} | ${i + 1}.º |`);
+});
 
 w(
   '',
