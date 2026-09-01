@@ -254,3 +254,56 @@ test('el aviso de arranque se ve SIN modulos y desaparece con ellos', async ({ p
   expect(html).toContain('id="aviso-arranque"');
   expect(html).toContain('npm run servir');
 });
+
+test('el panel DESGLOSA por ejercicio y no publica un total mezclado', async ({ page }) => {
+  // Medido antes del arreglo: 2 de 2 en Busca y 0 de 3 en Precio justo daban un 40 % de
+  // sesion, que no le paso al paciente en ninguno de los dos ejercicios.
+  await page.goto('/index.html?j=busca&t=100&c=4');
+  await page.waitForFunction(() => /** @type {any} */ (globalThis).__busca?.estado != null);
+
+  for (let r = 0; r < 2; r++) {
+    const nombre = await page.locator('#zona-objetivo .objetivo-nombre').textContent();
+    await page.locator(`.celda[aria-label="${nombre}"]`).first().click();
+    await page.waitForTimeout(250);
+  }
+  await page.locator('.juegos a', { hasText: 'Precio justo' }).click();
+  await page.waitForTimeout(400);
+  // Tres FALLOS deliberados. Pulsar por indice no vale: podria acertar, y entonces el
+  // recuento cambia y el test mide otra cosa cada vez.
+  for (let k = 0; k < 3; k++) {
+    const correcta = await page.evaluate(
+      () => /** @type {any} */ (globalThis).__busca.estado.instrumento.ronda.correcta,
+    );
+    const celdas = page.locator('.celda');
+    const n = await celdas.count();
+    for (let i = 0; i < n; i++) {
+      if ((await celdas.nth(i).getAttribute('aria-label')) !== correcta) {
+        await celdas.nth(i).click();
+        break;
+      }
+    }
+    await page.waitForTimeout(250);
+  }
+
+  await page.locator('.abridor').click();
+  const texto = await page.locator('.panel').innerText();
+
+  expect(texto, 'la precision de sesion manda al desglose').toMatch(/2 ejercicios distintos/);
+  expect(texto, 'y NO publica el 40 % mezclado').not.toMatch(/40 %/);
+  expect(texto, 'Busca al 100 %').toMatch(/100 % — 2 de 2/);
+  expect(texto, 'Precio justo al 0 %').toMatch(/0 % — 0 de 3/);
+});
+
+test('con UN solo ejercicio no hay desglose: seria el mismo numero dos veces', async ({ page }) => {
+  await page.goto('/index.html?j=busca&t=100&c=4');
+  await page.waitForFunction(() => /** @type {any} */ (globalThis).__busca?.estado != null);
+  const nombre = await page.locator('#zona-objetivo .objetivo-nombre').textContent();
+  await page.locator(`.celda[aria-label="${nombre}"]`).first().click();
+  await page.waitForTimeout(300);
+
+  await page.locator('.abridor').click();
+  const texto = await page.locator('.panel').innerText();
+  expect(texto).toMatch(/100 % — 1 de 1/);
+  expect(texto, 'sin desglose').not.toMatch(/ejercicios distintos/);
+  expect((texto.match(/100 % — 1 de 1/g) ?? []).length, 'el numero sale UNA vez').toBe(1);
+});

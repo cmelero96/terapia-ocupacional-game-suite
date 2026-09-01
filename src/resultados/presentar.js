@@ -45,6 +45,9 @@ export const TEXTO_MOTIVO = {
     'pueden separar. Sube el tamaño si quieres medir el eje perceptivo.',
   ejesMezclados:
     'Sin dato: se movieron los dos ejes en la misma sesion. Mueve un eje por sesion.',
+  instrumentosMezclados:
+    'Sin dato de sesion: hay varios ejercicios distintos y su precision no se puede ' +
+    'promediar. Mira el desglose por ejercicio.',
   origenesMezclados:
     'Sin dato: fallo de medicion de tiempo. Es un defecto de software, no de la sesion.',
   relojRetrocedio:
@@ -70,6 +73,17 @@ export function textoDeMotivo(motivo) {
  */
 export function presentarPrecision(resumen) {
   if (resumen.precision === undefined) {
+    // Los dos motivos son distinguibles a proposito, porque piden acciones distintas: uno se
+    // arregla jugando, y el otro mirando el desglose que YA existe.
+    if (resumen.motivoPrecision === 'instrumentosMezclados') {
+      return {
+        etiqueta: 'Aciertos',
+        valor:
+          `Sin dato de sesion: hay ${resumen.instrumentos.length} ejercicios distintos, y su `
+          + 'precision no se puede promediar. Mira el desglose de abajo.',
+        tieneDato: false,
+      };
+    }
     return {
       etiqueta: 'Aciertos',
       valor: 'Sin dato: no hubo ninguna activacion en la sesion.',
@@ -96,6 +110,33 @@ export function presentarPrecision(resumen) {
       `${resumen.intentos} activaciones${nota}`,
     tieneDato: true,
   };
+}
+
+/**
+ * El desglose por instrumento. Es lo que sustituye a la precision de sesion cuando hay mas
+ * de un ejercicio.
+ *
+ * **Una fila por instrumento, con su recuento.** Nunca un total: el total es justamente el
+ * numero que no significa nada. Medido: 2 de 2 en Busca y 0 de 3 en Precio justo daban un
+ * 40 % que no le paso al paciente en ninguno de los dos.
+ *
+ * @param {import('../registro/sesion.js').Resumen} resumen
+ * @param {Record<string, string>} [etiquetas] Nombre legible por instrumento
+ * @returns {Presentado[]}
+ */
+export function presentarPorInstrumento(resumen, etiquetas = {}) {
+  /** @type {Presentado[]} */
+  const filas = [];
+  for (const nombre of resumen.instrumentos) {
+    const v = resumen.porInstrumento.get(nombre);
+    if (v === undefined) continue;
+    filas.push({
+      etiqueta: etiquetas[nombre] ?? nombre,
+      valor: `${Math.round(v.precision * 100)} % — ${v.aciertos} de ${v.intentos} activaciones`,
+      tieneDato: true,
+    });
+  }
+  return filas;
 }
 
 /**

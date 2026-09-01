@@ -11,6 +11,7 @@
 
 import { conflictos, esAplicable, avisos, describirRango } from './conflictos.js';
 import {
+  presentarPorInstrumento,
   presentarPrecision, presentarLatencia, presentarDificultadTolerada,
 } from '../resultados/presentar.js';
 import { resumenSesion } from '../registro/sesion.js';
@@ -20,6 +21,26 @@ import {
   ESCALONES_T, ESCALONES_C, ESCALONES_PROPORCION, escalonMasCercano,
 } from '../dificultad/escalones.js';
 import { variantesDe, observacionesPorVariante } from '../dificultad/contenido.js';
+
+/**
+ * Nombre legible de cada instrumento, para el desglose por ejercicio.
+ *
+ * Vive aquí y no en el índice de la página porque es del panel: lo lee el TERAPEUTA. El
+ * paciente no ve el nombre del ejercicio en ningún sitio.
+ *
+ * @type {Record<string, string>}
+ */
+const ETIQUETA_INSTRUMENTO = {
+  busca: 'Busca / Lince',
+  clasificar: 'Clasificar',
+  denominar: 'Denominación',
+  rellenar: 'Rellenar palabras',
+  ordenar: 'Ordenar palabras',
+  simbolos: 'Símbolos',
+  precios: 'Precio justo',
+  comprar: 'Comprar',
+  tresEnRaya: 'Tres en raya',
+};
 
 /**
  * @typedef {object} EstadoPanel
@@ -344,6 +365,13 @@ export function montarPanel({
 
     const res = resumenSesion(s);
     sec.append(metrica(presentarPrecision(res)));
+    // El desglose por ejercicio. Sustituye a la precisión de sesión cuando hay más de uno, y
+    // no se muestra cuando hay uno solo: repetir el mismo número con otra etiqueta es ruido.
+    if (res.instrumentos.length > 1) {
+      for (const fila of presentarPorInstrumento(res, ETIQUETA_INSTRUMENTO)) {
+        sec.append(metrica(fila));
+      }
+    }
     sec.append(metrica(presentarLatencia(res, {
       resolucionMs: s.resolucionMs, fiableParaPresupuesto: s.fiableParaPresupuesto,
     })));

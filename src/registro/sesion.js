@@ -131,6 +131,11 @@ export function dificultadRegistrada(tablero, config) {
  * @property {number} tablerosIncompletos Cerrados sin resolver. Ver `TableroRegistrado`
  * @property {number} intentosIncompletos Intentos que viven en esos tableros
  * @property {number | undefined} precision
+ *   **`undefined` si la sesión mezcla instrumentos.** Ver `motivoPrecision`
+ * @property {import('../dificultad/constantes.js').MotivoSinMetrica | undefined} motivoPrecision
+ * @property {string[]} instrumentos Los que aparecen en la sesión, en orden de aparición
+ * @property {Map<string, { intentos: number, aciertos: number, precision: number }>} porInstrumento
+ *   El desglose. **Es lo que hay que mirar cuando la sesión mezcla ejercicios**
  * @property {number | undefined} latenciaMedia
  * @property {number} latenciasSinDato
  */
@@ -164,6 +169,38 @@ export function resumenSesion(sesion) {
   const intentos = todos.length;
   const aciertos = todos.filter((i) => i.correcto).length;
 
+  // --- Desglose POR INSTRUMENTO.
+  //
+  // Desde que cambiar de juego conserva la sesión, una sesión con varios ejercicios es el
+  // caso normal: el terapeuta hace tres seguidos con el mismo paciente.
+  //
+  // Y eso rompió la precisión de sesión. Medido: 2 aciertos de 2 en Busca y 0 de 3 en Precio
+  // justo daban un **40 %** — un número que no le pasó al paciente en ninguno de los dos
+  // ejercicios. Es el mismo defecto que el eje de contenido evitó particionando, una capa
+  // más arriba.
+  //
+  // La respuesta es la que el proyecto ya usa tres veces: **antes falta de dato que dato
+  // falso.** Con más de un instrumento, `precision` no existe y dice por qué.
+  /** @type {Map<string, { intentos: number, aciertos: number, precision: number }>} */
+  const porInstrumento = new Map();
+  /** @type {string[]} */
+  const instrumentos = [];
+  for (const t of sesion.tableros) {
+    if (!instrumentos.includes(t.instrumento)) instrumentos.push(t.instrumento);
+    const previo = porInstrumento.get(t.instrumento) ?? { intentos: 0, aciertos: 0, precision: 0 };
+    previo.intentos += t.intentos.length;
+    previo.aciertos += t.intentos.filter((i) => i.correcto).length;
+    porInstrumento.set(t.instrumento, previo);
+  }
+  for (const [, v] of porInstrumento) {
+    v.precision = v.intentos === 0 ? 0 : v.aciertos / v.intentos;
+  }
+
+  /** @type {import('../dificultad/constantes.js').MotivoSinMetrica | undefined} */
+  let motivoPrecision;
+  if (intentos === 0) motivoPrecision = 'datosInsuficientes';
+  else if (instrumentos.length > 1) motivoPrecision = 'instrumentosMezclados';
+
   /** @type {number[]} */
   const definidas = [];
   let sinDato = 0;
@@ -178,7 +215,12 @@ export function resumenSesion(sesion) {
     tableros: sesion.tableros.length,
     tablerosIncompletos,
     intentosIncompletos,
-    precision: intentos === 0 ? undefined : aciertos / intentos,
+    // `undefined` en cuanto haya un motivo. No hay una version "pooled" disponible: si
+    // existiera, alguien la leeria.
+    precision: motivoPrecision === undefined ? aciertos / intentos : undefined,
+    motivoPrecision,
+    instrumentos,
+    porInstrumento,
     latenciaMedia:
       definidas.length === 0
         ? undefined

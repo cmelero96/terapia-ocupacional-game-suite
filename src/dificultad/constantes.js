@@ -68,7 +68,11 @@ export const N_MIN = 5;
  * Los tres motivos son distinguibles a propósito: uno se arregla con más sesiones,
  * otro con otra configuración, y el tercero no usando los dos ejes a la vez.
  *
- * @typedef {'datosInsuficientes' | 'ejesAcoplados' | 'ejesMezclados'} MotivoSinMetrica
+ * El cuarto motivo, `instrumentosMezclados`, se añadió el 2026-09-01 al hacer que una sesión
+ * abarque varios instrumentos. Y es el mismo tipo de defecto que los otros tres: una
+ * precisión calculada sobre dos ejercicios distintos es un número que no le pasó a nadie.
+ *
+ * @typedef {'datosInsuficientes' | 'ejesAcoplados' | 'ejesMezclados' | 'instrumentosMezclados'} MotivoSinMetrica
  */
 
 export {};

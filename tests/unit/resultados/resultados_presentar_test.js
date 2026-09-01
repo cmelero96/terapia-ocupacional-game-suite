@@ -14,7 +14,10 @@ import {
 /** @param {object} [p] @returns {import('../../../src/registro/sesion.js').Resumen} */
 const resumen = (p = {}) => ({
   intentos: 10, aciertos: 8, precision: 0.8, latenciaMedia: 1240, latenciasSinDato: 0,
-  tableros: 2, tablerosIncompletos: 0, intentosIncompletos: 0, ...p,
+  tableros: 2, tablerosIncompletos: 0, intentosIncompletos: 0,
+  motivoPrecision: undefined, instrumentos: ['busca'],
+  porInstrumento: new Map([['busca', { intentos: 10, aciertos: 8, precision: 0.8 }]]),
+  ...p,
 });
 
 // ---------------------------------------------------------------- AC-1, sin ceros
