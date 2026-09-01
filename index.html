@@ -224,6 +224,33 @@
   .fila input[type='range'] { inline-size: 100%; }
   .fila input[type='checkbox'] { inline-size: 24px; block-size: 24px; }
   .valor { font-variant-numeric: tabular-nums; text-align: right; }
+
+  /* Escalones (ADR-0006). Sustituyen a los deslizadores en las cuatro perillas de
+     dificultad: un deslizador se arrastra, y el arrastre esta prohibido como via unica.
+     44px de lado es el minimo AAA de WCAG 2.5.8, y aqui no es negociable: el panel es la
+     interfaz del terapeuta, pero tiene que ser operable con las mismas vias que el
+     tablero. */
+  .fila-escalones { grid-template-columns: 14rem 1fr; }
+  .etiqueta-escalones { font-weight: 500; }
+  .escalones { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  .escalon {
+    min-inline-size: 44px; min-block-size: 44px;
+    padding: 0 0.5rem;
+    font: inherit; font-variant-numeric: tabular-nums;
+    color: var(--frame-ink); background: var(--frame-bg);
+    border: 2px solid var(--frame-line); border-radius: 6px;
+    cursor: pointer;
+  }
+  .escalon[aria-checked='true'] {
+    /* La marca NO es solo color: lleva grosor de borde y peso de texto. En escala de
+       grises, y con colores forzados del sistema, sigue distinguiendose. */
+    border-color: var(--frame-ink); border-width: 3px; font-weight: 700;
+    background: var(--frame-accent-bg, var(--frame-bg));
+  }
+  .escalon:focus-visible { outline: 3px solid var(--frame-focus, currentColor); outline-offset: 2px; }
+  @media (forced-colors: active) {
+    .escalon[aria-checked='true'] { border-color: Highlight; color: Highlight; }
+  }
   .nota { color: var(--frame-ink-soft); font-size: 0.9rem; margin: 0.25rem 0 0; }
 
   /* La distinción entre bloqueo y aviso es de PALABRA, no de tono: un terapeuta con

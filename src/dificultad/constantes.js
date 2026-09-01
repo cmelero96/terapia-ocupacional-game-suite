@@ -24,8 +24,26 @@ export const T_MAX = 140;
 /** Con menos de 3 elementos no hay búsqueda. */
 export const C_MIN = 3;
 
-/** Registro de constantes, compartida con el sistema 1. */
-export const C_MAX = 100;
+/**
+ * Tablero máximo. **Bajado de 100 a 60 el 2026-09-01 — ADR-0006.**
+ *
+ * Los 100 nunca se validaron con nadie: era un número redondo. Y arrastraban el activo más
+ * caro del proyecto, porque el mínimo de imágenes por grupo visual se deriva de aquí:
+ *
+ * ```
+ * Cmax = 100  ->  clusterMin = 26  ->  banco = 416 imágenes
+ * Cmax =  60  ->  clusterMin = 16  ->  banco = 256 imágenes
+ * ```
+ *
+ * **Bajar el techo no recorta una función: elimina 160 imágenes que nadie ha demostrado que
+ * hagan falta.** Un tablero de 100 objetos a 24 px es, además, la esquina donde el pilar 3
+ * ya está roto: los dos ejes dejan de ser independientes por debajo de 44 px.
+ *
+ * CUIDADO al cambiarlo: `nC` se normaliza contra este valor, así que mover `C_MAX` cambia
+ * la dificultad calculada de TODOS los tableros, incluidos los ya registrados. Hoy sale
+ * gratis porque no hay ninguna sesión real. Después de la primera, no.
+ */
+export const C_MAX = 60;
 
 // --- Perillas de proyecto. NINGUNA tiene validación empírica. ----------------
 

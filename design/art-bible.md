@@ -3,7 +3,7 @@
 > **Status**: Draft
 > **Fecha**: 2026-08-26
 > **Autor**: `art-director`, con `accessibility-specialist` como especialista principal
-> **Alcance**: los 384 elementos del banco. No cubre la interfaz del terapeuta
+> **Alcance**: los 256 elementos del banco. No cubre la interfaz del terapeuta
 
 ---
 
@@ -34,7 +34,7 @@ Cinco argumentos, y el quinto es el que lo cierra.
 contraste de Windows no toca los píxeles de un canvas. El mismo argumento aplica al
 formato del activo: un SVG en línea, o referenciado con `<img>` y `currentColor`, responde
 al modo de colores forzados. **Un PNG no.** Para una población de baja visión que eligió
-activamente el alto contraste, un banco de 384 PNG es un banco de 384 elementos que ignoran
+activamente el alto contraste, un banco de 256 PNG es un banco de 256 elementos que ignoran
 esa elección.
 
 **2. Escala sin pérdida, y el tamaño es un parámetro clínico.** El tamaño de objetivo lo
@@ -54,7 +54,7 @@ Es el argumento que la revisión del sistema 2 elevó explícitamente contra el 
 del revisor sénior a recortar alcance, y quedó escrito en el concepto como entrada
 obligatoria de este documento. Se cumple.
 
-**4. Peso.** 384 SVG de línea simple pesan menos que 384 PNG a resolución suficiente para
+**4. Peso.** 256 SVG de línea simple pesan menos que 256 PNG a resolución suficiente para
 140 px en pantalla de alta densidad. Importa porque el despliegue es copiar archivos y
 porque la consulta puede no tener buena conexión.
 
@@ -63,7 +63,7 @@ porque la consulta puede no tener buena conexión.
 El sistema 1 tiene una regla que parece menor y no lo es: **el color no puede ser el
 criterio que separa dos clusters.** Si dos grupos visuales solo se distinguen por matiz, un
 paciente con daltonismo recibe una dificultad que el terapeuta no configuró. Con ráster,
-cumplir eso exige auditar 384 archivos y confiar en que nadie suba uno nuevo que la rompa.
+cumplir eso exige auditar 256 archivos y confiar en que nadie suba uno nuevo que la rompa.
 **Con vector, el color es un atributo que el proyecto controla desde los tokens**, así que
 la regla pasa de auditoría a construcción.
 
@@ -119,7 +119,7 @@ del mismo cluster que el objetivo.
   compartir necesariamente significado, o al revés — pero el cluster tiene que poder
   describirse en una frase.
 - **El color no separa clusters.** La separación debe sobrevivir en escala de grises.
-- Mínimo **24 elementos activos** por cluster (`clusterMin`, derivada, no elegida).
+- Mínimo **16 elementos activos** por cluster (`clusterMin`, derivada, no elegida).
 
 | # | Cluster | Criterio de forma | Ejemplos |
 |---|---|---|---|
@@ -140,16 +140,26 @@ del mismo cluster que el objetivo.
 | 15 | Animales con alas | Cuerpo con apéndices laterales extendidos | pájaro, mariposa, gallina, murciélago |
 | 16 | Vehículos con ruedas | Cuerpo horizontal sobre círculos | coche, bicicleta, autobús, carro |
 
-**24 elementos × 16 clusters = 384.** Coincide con `bancoTotal` del registro, y no por
-casualidad: `clusterMin = 24` se deriva de `Cmax` y `Rmax`, y `G = 16` es el número de
+**16 elementos × 16 clusters = 256.** Coincide con `bancoTotal` del registro, y no por
+casualidad: `clusterMin = 16` se deriva de `Cmax` y `Rmax`, y `G = 16` es el número de
 clusters que hace falta para que la perilla de similitud tenga recorrido.
+
+> **Bajado de 384 a 256 el 2026-09-01 — ADR-0006.** Dos correcciones a la vez. `Cmax` bajó
+> de 100 a 60 porque los 100 nunca se validaron con nadie. Y `clusterMin` estaba derivada de
+> `objetivos(C)`, una fórmula que **ningún módulo del producto invoca**: publicaba 90
+> distractores en el tablero máximo cuando el código real da 99. Corregidas las dos,
+> `clusterMin = ceil(59/4) + 1 = 16`.
+>
+> **128 imágenes menos que producir.** Y ninguna función se pierde: nadie ha demostrado que
+> un tablero de 100 objetos sea clínicamente útil, y a ese recuento el tamaño baja de 44 px,
+> donde el pilar 3 ya está roto porque los dos ejes dejan de ser independientes.
 
 ### Cómo se comprueba que un cluster está bien formado
 
-Un cluster está bien si **un adulto sin daltonismo, viendo los 24 elementos en escala de
+Un cluster está bien si **un adulto sin daltonismo, viendo los 16 elementos en escala de
 grises al tamaño mínimo de 24 px, los confunde entre sí más que con elementos de otro
 cluster.** Eso es exactamente la propiedad que la perilla necesita, y es medible con
-personas antes de producir las 384.
+personas antes de producir las 256.
 
 > **Aviso, y es el mismo tipo que el de la taxonomía de perfiles:** esta tabla de 16
 > clusters es **una propuesta de ingeniería y arte, no una taxonomía validada.** Está
@@ -168,7 +178,7 @@ El manifiesto tiene **dos** campos distintos, y confundirlos rompería la perill
 
 Un tomate está en el cluster 8 (redondeados) y en las categorías `alimento` y `cocina`. Una
 taza está en el cluster 1 y en `cocina` y `bebida`. **Los dos ejes son independientes y el
-colaborador lo confirmó**, y es lo que sostiene el banco de 384 en lugar de ~130.
+colaborador lo confirmó**, y es lo que sostiene el banco de 256 en lugar de ~130.
 
 ---
 
@@ -177,14 +187,14 @@ colaborador lo confirmó**, y es lo que sostiene el banco de 384 en lugar de ~13
 | Requisito | Valor | Por qué |
 |---|---|---|
 | Formato | SVG 1.1, sin `<foreignObject>` | Compatibilidad y sin superficies de ejecución |
-| Lienzo | `viewBox="0 0 100 100"`, cuadrado | Un solo sistema de coordenadas para los 384 |
+| Lienzo | `viewBox="0 0 100 100"`, cuadrado | Un solo sistema de coordenadas para los 256 |
 | Margen interior | 6 unidades mínimo por lado | El objeto no toca el borde a ningún tamaño |
 | Texto | **Ninguno.** Convertido a trazo si el original lo tenía | Un texto sin convertir depende de fuentes del sistema |
 | Ráster incrustado | **Prohibido** | Anularía las cinco razones de elegir vector |
 | Filtros y máscaras | **Prohibidos** | Coste de render y comportamiento inconsistente bajo `forced-colors` |
 | Grupos y transformaciones | Aplanados | Simplifica la normalización y el diff |
 | Color | Declarado con tokens del proyecto, no con literales hex | Es lo que hace que la regla del color se cumpla por construcción |
-| Peso | Objetivo por debajo de 4 KB por archivo | 384 × 4 KB ≈ 1,5 MB de banco completo |
+| Peso | Objetivo por debajo de 4 KB por archivo | 256 × 4 KB ≈ 1,5 MB de banco completo |
 | Nombre de archivo | El identificador más `.svg` | El identificador es la clave. Nunca se renombra |
 
 **El pipeline de normalización es del sistema 13**, no de aquí: aplanar grupos, convertir
@@ -194,7 +204,7 @@ herramienta lo hace cumplir.
 
 ---
 
-## 5. De dónde salen las 384
+## 5. De dónde salen las 256
 
 Cuatro vías, y hay que combinarlas.
 
@@ -206,7 +216,7 @@ Cuatro vías, y hay que combinarlas.
 | **Generación asistida** | Bajo | Calidad irregular y licencias turbias. Un SVG generado suele traer basura estructural | **No para el banco. Sirve para maquetas** |
 
 **Antes de gastar nada:** hay que auditar la cobertura. Para cada uno de los 16 clusters,
-cuántos de los 24 elementos existen ya en una biblioteca de licencia permisiva. **Esa
+cuántos de los 16 elementos existen ya en una biblioteca de licencia permisiva. **Esa
 auditoría es la primera tarea real del carril de arte**, y decide el presupuesto.
 
 **Y la revisión de licencias no es opcional.** Cada archivo del banco necesita su licencia
@@ -225,7 +235,7 @@ verdad**, no los 16 en orden:
    categorías* funcione.
 3. Los doce clusters restantes, después de la primera prueba real.
 
-**96 elementos, no 384, para llegar al primer hito.** Con `Cmax` reducido mientras el banco
+**96 elementos, no 256, para llegar al primer hito.** Con `Cmax` reducido mientras el banco
 crece — y `Cmax` es una perilla clínica que el terapeuta ya controla, así que no es un
 apaño: es el uso previsto del parámetro.
 
@@ -235,9 +245,9 @@ apaño: es el uso previsto del parámetro.
 
 | Suposición | Cómo se comprueba |
 |---|---|
-| **Que los 16 clusters se confundan como esta tabla predice** | Con personas, en escala de grises, al tamaño mínimo. Antes de producir los 384 |
+| **Que los 16 clusters se confundan como esta tabla predice** | Con personas, en escala de grises, al tamaño mínimo. Antes de producir los 256 |
 | Que el estilo de línea plana sea reconocible para personas mayores | Con el colaborador, sobre 20 elementos de muestra |
-| Que 24 elementos por cluster den la sensación de dificultad que el terapeuta espera | En la primera prueba real |
+| Que 16 elementos por cluster den la sensación de dificultad que el terapeuta espera | En la primera prueba real |
 | Que el objetivo de 4 KB por archivo sea alcanzable con el estilo elegido | Midiendo los primeros 20 |
 | Que exista cobertura de licencia permisiva para al menos la mitad de la lista | La auditoría de la sección 5 |
 

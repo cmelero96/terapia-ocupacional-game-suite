@@ -368,7 +368,8 @@ su garantía de uniformidad.
 > **El agotamiento vive dentro de un solo tablero, no entre tableros.** El sistema 1 pide
 > "techo duro **por semilla**", y una semilla es un tablero: en el nivel visual el pool son
 > 23 elementos y el tablero pide hasta 90 señuelos, así que hacen falta cuatro pasadas —
-> `ceil(90/23) = 4 = Rmax`, de donde sale `clusterMin = 24`. El cursor nace y muere dentro
+> `ceil(90/23) = 4 = Rmax`, de donde sale `clusterMin = 24` (recalculada a **16** el
+> 2026-09-01, ADR-0006). El cursor nace y muere dentro
 > de un tablero, y no hay nada que registrar aparte de la semilla.
 >
 > Decirlo "entre tableros consecutivos" importaría un cursor que sobrevive a la generación

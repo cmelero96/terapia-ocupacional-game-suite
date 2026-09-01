@@ -328,7 +328,7 @@ distractores(C) = C − objetivos(C)
 |---|---|---|---|
 | `C` | int | [9, 100] | Elementos totales del tablero |
 | `Cmin` | int, constante | 9 | Tablero mínimo |
-| `Cmax` | int, perilla | [50, 150] · **100** | Tablero máximo que el producto permite |
+| `Cmax` | int, perilla | [30, 100] · **60** | Tablero máximo que el producto permite. **Bajado de 100 a 60 — ADR-0006** |
 | `objetivosMin` | int, perilla | [2, 5] · **3** | Objetivos en el tablero mínimo |
 | `objetivosMax` | int, perilla | [8, 15] · **10** | Objetivos en el tablero máximo |
 | `objetivos(C)` | int, salida | [3, 10] | Elementos correctos a encontrar |
@@ -389,7 +389,7 @@ entonces `|pool_semantica| = unionCategorias(t) − |pool_visual(t)|` y
 `|pool_ninguna| = (N−1) − unionCategorias(t)`. Sin esa regla, la sustracción daría un
 número menor que el real, o incluso negativo.
 
-**Ejemplo** con `N = 384`, objetivo `manzana-roja` (`["frutas","cocina","alimentos"]`,
+**Ejemplo** con `N = 384` (el banco de entonces; hoy 256 — ADR-0006), objetivo `manzana-roja` (`["frutas","cocina","alimentos"]`,
 cluster `redondo-liso`, clusterSize 24):
 
 | Pool | Cálculo | Tamaño |
@@ -436,29 +436,41 @@ rebarajar. Sigue siendo puro y reproducible; solo cambia el algoritmo de consumo
 
 ### F4 — `clusterMin(Cmax, Rmax)`
 
+> **CORREGIDA el 2026-09-01 — ADR-0006.** La versión anterior decía
+> `ceil(distractores(Cmax) / Rmax) + 1 = 24`, con `Cmax = 100`. Dos errores encadenados:
+>
+> 1. **`distractores()` es una fórmula muerta.** Publicaba 90 distractores en el tablero de
+>    100; el código hace `nD = C − 1 = 99`, y **ningún módulo de `src/` invoca F1**. El
+>    producto entero asume UN objetivo por tablero.
+> 2. **`Cmax = 100` nunca se validó con nadie.** Era un número redondo, y arrastraba el
+>    activo más caro del proyecto.
+>
+> Corregidas las dos: **el banco pasa de 384 a 256 imágenes.** 128 menos que producir, sin
+> perder ninguna función.
+
 ```
-clusterMin(Cmax, Rmax) = ceil( distractores(Cmax) / Rmax ) + 1
+clusterMin(Cmax, Rmax) = ceil( (Cmax − 1) / Rmax ) + 1
 ```
 
 | Variable | Tipo | Rango | Descripción |
 |---|---|---|---|
-| `Cmax` | int, perilla | [50, 150] · **100** | Tablero máximo |
+| `Cmax` | int, perilla | [30, 100] · **60** | Tablero máximo |
 | `Rmax` | int, perilla | [2, 6] · **4** | Repeticiones medias máximas por distractor, nivel visual, en el tablero máximo |
-| `distractores(Cmax)` | int | 90 con los valores propuestos | Resultado de F1 en el tablero máximo |
-| `clusterMin` | int, **derivada** | **[2, ∞) · 24** | Mínimo de elementos activos por grupo visual |
+| `Cmax − 1` | int | **59** | Distractores en el tablero máximo. Un objetivo por tablero |
+| `clusterMin` | int, **derivada** | **[2, ∞) · 16** | Mínimo de elementos activos por grupo visual |
 
 **Rango de salida:** entero en [2, ∞), sin techo. Crece cuando `Rmax` baja o `Cmax`
 sube. **Es la variable con más impacto económico de todo el sistema**, porque
 multiplica por `G` para dar el coste total de contenido.
 
-| `Rmax` | `clusterMin` |
-|---|---|
-| 5 | 19 |
-| **4** | **24** |
-| 3 | 31 |
-| 2 | 46 |
+| `Rmax` | `clusterMin` | Banco (× 16 clusters) |
+|---|---|---|
+| 5 | 13 | 208 |
+| **4** | **16** | **256** |
+| 3 | 21 | 336 |
+| 2 | 31 | 496 |
 
-**Valor fijado: `clusterMin = 24`.** Esto sustituye el rango "aproximadamente 23-30"
+**Valor fijado: `clusterMin = 16`.** Esto sustituye el rango "aproximadamente 23-30"
 que aparecía en `game-concept.md` y en el informe del prototipo. Un rango no es una
 entrada válida de una validación: ahora es un entero derivado de dos perillas.
 
@@ -528,11 +540,13 @@ fácil de subestimar.
 representados** entre sus miembros, o el nivel `semantica` se colapsa dentro de
 `visual` para esa categoría. Con 8 categorías y sin reutilizar clusters: `G ≥ 16`.
 
-| Escenario | G | bancoTotal |
-|---|---|---|
-| Sin reutilización cruzada | 16 | **384** |
-| **Con reutilización vía etiquetado múltiple** | 13 | **312** |
-| Con `Rmax = 3` en vez de 4 | 16 | 496 |
+Todas las cifras recalculadas el 2026-09-01 con `clusterMin = 16` — ADR-0006.
+
+| Escenario | G | bancoTotal | Antes (clusterMin 24) |
+|---|---|---|---|
+| Sin reutilización cruzada | 16 | **256** | 384 |
+| **Con reutilización vía etiquetado múltiple** | 13 | **208** | 312 |
+| Con `Rmax = 3` en vez de 4 | 16 | 336 | 496 |
 
 El escenario 2 es el ahorro real que el esquema multi-categoría habilita y que el
 concepto original no anticipaba.
@@ -544,7 +558,8 @@ concepto original no anticipaba.
 > fotografía de stock de alimentos falla, hay horas sin presupuestar — y eso
 > invalida en silencio el número sobre el que se apoya la decisión de producción.
 > `tools-programmer` estima además **30-40 horas reales** de autoría para 384
-> entradas, cifra que este documento tampoco daba.
+> entradas, cifra que este documento tampoco daba. Escalada a las 256 de ADR-0006 son
+> **20-27 horas**, y el aviso del recoloreado sigue vigente: la estimación no lo incluye.
 
 **La mitad oculta del coste:** cada asset exige 8 campos obligatorios curados a mano
 — `id`, `file`, `categories`, `cluster`, `name`, `status` — entre
@@ -849,7 +864,7 @@ estándares de test. Hoy el validador no existe.*
 **ENTONCES** todo `file` existe, o el build falla con el mismo formato de error.
 
 **AC-6 — Cluster por debajo del mínimo** · Unit · **BLOCKING**
-*Desbloqueado: la Sección D fija `Cmax = 100`, `Rmax = 4`, `clusterMin = 24`.*
+*Desbloqueado: la Sección D fija `Cmax = 60`, `Rmax = 4`, `clusterMin = 16` (ADR-0006).*
 **DADO** un manifiesto con un cluster de exactamente 23 elementos activos
 (`clusterMin − 1`),
 **CUANDO** se ejecuta el validador,

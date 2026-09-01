@@ -173,7 +173,7 @@ Del paciente:
 
 **Son dos ejes independientes, no una escalera única.** **CONFIRMADO por el colaborador
 clínico el 2026-08-26** (sesión 2, pregunta 0.1). Era la pregunta con consecuencia
-económica directa: la confirmación fija el banco en **384 elementos** y descarta la
+económica directa: la confirmación fija el banco en **dos ejes** —256 elementos tras ADR-0006, 384 cuando se escribió esto— y descarta la
 hipótesis de ~130 que habría fusionado los dos ejes.
 
 | Eje | Perillas | Qué exige al paciente |
@@ -685,7 +685,7 @@ clara y delega en el equipo de desarrollo**. Se construye una versión provision
 | **Art Pipeline Complexity** | Baja al principio: imágenes de stock. **Sube a media o alta después**: la coherencia de estilo entre cientos de elementos de stock es el coste real oculto del proyecto |
 | **Audio Needs** | Mínimas. Un sonido suave de acierto. Sin música. Sin sonido de error, por el pilar 2 |
 | **Networking** | Ninguna hasta el Nivel 3 |
-| **Content Volume** | **Se dimensiona por distribución, no por total.** Nivel 0: 30 imágenes. Nivel 1: `clusterMin = 24` por grupo visual × 16 grupos = **384**, o 312 con reutilización de clusters. Ver "Regla de distribución" abajo |
+| **Content Volume** | **Se dimensiona por distribución, no por total.** Nivel 0: 30 imágenes. Nivel 1: `clusterMin = 16` por grupo visual × 16 grupos = **256** (ADR-0006, antes 384), o menos con reutilización de clusters. Ver "Regla de distribución" abajo |
 | **Procedural Systems** | La generación de tableros es procedural por diseño (pilar 4). El banco de imágenes se referencia por identificador desde un manifiesto con metadatos; el juego nunca referencia un archivo directamente, para poder sustituir el stock sin reescribir instrumentos |
 
 ### El banco de imágenes es infraestructura compartida
@@ -717,16 +717,23 @@ Con la similitud visual en su nivel máximo, el pool de distractores disponibles
 > documento decía "23 a 30 elementos por grupo visual". Un rango no es una entrada
 > válida de validación, y así lo rechazó `qa-lead`. Ahora es un entero derivado.
 
-**`clusterMin = ceil(distractores(Cmax) / Rmax) + 1 = 24`**, con `Cmax = 100` y
-`Rmax = 4`. No se fija a mano: se deriva de esas dos perillas. Bajar `Rmax` a 3
-sube `clusterMin` a 31; subirlo a 5 lo baja a 19.
+**`clusterMin = ceil((Cmax − 1) / Rmax) + 1 = 16`**, con `Cmax = 60` y `Rmax = 4`.
+No se fija a mano: se deriva de esas dos perillas. Bajar `Rmax` a 3 sube
+`clusterMin` a 21; subirlo a 5 lo baja a 13.
+
+> **Corregido el 2026-09-01 — ADR-0006.** Este párrafo decía 24, con `Cmax = 100` y
+> `distractores(Cmax)`. Dos errores encadenados. `distractores()` es **una fórmula
+> muerta**: publicaba 90 distractores en el tablero de 100 cuando el código real hace
+> `nD = C − 1 = 99`, y ningún módulo del producto la invoca. Y `Cmax = 100` nunca se
+> validó con nadie. Con `Cmax = 60` y la fórmula real, `clusterMin = 16`.
 
 Con menos elementos por grupo, los niveles altos de dificultad dejan de entrenar
 discriminación visual y pasan a ser repetición bruta de pocos iconos.
 
-**Tamaño total del banco: 384 imágenes** con 16 clusters al mínimo. Baja a **312**
+**Tamaño total del banco: 256 imágenes** con 16 clusters al mínimo. Baja más aún
 si un mismo cluster visual sirve a más de una categoría mediante etiquetado
-múltiple. El modelo antiguo de "categorías × grupos por categoría × tamaño" ya no
+múltiple. **Son 128 imágenes menos que las 384 planificadas**, y sin perder ninguna
+función: ver ADR-0006. El modelo antiguo de "categorías × grupos por categoría × tamaño" ya no
 aplica: **las categorías son etiquetas transversales y no multiplican el coste.**
 Añadir una categoría semántica cuesta cero imágenes nuevas; solo producir un
 cluster visual nuevo cuesta contenido.
@@ -945,7 +952,7 @@ necesidad.
 | Tier | Content | Features | Timeline |
 | ---- | ---- | ---- | ---- |
 | **MVP (Nivel 0 — Prototipo)** | 1 instrumento, 30 imágenes de stock | Perillas manuales en pantalla, sin persistencia | Semanas |
-| **Vertical Slice (Nivel 1 — Entregable)** | 1 instrumento, banco dimensionado por distribución: **384 imágenes**, o 312 con reutilización de clusters. Ver Content Volume | Añade panel del terapeuta, perfiles locales, dificultad adaptativa dentro de rango, registro exportable | 2-3 meses |
+| **Vertical Slice (Nivel 1 — Entregable)** | 1 instrumento, banco dimensionado por distribución: **256 imágenes** (ADR-0006; antes 384), o menos con reutilización de clusters. Ver Content Volume | Añade panel del terapeuta, perfiles locales, dificultad adaptativa dentro de rango, registro exportable | 2-3 meses |
 | **Alpha (Nivel 2 — Catálogo)** | 3 instrumentos reutilizando banco y capa de entrada. Candidatos: clasificar por categorías, transcribir símbolos, precio justo | Prueba que la plataforma escala con instrumentos nuevos | +4-6 meses |
 | **Full Vision** | Catálogo completo, composición de sesiones, informes, práctica en casa (Nivel 3) | Cuentas, servidor, RGPD, seguridad. Las obligaciones regulatorias entran aquí, de forma explícita | 18-30 meses |
 

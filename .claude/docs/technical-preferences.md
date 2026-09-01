@@ -111,6 +111,12 @@
 - **Declarar tokens de color en `:root`.** Los tokens del marco viven en `.frame-root` y
   los del tablero en `.board-root`, que son hermanos y por tanto no heredan entre sí. Y
   esos dos contenedores **nunca se anidan**
+- **Un `<input type="range">` para una perilla de dificultad.** Se opera arrastrando, y el
+  arrastre está prohibido como vía única (WCAG 2.5.7). Era la única parte del producto que
+  fallaba su propia regla de entrada, y ningún test lo vio porque todos usaban `.fill()`,
+  que salta el gesto. Las cuatro perillas son **escalones** — ADR-0006. Un deslizador es
+  admisible sólo para un continuo que no entre en el registro, como el tiempo de vuelta del
+  barrido
 - **Usar el color como criterio que separa dos grupos visuales (clusters).** La
   separación debe sobrevivir en escala de grises. Si dos clusters solo se distinguen
   por matiz, un paciente con daltonismo recibe una dificultad que el terapeuta no
@@ -159,6 +165,8 @@ Herramientas declaradas:
   nominal en JSDoc como mecanismo de aplicación, en lugar de análisis semántico en CI
 - [ADR-0005](../../docs/architecture/0005-dom-contra-canvas.md) — DOM para el área de
   juego. Los colores forzados del sistema operativo no funcionan sobre un canvas
+- [ADR-0006](../../docs/architecture/0006-techo-del-tablero-y-escalones.md) — `Cmax` baja a
+  60 y el banco a 256 imágenes; las perillas de dificultad pasan a escalones
 
 ADR pendientes:
 

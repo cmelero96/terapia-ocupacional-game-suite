@@ -9,6 +9,7 @@
  */
 
 import { test, expect } from '@playwright/test';
+import { elegirEscalon } from '../ayudas/panel.js';
 
 /** @param {import('@playwright/test').Page} page */
 const intentos = (page) => page.evaluate(
@@ -37,7 +38,7 @@ test('S1 — aplicar una configuracion NO destruye la sesion', async ({ page }) 
   expect(antes.tableros).toBe(2);
 
   await page.locator('.abridor').click();
-  await page.locator('#perilla-t').fill('100');
+  await elegirEscalon(page, 't', 100);
   await page.locator('.accion.primaria').click();
   await page.waitForTimeout(400);
 

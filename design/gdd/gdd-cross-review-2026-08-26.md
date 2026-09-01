@@ -12,6 +12,37 @@ bloqueantes **ya están en el código**, así que no son correcciones de documen
 
 ---
 
+## Estado de los bloqueantes — actualizado el 2026-09-01
+
+**Nueve de los trece, cerrados.** El resto está aparcado por decisión explícita, no por
+olvido.
+
+| # | Bloqueante | Estado |
+|---|---|---|
+| **C1** | `Cmin` definida dos veces (9 y 3) | **CERRADO** — ADR-0006. No era un conflicto clínico: el 9 era el dominio de una fórmula muerta. `Cmin = 3` |
+| **C2** | Gesto contra botón para abrir el panel | **CERRADO** — ADR-0006. Botón visible: un gesto que el terapeuta no recuerda lo deja fuera de su herramienta |
+| **C3** | El concepto prohíbe sliders; el panel usa sliders | **CERRADO** — ADR-0006. Escalones. Y el argumento decisivo no era el del concepto: **un deslizador se arrastra**, y el arrastre está prohibido |
+| **C4** | `clusterMin` derivada de una fórmula muerta | **CERRADO** — ADR-0006. Y con una respuesta que este informe no anticipó: el banco no sube a 416, **baja a 256**, porque `Cmax` bajó de 100 a 60 a la vez |
+| **C5** | La fila 24 del índice omite el sistema 8 | **CERRADO** — corregido en el índice |
+| **D1** | Los tres mecanismos del pilar 1 sin implementar | **ACEPTADO** — ADR-0006, decisión 5. La primera prueba se hace con el panel completo. **El tiempo de configuración medido no valida el presupuesto de 30 segundos** |
+| **D2** | La habituación no tiene dueño | **APARCADO** — ADR-0006, decisión 6. Sigue abierto, con el coste anotado: toda medida de progreso obtenida antes de resolverlo está contaminada |
+| **S1** | Aplicar una configuración destruye el registro | **CERRADO** — `sesion-viva.js`. Verificado en el navegador |
+| **S2** | El registro no es por tablero | **CERRADO** — un registro por tablero. Medido: reportaba 80 en lugar de 60 |
+| **S3** | Dos de las cinco vías de acceso sin conectar | **CERRADO** — barrido y permanencia montados y verificados en el navegador |
+| **S4** | El caso límite de intentos incompletos no existe | **ABIERTO** |
+
+**Lo que sigue abierto y no está en la tabla:** el propio aviso de alcance de más abajo. El
+pase de consistencia no terminó y dejó **166 criterios de aceptación cruzados sin
+comprobar**. El recuento de trece sigue siendo un **suelo**.
+
+**Hallazgo que ninguna de las dos revisiones encontró**, y que apareció al implementar C3:
+el deslizador del panel era la única parte del producto que **fallaba su propia regla de
+entrada**. Ningún test lo vio porque todos usaban `.fill()`, que escribe el valor sin hacer
+el gesto. Un pase de consistencia sobre documentos no podía verlo: los documentos decían la
+regla correcta.
+
+---
+
 ## Aviso de alcance, primero
 
 **El pase de consistencia no terminó.** Agotó su límite de turnos tras 237.000 tokens y 37

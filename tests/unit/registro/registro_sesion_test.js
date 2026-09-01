@@ -144,8 +144,8 @@ test('test_la_dificultad_registrada_es_la_EFECTIVA', () => {
     svPedida: 0.8, ssPedida: 0.8, svEfectiva: 9 / 11, ssEfectiva: 2 / 11,
   };
   const d = dificultadRegistrada(tablero, { t: 60, C: 12 });
-  assert.equal(d.dp, 40.1, 'la registrada sale de las efectivas');
-  assert.equal(d.dpPedida, 51.7, 'y la pedida se guarda tambien');
+  assert.equal(d.dp, 42.7, 'la registrada sale de las efectivas');
+  assert.equal(d.dpPedida, 54.3, 'y la pedida se guarda tambien');
   assert.equal(d.dm, 48.0);
   // El error va siempre hacia arriba: guardar solo la pedida sobrestimaria.
   assert.ok(d.dpPedida > d.dp);

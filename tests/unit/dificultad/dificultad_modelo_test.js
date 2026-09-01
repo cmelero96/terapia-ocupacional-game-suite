@@ -40,12 +40,15 @@ test('test_dm_es_monotona_decreciente_y_acotada', () => {
 test('test_canario_F2_la_tabla_publicada_exacta', () => {
   /** @type {[number, number, number, number][]} */
   const tabla = [
+    // Recalculada el 2026-09-01 al bajar C_MAX de 100 a 60 (ADR-0006). `nC` se normaliza
+    // contra C_MAX, asi que el techo mueve la dificultad de TODOS los tableros: el mismo
+    // tablero de 12 objetos pasa de 3,7 a 6,3. Ejecutada, no recordada.
     [3, 0, 0, 0.0],
-    [12, 0, 0, 3.7],
-    [12, 0.5, 0, 23.7],
-    [12, 0, 0.5, 13.7],
-    [40, 0.5, 0.5, 45.3],
-    [100, 1, 1, 100.0],
+    [12, 0, 0, 6.3],
+    [12, 0.5, 0, 26.3],
+    [12, 0, 0.5, 16.3],
+    [40, 0.5, 0.5, 56.0],
+    [60, 1, 1, 100.0],
   ];
   for (const [C, sv, ss, esperado] of tabla) {
     assert.equal(dp(C, sv, ss), esperado, `dp(${C}, ${sv}, ${ss})`);

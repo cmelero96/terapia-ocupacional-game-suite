@@ -88,6 +88,8 @@ visual y lo que cambia es la cantidad, el pilar 3 está roto aunque los números
 
    El techo es `ceil(n / |pool|)` apariciones de cada elemento. Con el pool visual de 23 y
    90 distractores, son 4 — que es exactamente `Rmax`, de donde salió `clusterMin = 24`.
+   **Corregido el 2026-09-01, ADR-0006:** los 90 venían de `distractores()`, una fórmula
+   muerta; el código hace `nD = C − 1`. Con `Cmax = 60`, `clusterMin = 16`.
 5. **Un objetivo, siempre exactamente uno.** El instrumento decide cuál es el correcto; este
    sistema garantiza que hay uno y solo uno, y que **no aparece también como distractor**.
 6. **Un tablero se reproduce con la semilla más la configuración más la versión del

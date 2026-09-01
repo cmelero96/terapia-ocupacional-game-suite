@@ -8,21 +8,31 @@
 # Actualizado por /design-system y verificado por /consistency-check.
 
 constants:
-  - name: Cmin
-    value: 9
-    unit: elementos
-    description: Tablero mínimo. Dominio inferior de objetivos(C).
-    source: design/gdd/manifiesto-banco-imagenes.md
-    referenced_by:
-      - design/gdd/manifiesto-banco-imagenes.md
+  # RETIRADA el 2026-09-01, ADR-0006. Era el bloqueante C1 de la revisión cruzada:
+  # Cmin estaba definida dos veces, con 9 aquí y 3 en modelo-dificultad.md, y el código
+  # usa 3. No era un conflicto clínico: el 9 era el dominio inferior de objetivos(C),
+  # una fórmula que ningún módulo de src/ invoca. Al retirar la fórmula, el 9 se queda sin
+  # nada que dimensionar. Cmin es 3 — un objetivo y dos distractores— y vive una sola vez,
+  # más abajo, con modelo-dificultad.md como fuente.
+  #
+  # - name: Cmin
+  #   value: 9
 
   - name: Cmax
-    value: 100
+    value: 60
     unit: elementos
     description: >
       Tablero máximo que el producto permite. Dimensiona el banco de imágenes
       entero: subirlo después obliga a producir más contenido.
-    safe_range: [50, 150]
+      BAJADO DE 100 A 60 el 2026-09-01, ADR-0006. Los 100 no se validaron con
+      nadie: era un número redondo, y arrastraba el activo más caro del proyecto.
+      El efecto es 160 imágenes menos (416 -> 256). Un tablero de 100 objetos es
+      además la esquina donde el pilar 3 ya está roto, porque a ese recuento el
+      tamaño baja de 44 px y los dos ejes dejan de ser independientes.
+      CUIDADO: nC se normaliza contra este valor, así que moverlo cambia la
+      dificultad calculada de TODOS los tableros, incluidos los ya registrados.
+      El 2026-09-01 salía gratis porque no había ninguna sesión real.
+    safe_range: [30, 100]
     source: design/gdd/manifiesto-banco-imagenes.md
     referenced_by:
       - design/gdd/manifiesto-banco-imagenes.md
@@ -63,7 +73,7 @@ constants:
       - design/gdd/game-concept.md
 
   - name: clusterMin
-    value: 24
+    value: 16
     unit: elementos por grupo visual
     derived: true
     derivation: ceil(distractores(Cmax) / Rmax) + 1
@@ -72,15 +82,19 @@ constants:
       se fija a mano. Sustituye el rango "aproximadamente 23-30" que aparecía
       antes en game-concept.md, que no era una entrada válida de validación.
       ESCALÓN DE APLICACIÓN POR NIVEL: en el Nivel 0 (MVP, 30 imágenes en total)
-      es ADVERTENCIA, porque ningún reparto de 30 imágenes satisface un mínimo de
-      24 y el primer manifiesto sería inválido por construcción. Del Nivel 1 en
+      es ADVERTENCIA, porque ningún reparto de 30 imágenes satisface el mínimo y el
+      primer manifiesto sería inválido por construcción. Del Nivel 1 en
       adelante BLOQUEA el build. El escalón existe para que la salida fácil no sea
       bajar clusterMin, que es lo único que hace real la perilla de similitud visual.
       CONFIRMADA CLÍNICAMENTE el 2026-08-26: el colaborador confirmó que la
       similitud semántica y la visual son ejes distintos (sesión 2, pregunta 0.1),
-      así que el banco es la rama de 384 elementos (16 x 24) y NO la de ~130 que
-      habría resultado de fusionar los dos ejes. Esta derivación queda validada,
-      no solo derivada.
+      así que el banco tiene DOS ejes y NO la rama de ~130 que habría resultado de
+      fusionarlos. Esa parte queda validada, no solo derivada.
+      RECALCULADA el 2026-09-01, ADR-0006: con Cmax = 60 y la fórmula real de
+      distractores (nD = C - 1 = 59, no la muerta que decía 54), sale
+      ceil(59/4) + 1 = 16, y el banco 16 x 16 = 256 elementos. El 24 anterior
+      estaba derivado de objetivos(C), una fórmula que ningún módulo de src/
+      invoca nunca. Se eligió el número más alto de los dos candidatos.
     source: design/gdd/manifiesto-banco-imagenes.md
     referenced_by:
       - design/gdd/manifiesto-banco-imagenes.md
@@ -217,23 +231,34 @@ constants:
 
 formulas:
   - name: objetivos
+    status: MUERTA
     expression: >
       clamp(round(objetivosMin + (objetivosMax - objetivosMin) * (C - Cmin) / (Cmax - Cmin)),
       objetivosMin, objetivosMax)
     variables: [C, Cmin, Cmax, objetivosMin, objetivosMax]
     output_range: [3, 10]
     description: >
-      Objetivos a encontrar en un tablero de C elementos. SUSTITUYE a
-      max(3, round(C * 0.1)), que producía una meseta inicial de 26 muescas
-      seguida de mesetas de 10 y contaminaba la comparación longitudinal.
+      MUERTA desde el 2026-09-01, ADR-0006. NINGÚN módulo de src/ la invoca, y el
+      producto contradice su premisa: generacion-tableros.md e instrumento-busca.md
+      declaran UN objetivo por tablero, y generador.js hace nD = C - 1.
+      Se conserva documentada, no borrada, porque durante meses derivó clusterMin y
+      por tanto el presupuesto de contenido entero: publicaba distractores(100) = 90
+      cuando el código real da 99. Un lector que encuentre el 24 antiguo en un
+      documento sin actualizar necesita poder llegar hasta aquí.
+      Si algún día hace falta un instrumento de VARIOS objetivos por tablero, la
+      decisión se retoma desde cero: no se resucita esta fórmula.
     source: design/gdd/manifiesto-banco-imagenes.md
     referenced_by:
       - design/gdd/manifiesto-banco-imagenes.md
 
   - name: distractores
+    status: MUERTA
     expression: C - objetivos(C)
     variables: [C]
     output_range: [6, 90]
+    description: >
+      MUERTA desde el 2026-09-01, ADR-0006. La real es nD = C - 1, en
+      src/tablero/generador.js. Ver la nota de objetivos().
     source: design/gdd/manifiesto-banco-imagenes.md
     referenced_by:
       - design/gdd/manifiesto-banco-imagenes.md
@@ -252,9 +277,13 @@ formulas:
       - design/gdd/manifiesto-banco-imagenes.md
 
   - name: clusterMin
-    expression: ceil(distractores(Cmax) / Rmax) + 1
+    expression: ceil((Cmax - 1) / Rmax) + 1
     variables: [Cmax, Rmax]
     output_range: [2, null]
+    description: >
+      CORREGIDA el 2026-09-01, ADR-0006. Antes usaba distractores(Cmax), que es
+      MUERTA y devolvía 90 para Cmax = 100 en lugar de 99. Ahora usa Cmax - 1, que es
+      lo que hace el código. Con Cmax = 60 y Rmax = 4: ceil(59/4) + 1 = 16.
     source: design/gdd/manifiesto-banco-imagenes.md
     referenced_by:
       - design/gdd/manifiesto-banco-imagenes.md
@@ -274,10 +303,11 @@ formulas:
   - name: bancoTotal
     expression: sum(clusterSize(g) for g in 1..G)
     variables: [G, clusterSize]
-    output_range: [312, null]
+    output_range: [208, null]
     description: >
-      Imágenes únicas totales. 384 con 16 clusters al mínimo; 312 si se reutilizan
-      clusters entre categorías. El modelo antiguo "categorías x grupos x tamaño"
+      Imágenes únicas totales. 256 con 16 clusters al mínimo (ADR-0006, 2026-09-01);
+      antes 384, con clusterMin = 24 derivada de una fórmula muerta. Menos si se
+      reutilizan clusters entre categorías. El modelo antiguo "categorías x grupos x tamaño"
       ya no aplica: las categorías son etiquetas transversales y no multiplican.
     source: design/gdd/manifiesto-banco-imagenes.md
     referenced_by:

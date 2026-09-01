@@ -207,8 +207,10 @@ test('test_dp_recalculada_con_las_efectivas_difiere_cuando_sv_mas_ss_pasa_de_1',
 
   const dpPedida = dp(12, t.svPedida, t.ssPedida);
   const dpEfectiva = dp(12, t.svEfectiva, t.ssEfectiva);
-  assert.equal(dpPedida, 51.7);
-  assert.equal(dpEfectiva, 40.1);
+  // Recalculadas al bajar C_MAX a 60 (ADR-0006). La DIFERENCIA no cambia —11,6— porque
+  // `nC` no depende de sv ni de ss: el techo desplaza las dos por igual.
+  assert.equal(dpPedida, 54.3);
+  assert.equal(dpEfectiva, 42.7);
   // El error va SIEMPRE hacia arriba: registrar la pedida sobrestimaria la dificultad
   // que el paciente afronto de verdad.
   assert.ok(dpPedida > dpEfectiva);

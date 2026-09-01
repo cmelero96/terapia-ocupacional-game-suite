@@ -220,9 +220,13 @@ test('la activación ocurre al soltar, y salir del objetivo la aborta', async ({
 // ---------------------------------------------------------------- AC-6, AC-7
 
 test('AC-6 y AC-7 — los presupuestos, MEDIDOS y publicados', async ({ page }) => {
-  // `rep=4` repite el banco provisional de 32 para llegar a 100. Es un andamio de
-  // medición declarado, no una función de producto: el banco real tendrá 96 elementos.
-  await page.goto(`${url(60, 100)}&rep=4`);
+  // El peor caso es C_MAX, y C_MAX bajó de 100 a 60 el 2026-09-01 (ADR-0006). El
+  // presupuesto se mide en el techo REAL del producto: medirlo en 100 mediría una
+  // configuración que el panel ya no permite pedir.
+  //
+  // `rep=2` repite el banco provisional de 32 para llegar a 60. Es un andamio de medición
+  // declarado, no una función de producto: el banco real tendrá 256 elementos.
+  await page.goto(`${url(60, 60)}&rep=2`);
 
   const resolucion = await page.evaluate(
     () => /** @type {any} */ (globalThis).__busca?.estado?.resolucion ?? null,
@@ -234,7 +238,8 @@ test('AC-6 y AC-7 — los presupuestos, MEDIDOS y publicados', async ({ page }) 
     return performance.now() - t0;
   });
 
-  await expect(page.locator('.celda')).toHaveCount(100);
+  await expect(page.locator('.celda')).toHaveCount(60);
+  const nCeldas = await page.locator('.celda').count();
 
   const caja = await page.locator('.celda').first().boundingBox();
   const t0 = Date.now();
@@ -247,13 +252,13 @@ test('AC-6 y AC-7 — los presupuestos, MEDIDOS y publicados', async ({ page }) 
   console.log('\n  === presupuestos medidos ===');
   console.log(`  resolución del reloj monótono: ${resolucion?.resolucionMs} ms ` +
     `(fiable: ${resolucion?.fiableParaPresupuesto})`);
-  console.log(`  render de 100 elementos DOM:   ${render.toFixed(2)} ms  (presupuesto 16,6)`);
+  console.log(`  render de ${nCeldas} elementos DOM:    ${render.toFixed(2)} ms  (presupuesto 16,6)`);
   console.log(`  latencia hasta el acuse:       ${latencia} ms  (presupuesto 100)`);
   console.log('  Nota: la latencia incluye la ida y vuelta del protocolo de Playwright,');
   console.log('  así que es una COTA SUPERIOR generosa, no la latencia real del gesto.\n');
 
   // ADR-0005 dejó esto como predicción sin medir. Aquí se mide.
-  expect(render, `render de 100 elementos: ${render.toFixed(2)} ms`).toBeLessThan(16.6);
+  expect(render, `render de ${nCeldas} elementos: ${render.toFixed(2)} ms`).toBeLessThan(16.6);
   expect(resolucion?.fiableParaPresupuesto).toBe(true);
 });
 

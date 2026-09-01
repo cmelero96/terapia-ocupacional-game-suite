@@ -6,6 +6,7 @@
  */
 
 import { test, expect } from '@playwright/test';
+import { elegirEscalon } from '../ayudas/panel.js';
 
 /** @param {string} j @param {Record<string, string|number>} [extra] */
 const url = (j, extra = {}) => {
@@ -194,7 +195,7 @@ test('EL BLOQUEANTE S2: el registro es POR TABLERO', async ({ page }) => {
 test('el instrumento elegido sobrevive a aplicar una configuración', async ({ page }) => {
   await page.goto(url('denominar'));
   await page.locator('.abridor').click();
-  await page.locator('#perilla-t').fill('80');
+  await elegirEscalon(page, 't', 80);
   await page.locator('.accion.primaria').click();
   await expect(page.locator('.abridor')).toBeVisible();
 

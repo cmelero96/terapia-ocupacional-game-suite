@@ -4,6 +4,7 @@
  */
 
 import { test, expect } from '@playwright/test';
+import { elegirEscalon } from '../ayudas/panel.js';
 
 /** @param {Record<string, string|number>} [extra] */
 const url = (extra = {}) => {
@@ -73,7 +74,7 @@ test('AC-3 — aplicar surte efecto en el tablero siguiente, sin diálogo de con
   await page.goto(url({ t: 60 }));
   await page.locator('.abridor').click();
 
-  await page.locator('#perilla-t').fill('100');
+  await elegirEscalon(page, 't', 100);
   const dialogosAntes = await page.locator('[role="dialog"]').count();
 
   await page.locator('.accion.primaria').click();
@@ -114,7 +115,7 @@ test('AC-6 — una configuración inválida no se puede aplicar, y el mensaje no
   await page.goto(url());
   await page.locator('.abridor').click();
 
-  await page.locator('#perilla-c').fill('100');
+  await elegirEscalon(page, 'c', 60);
   await expect(page.locator('.accion.primaria')).toBeDisabled();
 
   const bloqueo = page.locator('.mensaje[data-bloquea="si"]');
@@ -200,10 +201,10 @@ test('AC-10 — treinta segundos: el coste del SOFTWARE, medido', async ({ page 
 
   const t0 = Date.now();
   await page.locator('.abridor').click();
-  await page.locator('#perilla-t').fill('100');
-  await page.locator('#perilla-c').fill('20');
-  await page.locator('#perilla-sv').fill('0.5');
-  await page.locator('#perilla-ss').fill('0.1');
+  await elegirEscalon(page, 't', 100);
+  await elegirEscalon(page, 'c', 20);
+  await elegirEscalon(page, 'sv', 0.5);
+  await elegirEscalon(page, 'ss', 0.25);
   await page.locator('.accion.primaria').click();
   await expect(page.locator('.celda')).toHaveCount(20);
   const ms = Date.now() - t0;
@@ -252,7 +253,7 @@ test('el interruptor de silencio está deshabilitado con nota, no oculto', async
 test('cerrar sin aplicar no cambia nada', async ({ page }) => {
   await page.goto(url({ t: 60 }));
   await page.locator('.abridor').click();
-  await page.locator('#perilla-t').fill('140');
+  await elegirEscalon(page, 't', 140);
   await page.locator('.accion', { hasText: 'Cerrar sin cambios' }).click();
 
   await expect(page.locator('.panel')).not.toBeVisible();

@@ -15,7 +15,10 @@ import {
 } from '../resultados/presentar.js';
 import { resumenSesion } from '../registro/sesion.js';
 import { dificultadTolerada } from '../dificultad/modelo.js';
-import { T_MIN, T_MAX, C_MIN, C_MAX, T_AAA } from '../dificultad/constantes.js';
+import { T_AAA } from '../dificultad/constantes.js';
+import {
+  ESCALONES_T, ESCALONES_C, ESCALONES_PROPORCION, escalonMasCercano,
+} from '../dificultad/escalones.js';
 
 /**
  * @typedef {object} EstadoPanel
@@ -32,6 +35,118 @@ function grupo(etiqueta, hijos) {
   leyenda.textContent = etiqueta;
   fs.append(leyenda, ...hijos);
   return fs;
+}
+
+/**
+ * Ajusta una configuración a los escalones.
+ *
+ * Una configuración puede llegar por URL con `t = 63`, que no es un escalón. Sin ajustarla,
+ * el grupo de botones se dibuja **sin ninguno elegido** y el terapeuta no ve a qué está
+ * jugando. Se ajusta al escalón más cercano, y en caso de empate al más bajo.
+ *
+ * @param {EstadoPanel['config']} config
+ * @returns {EstadoPanel['config']}
+ */
+function aEscalones(config) {
+  return {
+    t: escalonMasCercano(config.t, ESCALONES_T),
+    C: escalonMasCercano(config.C, ESCALONES_C),
+    sv: escalonMasCercano(config.sv, ESCALONES_PROPORCION),
+    ss: escalonMasCercano(config.ss, ESCALONES_PROPORCION),
+  };
+}
+
+/**
+ * Control de ESCALONES: un grupo de botones, uno por valor permitido.
+ *
+ * Sustituye al deslizador en las cuatro perillas de dificultad — ADR-0006. Dos motivos, y
+ * el segundo no estaba en el concepto:
+ *
+ * 1. **Comparabilidad.** Con un deslizador, 63 px y 64 px son sesiones distintas que
+ *    parecen la misma. Con escalones, dos sesiones en el mismo escalón son comparables.
+ * 2. **Un deslizador se ARRASTRA.** El proyecto prohíbe el arrastre como vía única y WCAG
+ *    2.5.7 exige alternativa. Un botón se activa con un solo punto, así que también
+ *    funciona con barrido y con permanencia. El deslizador era la única parte del producto
+ *    que fallaba su propia regla de entrada.
+ *
+ * Se implementa con `role="radiogroup"`: para un lector de pantalla es un grupo de opciones
+ * excluyentes, que es exactamente lo que es. Un grupo de `<button>` no comunicaría cuál
+ * está elegido.
+ *
+ * @param {object} spec
+ * @param {string} spec.id
+ * @param {string} spec.etiqueta
+ * @param {number} spec.valor
+ * @param {readonly number[]} spec.escalones
+ * @param {string} spec.unidad
+ * @param {(v: number) => string} [spec.formato]
+ * @param {(v: number) => void} spec.alCambiar
+ * @returns {HTMLElement}
+ */
+function escalones({ id, etiqueta, valor, escalones: pasos, unidad, formato, alCambiar }) {
+  const fila = document.createElement('div');
+  fila.className = 'fila fila-escalones';
+
+  const lab = document.createElement('span');
+  lab.className = 'etiqueta-escalones';
+  lab.id = `${id}-etiqueta`;
+  lab.textContent = etiqueta;
+
+  const grupo = document.createElement('div');
+  grupo.className = 'escalones';
+  grupo.id = id;
+  grupo.setAttribute('role', 'radiogroup');
+  grupo.setAttribute('aria-labelledby', lab.id);
+
+  const texto = formato ?? ((v) => String(v));
+
+  /** @type {HTMLButtonElement[]} */
+  const botones = [];
+  let elegido = valor;
+
+  /** @param {number} v */
+  const marcar = (v) => {
+    elegido = v;
+    for (const b of botones) {
+      const suyo = Number(b.dataset['valor']);
+      const activo = Math.abs(suyo - v) < 1e-9;
+      b.setAttribute('aria-checked', activo ? 'true' : 'false');
+      // `tabindex` gestionado: el grupo entero es UNA parada de tabulación, y dentro se
+      // navega con las flechas. Es el patrón del ARIA APG para radiogroup.
+      b.tabIndex = activo ? 0 : -1;
+    }
+  };
+
+  /** @param {number} delta */
+  const mover = (delta) => {
+    const i = pasos.findIndex((e) => Math.abs(e - elegido) < 1e-9);
+    const j = Math.min(Math.max((i === -1 ? 0 : i) + delta, 0), pasos.length - 1);
+    const v = pasos[j];
+    if (v === undefined) return;
+    marcar(v);
+    botones[j]?.focus();
+    alCambiar(v);
+  };
+
+  pasos.forEach((e) => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'escalon';
+    b.setAttribute('role', 'radio');
+    b.dataset['valor'] = String(e);
+    b.textContent = `${texto(e)}${unidad}`;
+    b.addEventListener('click', () => { marcar(e); alCambiar(e); });
+    b.addEventListener('keydown', (ev) => {
+      if (ev.key === 'ArrowRight' || ev.key === 'ArrowDown') { ev.preventDefault(); mover(1); }
+      if (ev.key === 'ArrowLeft' || ev.key === 'ArrowUp') { ev.preventDefault(); mover(-1); }
+    });
+    botones.push(b);
+    grupo.append(b);
+  });
+
+  marcar(valor);
+  fila.append(lab, grupo);
+  return fila;
 }
 
 /**
@@ -100,7 +215,7 @@ export function montarPanel({
 }) {
   // Borrador: se edita aqui y solo pasa a `estado` al aplicar. Cerrar sin aplicar no
   // cambia nada.
-  let borrador = { ...estado.config };
+  let borrador = aEscalones(estado.config);
   let borradorAcceso = { ...estado.acceso };
 
   const dialogo = document.createElement('div');
@@ -250,9 +365,9 @@ export function montarPanel({
     // Las cuatro perillas AGRUPADAS POR EJE. En lista plana, el terapeuta no descubre que
     // son dos ejes independientes, y la capacidad que el pilar 3 le da se queda sin usar.
     const ejeMotor = grupo('Eje motor — precisión del gesto', [
-      deslizador({
+      escalones({
         id: 'perilla-t', etiqueta: 'Tamaño de objetivo', valor: borrador.t,
-        min: T_MIN, max: T_MAX, paso: 1, unidad: ' px',
+        escalones: ESCALONES_T, unidad: '',
         alCambiar: (v) => { borrador.t = v; refrescarAvisos(); },
       }),
       (() => {
@@ -265,19 +380,21 @@ export function montarPanel({
     ejeMotor.setAttribute('aria-label', 'Eje motor');
 
     const ejePerceptivo = grupo('Eje perceptivo-cognitivo — dificultad de encontrar', [
-      deslizador({
+      escalones({
         id: 'perilla-c', etiqueta: 'Cantidad de objetos', valor: borrador.C,
-        min: C_MIN, max: C_MAX, paso: 1, unidad: '',
+        escalones: ESCALONES_C, unidad: '',
         alCambiar: (v) => { borrador.C = v; refrescarAvisos(); },
       }),
-      deslizador({
+      escalones({
         id: 'perilla-sv', etiqueta: 'Similitud visual', valor: borrador.sv,
-        min: 0, max: 1, paso: 0.05, unidad: '',
+        escalones: ESCALONES_PROPORCION, unidad: '',
+        formato: (v) => (v === 0 || v === 1 ? String(v) : v.toFixed(2).replace('0.', ',')),
         alCambiar: (v) => { borrador.sv = v; refrescarAvisos(); },
       }),
-      deslizador({
+      escalones({
         id: 'perilla-ss', etiqueta: 'Similitud semántica', valor: borrador.ss,
-        min: 0, max: 1, paso: 0.05, unidad: '',
+        escalones: ESCALONES_PROPORCION, unidad: '',
+        formato: (v) => (v === 0 || v === 1 ? String(v) : v.toFixed(2).replace('0.', ',')),
         alCambiar: (v) => { borrador.ss = v; refrescarAvisos(); },
       }),
     ]);
@@ -371,7 +488,7 @@ export function montarPanel({
   abridor.setAttribute('aria-haspopup', 'dialog');
 
   function abrir() {
-    borrador = { ...estado.config };
+    borrador = aEscalones(estado.config);
     borradorAcceso = { ...estado.acceso };
     const p = progreso();
     zonaProgreso.textContent =

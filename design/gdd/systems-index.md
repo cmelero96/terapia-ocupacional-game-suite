@@ -43,7 +43,9 @@ trabajos es la propuesta de valor central del producto, no una función secundar
 > controles discretos.
 >
 > **Antes de encargar una sola imagen del banco**, resolver C4: `clusterMin` está derivada de
-> una fórmula que el código no usa, así que el banco puede ser de 416 elementos y no 384.
+> una fórmula que el código no usa. **RESUELTO el 2026-09-01 — ADR-0006: el banco es de
+> 256 elementos.** No 416 ni 384: `Cmax` bajó de 100 a 60 a la vez que se corrigió la
+> fórmula, y las dos correcciones juntas quitan 128 imágenes.
 
 ## Alcance revisado tras la sesión 2 con el colaborador (2026-08-26)
 
@@ -74,7 +76,7 @@ Core         5 capa de adaptación de entrada ·  8 generación de tableros
 Adaptación   6 estímulo reducido ·  7 silencio y volumen
 Instrumentos 10 Busca ·  21 clasificar ·  24 denominación
 UI           11 frontera de modo y panel ·  12 resultados de sesión
-Meta         13 herramientas del banco (necesarias para validar 384 elementos)
+Meta         13 herramientas del banco (necesarias para validar 256 elementos)
              14 invariantes de CI  ← el único candidato honesto a aplazar
 ```
 
@@ -279,7 +281,7 @@ No hay más ciclos en el grafo.
 | Sistema | Tipo de riesgo | Descripción | Mitigación |
 |---------|----------------|-------------|------------|
 | **Capa de adaptación de entrada** | Técnico | Cuatro modos de activación con un solo código. El barrido por pulsador y la permanencia no tienen biblioteca estándar: son trabajo propio. Y la coexistencia con el clic por permanencia del sistema operativo (seguimiento ocular) está sin verificar: dos temporizadores apilados duplicarían la espera real | Prototipo específico de modos de entrada **antes** del Nivel 1. El prototipo de concepto cortó teclado y pulsador a propósito, así que esta hipótesis sigue entera |
-| **Manifiesto del banco de imágenes** | Alcance | Es el coste real del proyecto, no el código. La regla de distribución exige `clusterMin` elementos por grupo visual. **OJO: el valor publicado (24) está derivado de una fórmula muerta — ver C4 del informe cruzado del 2026-08-26. El valor correcto es 26 y el banco 416, no 384.** Mal distribuido, se rehace cuatro veces | No producir contenido hasta que el colaborador confirme que la similitud visual es un eje que usa. Si dice que no, el banco baja a ~130 |
+| **Manifiesto del banco de imágenes** | Alcance | Es el coste real del proyecto, no el código. La regla de distribución exige `clusterMin` elementos por grupo visual. **RESUELTO 2026-09-01 (ADR-0006): `clusterMin = 16`, banco 256.** El 24 anterior estaba derivado de una fórmula muerta (C4 del informe cruzado); se corrigió la fórmula y a la vez se bajó `Cmax` de 100 a 60. Mal distribuido, se rehace cuatro veces | No producir contenido hasta que el colaborador confirme que la similitud visual es un eje que usa. Si dice que no, el banco baja a ~130 |
 | **Taxonomía de perfiles funcionales** | Diseño — **BLOQUEADO** | Es el emparejamiento paciente↔instrumento, o sea la pieza central del producto. Hoy solo hay etiquetas diagnósticas (gente mayor, autismo, TDAH), no perfiles funcionales | Sesión con el colaborador: qué capacidad entrena cada instrumento y para qué limitación sirve. Sigue pendiente tras la sesión del 2026-08-24 |
 | **Dificultad adaptativa** | Diseño | El controlador está sin especificar: ventana de cálculo, arranque en frío, `mínimo == máximo`, división por cero. Y con ventana por tablero el objetivo del 80% es inalcanzable y el controlador oscila | Ventana sobre ≥20 objetivos acumulados, no por tablero. Especificar los cuatro casos límite antes de escribir código |
 | **Registro de rendimiento** | Diseño — validez de medición | Si no distingue **ruido motor**, **error de memoria del objetivo** y **error de búsqueda**, todo lo que el terapeuta vea está contaminado. Y sin instrumentación de habituación, la mejora aparente puede ser memorización | El esquema de datos lo decide todo. Diseñarlo antes del instrumento, no después |
