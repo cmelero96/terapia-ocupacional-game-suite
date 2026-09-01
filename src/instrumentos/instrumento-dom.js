@@ -333,13 +333,41 @@ export function montarInstrumento({
     return cadenciaBarrido(Math.max(alcanzables().length, 3), acceso.msVuelta);
   }
 
+  /**
+   * ¿Esta el foco DENTRO del tablero, o en ningun sitio?
+   *
+   * **La frontera de modo aplicada al foco, y hacia fuera.** El barrido es del PACIENTE; el
+   * marco —selector de instrumento, boton del panel— es del TERAPEUTA.
+   *
+   * Sin esta comprobacion el barrido roba el foco de la pagina entera cada paso. Medido con
+   * `vuelta=6000`: el terapeuta pulsaba Tab doce veces y **no llegaba al boton del panel**,
+   * porque el barrido se lo devolvia al tablero cada 500 ms. Los enlaces de juego seguian
+   * funcionando con raton, y con teclado no: Enter caia sobre una celda.
+   *
+   * O sea que activar el barrido —un interruptor del panel— **dejaba al terapeuta sin via de
+   * teclado para volver a apagarlo**. Es la peor forma de este defecto.
+   *
+   * `body` o `null` cuentan como "dentro": es el estado al cargar la pagina, y el barrido
+   * tiene que arrancar.
+   *
+   * @returns {boolean}
+   */
+  function focoDisponibleParaElBarrido() {
+    const a = document.activeElement;
+    if (a === null || a === document.body || a === document.documentElement) return true;
+    return raiz.contains(a) || zonaObjetivo.contains(a) || zonaContenedores.contains(a);
+  }
+
   function arrancarBarrido() {
     const c = cadencia();
     if (c === null) return;
     const paso = () => {
       // **Sin limite de vueltas.** Un limite seria presion de tiempo por la puerta de
       // atras: que la cadencia expire solo puede producir "todavia no", nunca un fallo.
-      if (!pausado) enfocarBarrido(iBarrido + 1);
+      //
+      // Y no avanza si el foco esta FUERA del tablero: el terapeuta esta usando el marco, y
+      // el barrido del paciente no le quita el foco de las manos.
+      if (!pausado && focoDisponibleParaElBarrido()) enfocarBarrido(iBarrido + 1);
       tareaBarrido = programador.programar(paso, c.msPorPaso);
     };
     tareaBarrido = programador.programar(paso, c.msPorPaso);

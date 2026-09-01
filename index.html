@@ -370,13 +370,28 @@
   const nav = document.getElementById('juegos');
   for (const [id, etiqueta] of JUEGOS) {
     const a = document.createElement('a');
-    const u = new URL(location.href);
-    u.searchParams.set('j', id);
-    a.href = u.toString();
+    a.dataset.juego = id;
     a.textContent = etiqueta;
     if (id === tipo) a.setAttribute('aria-current', 'page');
     nav.append(a);
   }
+
+  /**
+   * Recompone los `href` del selector desde la URL actual.
+   *
+   * Hay que rehacerlos, no fijarlos una vez: **aplicar una configuración ya no recarga la
+   * página** (S1), así que los enlaces construidos al cargar quedaban con la configuración
+   * VIEJA. Medido: se aplicaba `t = 100`, se cambiaba de juego, y volvía `t = 60`. El
+   * terapeuta perdía en silencio lo que acababa de ajustar.
+   */
+  function refrescarEnlaces() {
+    for (const a of nav.querySelectorAll('a')) {
+      const u = new URL(location.href);
+      u.searchParams.set('j', a.dataset.juego ?? 'busca');
+      a.href = u.toString();
+    }
+  }
+  refrescarEnlaces();
 
   const config = {
     t: n('t', 60),
@@ -518,6 +533,21 @@
         location.href = url.toString();
         return;
       }
+      // La URL refleja lo aplicado, para que el selector de instrumento y una recarga se
+      // lleven la configuración de verdad y no la de la carga inicial.
+      const u = new URL(location.href);
+      u.searchParams.set('t', String(nueva.t));
+      u.searchParams.set('c', String(nueva.C));
+      u.searchParams.set('sv', String(nueva.sv));
+      u.searchParams.set('ss', String(nueva.ss));
+      if (accesoNuevo !== undefined) {
+        u.searchParams.set('barrido', accesoNuevo.barrido ? '1' : '0');
+        u.searchParams.set('vuelta', String(accesoNuevo.msVuelta));
+      }
+      if (variante !== undefined) u.searchParams.set('tarea', variante);
+      history.replaceState(null, '', u.toString());
+      refrescarEnlaces();
+
       estado = viva.reconfigurar({
         config: nueva,
         ...(variante === undefined ? {} : { varianteContenido: variante }),
