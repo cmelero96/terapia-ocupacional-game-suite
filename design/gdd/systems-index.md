@@ -102,7 +102,7 @@ reglas que declara dejan de estar vigiladas.
 | 10 | Instrumento: Busca (búsqueda visual) — **posee la raíz de composición del MVP** | Instrumento | MVP | **JUGABLE** | [instrumento-busca.md](instrumento-busca.md) | 2, 3, 4, 5, 6, 8, 9 |
 | 11 | Frontera de modo y panel del terapeuta | UI | MVP | Needs Revision | [panel-terapeuta.md](panel-terapeuta.md) | 2, 4, 5, 6, 7, 8, 9, 10 |
 | 12 | Pantalla de resultados de sesión | UI | MVP | **Designed** · **implementado y ejecutable** | [resultados-sesion.md](resultados-sesion.md) | 2, 4, 9, 11 |
-| 13 | Herramientas del banco: validador, importador de lote, reexportador, galería de clusters, diff, normalización *(inferido)* | Meta | MVP | Not Started | — | 1, 2 |
+| 13 | Herramientas del banco: validador, integridad, continuidad, importador | Meta | MVP | **Designed** · **implementado y ejecutable** — falta la galería y el pipeline de contraste | [herramientas-del-banco.md](herramientas-del-banco.md) | 1, 4 |
 | 14 | Invariantes como barreras de CI: analizadores estáticos + tokenizador de CSS + **detección de fuente aleatoria o reloj constante fuera de `tests/`** *(inferido)* | Meta | MVP | Not Started | — | 1, 2, 3, 5, 9 |
 | 15 | Taxonomía de perfiles funcionales | Clínico | Vertical Slice | **Provisional** — andamio de ingeniería, SIN validar clínicamente | [taxonomia-perfiles-funcionales.md](taxonomia-perfiles-funcionales.md) | — |
 | 16 | Presets y perfiles del terapeuta | Clínico | Vertical Slice | Not Started | — | 4, 15 |
@@ -312,11 +312,11 @@ bloqueado es el Nivel 1, y hay 13 GDD que escribir antes de llegar ahí.
 | Sistemas identificados | **32** |
 | GDD empezados | 3 |
 | GDD revisados | 3 |
-| GDD diseñados sin revisar | **13** |
+| GDD diseñados sin revisar | **14** |
 | GDD provisionales sin validar | 1 (sistema 15) |
 | Instrumentos JUGABLES | **9 de 9 de la lista** |
 | Instrumentos con GDD | **9 de 9** — completado el 2026-09-01 |
-| Sistemas con código en `src/` | **20** (2 parcial, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 21, 22, 23, 24, 28, 29, 30, 31 y 32) |
+| Sistemas con código en `src/` | **21** (2 parcial, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, **13**, 21, 22, 23, 24, 28, 29, 30, 31 y 32) |
 | GDD aprobados | 0 |
 | Sistemas MVP diseñados | 3 / 14 |
 | Sistemas Vertical Slice diseñados | 0 / 6 |

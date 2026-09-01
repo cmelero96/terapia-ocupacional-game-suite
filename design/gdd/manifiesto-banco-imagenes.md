@@ -822,8 +822,12 @@ de cero y **no** produce manifiesto de salida.
 **CUANDO** se comparan,
 **ENTONCES** todo `id` del anterior sigue presente; un `id` que desaparece sin que su
 entrada esté en `status: retired` es un error.
-*Requiere herramienta de diff que no existe. Falta decidir contra qué versión se
-compara: último tag o último commit en `main`.*
+**IMPLEMENTADO** — `tools/banco/diff-manifiestos.js`. **Decidido: contra `origin/main`.** El
+proyecto es de desarrollo troncal y no tiene tags, así que "último tag" no existe hoy y
+elegirlo sería aplazar la comprobación con apariencia de haberla resuelto.
+
+Detecta además un caso que este criterio no pedía: un `file` o un `cluster` que **cambia bajo
+un id que se queda**. Es la misma clase de defecto que sustituir el archivo.
 
 **AC-3a — El importador se niega a escribir sobre un id existente** · Unit · **BLOCKING**
 **DADO** un manifiesto que ya contiene el `id` `manzana-liso-01`,
@@ -855,8 +859,10 @@ salida validado.
 `file` de una entrada,
 **CUANDO** se ejecuta el validador con esa función inyectada,
 **ENTONCES** reporta error nombrando el `id` afectado.
-*Obliga a que `existeArchivo` sea inyectable, por la norma de independencia de los
-estándares de test. Hoy el validador no existe.*
+**IMPLEMENTADO** — `tools/banco/validar.js`, con `existeArchivo` inyectado. Y el motivo que
+importa a largo plazo no es el test: ADR-0001 lo pide para que el mismo validador sirva en una
+futura ruta de ejecución, si el terapeuta sube sus propias imágenes. Un validador que abre
+archivos sólo sirve en construcción.
 
 **AC-5b — Archivo ausente, comprobación real** · Integration · **BLOCKING**
 **DADO** el manifiesto y el directorio `assets/` reales,
@@ -865,10 +871,13 @@ estándares de test. Hoy el validador no existe.*
 
 **AC-6 — Cluster por debajo del mínimo** · Unit · **BLOCKING**
 *Desbloqueado: la Sección D fija `Cmax = 60`, `Rmax = 4`, `clusterMin = 16` (ADR-0006).*
-**DADO** un manifiesto con un cluster de exactamente 23 elementos activos
-(`clusterMin − 1`),
+**DADO** un manifiesto con un cluster de exactamente **15** elementos activos
+(`clusterMin − 1`, con `clusterMin = 16` tras ADR-0006),
 **CUANDO** se ejecuta el validador,
 **ENTONCES** falla nombrando el cluster, su recuento real y el mínimo requerido.
+**IMPLEMENTADO**, y con su escalón por nivel: mientras el banco tenga menos entradas activas
+que su objetivo, `clusterMin` es ADVERTENCIA. El escalón se decide **por un dato, no por una
+bandera**: una `--permisivo` acabaría puesta en CI para siempre.
 
 ### Consultas de pool
 

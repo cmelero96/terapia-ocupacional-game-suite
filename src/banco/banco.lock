@@ -1,0 +1,10 @@
+# banco.lock — integridad de los archivos del banco de imagenes. Sistema 13.
+#
+# Generado por: node tools/banco/lock.js --generar
+# Comprobado por CI:  node tools/banco/lock.js --comprobar
+#
+# Un hash que CAMBIA con el id intacto significa que alguien sustituyo el archivo
+# detras de un identificador existente. Eso esta prohibido: el id es la clave con la
+# que se guarda que estimulo vio el paciente. La via correcta es retirar el id y
+# crear otro.
+

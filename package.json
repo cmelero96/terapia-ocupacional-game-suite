@@ -16,9 +16,12 @@
     "tokens:comprobar": "node tools/theme/generar-css.js --comprobar",
     "revision": "node tools/hoja-revision-contenido.js",
     "revision:comprobar": "node tools/hoja-revision-contenido.js --comprobar",
+    "banco": "node tools/banco/cli.js validar",
+    "banco:lock": "node tools/banco/cli.js lock --comprobar",
+    "banco:diff": "node tools/banco/cli.js diff",
     "servir": "node tools/servir.js",
     "test:navegador": "playwright test",
-    "check": "npm run typecheck && npm run tokens:comprobar && npm run revision:comprobar && npm run invariantes && npm run test"
+    "check": "npm run typecheck && npm run tokens:comprobar && npm run revision:comprobar && npm run banco && npm run banco:lock && npm run invariantes && npm run test"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
