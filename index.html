@@ -129,6 +129,19 @@
   .celda { transition: border-color 90ms linear, border-width 90ms linear; }
 
   /* Selector de instrumento. Vive en el marco, fuera del tablero. */
+  /* El aviso de arranque. Se ve SIN JavaScript y lo borra el script al arrancar bien. */
+  .aviso-arranque {
+    margin: 1rem; padding: 1rem 1.25rem; max-width: 44rem;
+    border: 3px solid var(--frame-line); border-radius: 8px;
+    background: var(--frame-bg); color: var(--frame-ink);
+  }
+  .aviso-arranque p { margin: 0.5rem 0; }
+  .aviso-arranque pre {
+    margin: 0.5rem 0; padding: 0.5rem 0.75rem;
+    border: 2px solid var(--frame-line); border-radius: 6px;
+    font: inherit; font-family: ui-monospace, monospace;
+  }
+
   .juegos { display: flex; gap: 0.5rem; padding: 0.75rem 1rem; align-items: center; flex-wrap: wrap; }
   .juegos a {
     min-block-size: 44px; padding: 0 1rem; display: grid; place-items: center;
@@ -325,6 +338,23 @@
   <!-- El panel vive en el ámbito del MARCO. `.frame-root` y `.board-root` son contenedores
        hermanos que nunca se anidan: es lo que impide que un token del marco se filtre al
        tablero, donde el umbral de contraste es clínico y no estético. -->
+  <!-- AVISO DE ARRANQUE. Estatico a proposito: es lo unico de esta pagina que se ve sin
+       JavaScript, y lo borra el script al arrancar bien.
+       Existe porque abrir el archivo desde el disco es una ruta que este proyecto no
+       soporta —los modulos ES no cargan desde `file://` en Chrome ni en Edge— y hasta ahora
+       el sintoma era una pagina en blanco. Una pagina en blanco no dice que hacer. -->
+  <div id="aviso-arranque" class="aviso-arranque">
+    <p><strong>Esta pagina no ha podido arrancar.</strong></p>
+    <p>La causa casi siempre es la misma: <strong>se ha abierto el archivo directamente
+    desde el disco</strong>. Los modulos de JavaScript no se cargan desde <code>file://</code>
+    en Chrome ni en Edge, asi que no se dibuja nada.</p>
+    <p>Hay que servirla por HTTP. Desde la carpeta del proyecto:</p>
+    <pre>npm run servir</pre>
+    <p>Y despues abrir <code>http://localhost:8080/index.html</code> (el puerto lo dice la
+    consola).</p>
+    <p>Si ya la estas sirviendo y sigues viendo esto, mira la consola del navegador: hay un
+    error de carga.</p>
+  </div>
   <nav class="juegos" id="juegos" aria-label="Instrumento"></nav>
   <div id="marco-panel"></div>
   <div class="objetivo" id="zona-objetivo"></div>
@@ -366,13 +396,21 @@
     ['tresEnRaya', 'Tres en raya'],
   ];
   const tipo = JUEGOS.some(([id]) => id === params.get('j')) ? params.get('j') : 'busca';
+  /**
+   * El instrumento activo AHORA, que puede cambiar sin recargar. Ver `cambiarDeJuego`.
+   */
+  let tipoActual = tipo;
+
+  // El script ha arrancado: fuera el aviso estatico. Se quita AQUI y no al final, para que
+  // un fallo posterior no deje la pagina en blanco con el aviso ya borrado — a partir de
+  // este punto hay interfaz que mirar.
+  document.getElementById('aviso-arranque')?.remove();
 
   const nav = document.getElementById('juegos');
   for (const [id, etiqueta] of JUEGOS) {
     const a = document.createElement('a');
     a.dataset.juego = id;
     a.textContent = etiqueta;
-    if (id === tipo) a.setAttribute('aria-current', 'page');
     nav.append(a);
   }
 
@@ -389,6 +427,9 @@
       const u = new URL(location.href);
       u.searchParams.set('j', a.dataset.juego ?? 'busca');
       a.href = u.toString();
+      const activo = a.dataset.juego === tipoActual;
+      if (activo) a.setAttribute('aria-current', 'page');
+      else a.removeAttribute('aria-current');
     }
   }
   refrescarEnlaces();
@@ -562,37 +603,105 @@
     },
   });
 
-  // Aviso de contenido: los precios caducan, y el terapeuta tiene que saberlo ANTES de
-  // interpretar un resultado.
-  if (estado !== null && estado.avisoContenido !== undefined) {
-    const av = document.createElement('p');
-    av.className = 'aviso-contenido';
-    av.textContent = `⚠ ${estado.avisoContenido}`;
-    document.getElementById('juegos').after(av);
+  /**
+   * Los avisos que dependen del INSTRUMENTO, y por tanto se rehacen al cambiar de juego.
+   *
+   * Antes se pintaban una vez al cargar. Desde que cambiar de instrumento no recarga la
+   * pagina, un aviso que no se rehace es un aviso FALSO: el de caducidad de los precios se
+   * quedaba puesto al pasar a un juego sin precios.
+   */
+  function ponerAvisosDeContenido() {
+    for (const v of document.querySelectorAll('.aviso-contenido, .aviso-provisional')) {
+      v.remove();
+    }
+    const est = viva?.estado ?? estado;
+
+    if (est !== null && est.avisoContenido !== undefined) {
+      const av = document.createElement('p');
+      av.className = 'aviso-contenido';
+      av.textContent = `⚠ ${est.avisoContenido}`;
+      nav.after(av);
+    }
+
+    // SEIS juegos, no cinco: 'comprar' usa el catalogo provisional de precios, y faltaba.
+    // Mientras nadie con la titulacion firme el contenido, la pagina lo dice a la cara.
+    const CON_CONTENIDO_PROVISIONAL = [
+      'rellenar', 'simbolos', 'precios', 'ordenar', 'tresEnRaya', 'comprar',
+    ];
+    if (CON_CONTENIDO_PROVISIONAL.includes(tipoActual)) {
+      const nota = document.createElement('p');
+      // Clase PROPIA: el aviso de caducidad de los precios es otra cosa, y un test comprueba
+      // que ese sale solo en precio justo. Compartir la clase los hacia indistinguibles.
+      nota.className = 'aviso-provisional';
+      nota.append(
+        document.createTextNode('⚠ Contenido PROVISIONAL, sin revisar por un terapeuta. '),
+      );
+      const enlace = document.createElement('a');
+      enlace.href = 'docs/revision-contenido.md';
+      enlace.textContent = 'Hoja de revision';
+      nota.append(enlace);
+      nota.append(document.createTextNode('.'));
+      nav.after(nota);
+    }
+  }
+  ponerAvisosDeContenido();
+
+  // --- Cambiar de instrumento SIN recargar la página.
+  //
+  // Antes el selector era nueve enlaces y punto: pulsar navegaba a `?j=X` y la página se
+  // cargaba de cero. Eso tenía dos problemas, y el primero es el mismo defecto que S1 con
+  // otra cara:
+  //
+  // **1 · Destruía la sesión.** Medido: dos tableros cerrados y dos intentos desaparecían al
+  // cambiar de juego. Y una sesión con varios instrumentos es el caso NORMAL — el terapeuta
+  // hace tres ejercicios seguidos con el mismo paciente.
+  //
+  // **2 · Dependía de que el navegador resolviera `index.html?j=X`.** Servido por HTTP eso
+  // siempre funciona. Abriendo el archivo desde el disco, depende del navegador: es una ruta
+  // de apertura que este proyecto no soporta —los módulos ES no cargan desde `file://` en
+  // Chrome ni en Edge— pero pulsar un botón y que no pase nada es la peor forma de decirlo.
+  //
+  // Los `href` se conservan a propósito: siguen siendo enlaces de verdad, se pueden copiar,
+  // abrir en otra pestaña y marcar. Lo que cambia es que un clic normal se atiende aquí.
+  /** @param {string} id */
+  function cambiarDeJuego(id) {
+    if (id === tipoActual || viva === null) return;
+    tipoActual = id;
+
+    const u = new URL(location.href);
+    u.searchParams.set('j', id);
+    history.pushState({ j: id }, '', u.toString());
+
+    // La sesión SOBREVIVE: `reconfigurar` conserva registro y sesión, y cierra el tablero en
+    // curso marcándolo incompleto. Cada tablero registrado lleva su `instrumento`, así que
+    // una sesión con varios ejercicios sigue siendo interpretable.
+    estado = viva.reconfigurar({ tipo: id });
+    estadoPanel.instrumento = id;
+    refrescarEnlaces();
+    ponerAvisosDeContenido();
+    globalThis.__busca = { viva, estado, config, panel, estadoPanel, arranqueFallido };
   }
 
-  // Cuatro de los nueve juegos usan contenido que escribió el desarrollador, no un
-  // clínico. Mientras nadie con la titulación lo firme, la página lo dice a la cara: un
-  // aviso que no se ve equivale a no haberlo puesto.
-  // SEIS juegos, no cinco: 'comprar' usa el catálogo provisional de precios, y faltaba.
-  const CON_CONTENIDO_PROVISIONAL = [
-    'rellenar', 'simbolos', 'precios', 'ordenar', 'tresEnRaya', 'comprar',
-  ];
-  if (CON_CONTENIDO_PROVISIONAL.includes(tipo)) {
-    const nota = document.createElement('p');
-    // Clase PROPIA: el aviso de caducidad de los precios es otra cosa, y un test comprueba
-    // que ese sale solo en precio justo. Compartir la clase los hacia indistinguibles.
-    nota.className = 'aviso-provisional';
-    nota.append(
-      document.createTextNode('⚠ Contenido PROVISIONAL, sin revisar por un terapeuta. '),
-    );
-    const enlace = document.createElement('a');
-    enlace.href = 'docs/revision-contenido.md';
-    enlace.textContent = 'Hoja de revisión';
-    nota.append(enlace);
-    nota.append(document.createTextNode('.'));
-    document.getElementById('juegos').after(nota);
-  }
+  nav.addEventListener('click', (ev) => {
+    const a = ev.target instanceof Element ? ev.target.closest('a[data-juego]') : null;
+    if (!(a instanceof HTMLAnchorElement)) return;
+    // Un clic con Ctrl, Meta, Shift o del botón central abre en otra pestaña: eso es del
+    // navegador y no se toca.
+    if (ev.defaultPrevented || ev.ctrlKey || ev.metaKey || ev.shiftKey || ev.altKey) return;
+    if (viva === null) return;
+    ev.preventDefault();
+    cambiarDeJuego(a.dataset.juego ?? 'busca');
+  });
+
+  // El botón de atrás del navegador también cambia en el sitio, para que no se pierda la
+  // sesión por volver atrás.
+  addEventListener('popstate', () => {
+    const p2 = new URLSearchParams(location.search);
+    const j = p2.get('j');
+    if (j !== null && JUEGOS.some(([id]) => id === j)) cambiarDeJuego(j);
+  });
+
+
 
   // Si el arranque falló, el panel se abre solo: no hay nada que hacer en la pantalla del
   // paciente hasta que la configuración sea realizable.

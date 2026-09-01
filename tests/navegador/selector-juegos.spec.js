@@ -125,3 +125,132 @@ test('el juego activo se marca con aria-current', async ({ page }) => {
   await expect(page.locator('.juegos a[aria-current="page"]')).toHaveCount(1);
   await expect(page.locator('.juegos a[aria-current="page"]')).toHaveText('Comprar');
 });
+
+// ---------------------------------------------------------------- cambio EN EL SITIO
+
+test('cambiar de juego CONSERVA la sesion', async ({ page }) => {
+  // El defecto que aparecio al buscar por que los botones podrian no funcionar, y es el
+  // mismo que S1 con otra cara: el selector recargaba la pagina, asi que se llevaba por
+  // delante el registro. Medido: dos tableros cerrados desaparecian.
+  //
+  // Y una sesion con VARIOS instrumentos es el caso normal: el terapeuta hace tres
+  // ejercicios seguidos con el mismo paciente.
+  await page.goto('/index.html?j=busca&t=60&c=9');
+  await page.waitForFunction(() => /** @type {any} */ (globalThis).__busca?.estado != null);
+
+  for (let r = 0; r < 2; r++) {
+    const nombre = await page.locator('#zona-objetivo .objetivo-nombre').textContent();
+    await page.locator(`.celda[aria-label="${nombre}"]`).first().click();
+    await page.waitForTimeout(250);
+  }
+  const antes = await page.evaluate(
+    () => /** @type {any} */ (globalThis).__busca.viva.sesion.tableros.length,
+  );
+  expect(antes).toBe(2);
+
+  await page.locator('.juegos a', { hasText: 'Precio justo' }).click();
+  await page.waitForTimeout(400);
+
+  const despues = await page.evaluate(() => {
+    const s = /** @type {any} */ (globalThis).__busca.viva.sesion;
+    return { tableros: s.tableros.length, orden: s.orden };
+  });
+  expect(despues.tableros, 'los tableros cerrados sobreviven al cambio de juego').toBe(antes);
+  expect(despues.orden, 'y es la MISMA sesion').toBe(0);
+});
+
+test('cada tablero registrado dice de QUE instrumento es', async ({ page }) => {
+  // Sin este campo, una sesion que mezcla instrumentos no es interpretable: la precision
+  // seria la media de tareas que no se pueden promediar.
+  await page.goto('/index.html?j=busca&t=60&c=9');
+  await page.waitForFunction(() => /** @type {any} */ (globalThis).__busca?.estado != null);
+
+  const nombre = await page.locator('#zona-objetivo .objetivo-nombre').textContent();
+  await page.locator(`.celda[aria-label="${nombre}"]`).first().click();
+  await page.waitForTimeout(250);
+
+  await page.locator('.juegos a', { hasText: 'Precio justo' }).click();
+  await page.waitForTimeout(400);
+  await page.locator('.celda').first().click();
+  await page.waitForTimeout(300);
+
+  const instrumentos = await page.evaluate(() => {
+    const s = /** @type {any} */ (globalThis).__busca.viva.sesionConTableros();
+    return s.tableros.map((/** @type {any} */ t) => t.instrumento);
+  });
+  expect(instrumentos).toContain('busca');
+  expect(instrumentos).toContain('precios');
+});
+
+test('cambiar de juego NO recarga la pagina', async ({ page }) => {
+  // Es lo que hace que la sesion sobreviva, y ademas quita la dependencia de que el
+  // navegador resuelva `index.html?j=X` — que es lo que puede fallar al abrir el archivo
+  // desde el disco.
+  await page.goto('/index.html?j=busca&t=60&c=9');
+  await page.waitForFunction(() => /** @type {any} */ (globalThis).__busca?.estado != null);
+  await page.evaluate(() => { /** @type {any} */ (globalThis).__marcaDeCarga = 'viva'; });
+
+  await page.locator('.juegos a', { hasText: 'Comprar' }).click();
+  await page.waitForTimeout(400);
+
+  const marca = await page.evaluate(() => /** @type {any} */ (globalThis).__marcaDeCarga);
+  expect(marca, 'si hubiera recargado, la marca se habria perdido').toBe('viva');
+  expect(new URL(page.url()).searchParams.get('j')).toBe('comprar');
+});
+
+test('el aviso de caducidad de los precios NO se queda pegado al cambiar de juego', async ({ page }) => {
+  // Otro defecto del cambio en el sitio: los avisos se pintaban una vez al cargar, asi que
+  // un aviso que no se rehace es un aviso FALSO.
+  await page.goto('/index.html?j=precios&t=60&c=6');
+  await page.waitForFunction(() => /** @type {any} */ (globalThis).__busca?.estado != null);
+  await expect(page.locator('.aviso-contenido')).toHaveCount(1);
+
+  await page.locator('.juegos a', { hasText: 'Busca' }).click();
+  await page.waitForTimeout(400);
+  await expect(page.locator('.aviso-contenido'), 'Busca no tiene precios').toHaveCount(0);
+  await expect(page.locator('.aviso-provisional'), 'ni contenido provisional').toHaveCount(0);
+
+  await page.locator('.juegos a', { hasText: 'Precio justo' }).click();
+  await page.waitForTimeout(400);
+  await expect(page.locator('.aviso-contenido'), 'y vuelve al volver').toHaveCount(1);
+});
+
+test('el boton de ATRAS del navegador tambien cambia sin recargar', async ({ page }) => {
+  await page.goto('/index.html?j=busca&t=60&c=9');
+  await page.waitForFunction(() => /** @type {any} */ (globalThis).__busca?.estado != null);
+  await page.evaluate(() => { /** @type {any} */ (globalThis).__marcaDeCarga = 'viva'; });
+
+  await page.locator('.juegos a', { hasText: 'Comprar' }).click();
+  await page.waitForTimeout(300);
+  await page.goBack();
+  await page.waitForTimeout(400);
+
+  expect(new URL(page.url()).searchParams.get('j')).toBe('busca');
+  expect(
+    await page.evaluate(() => /** @type {any} */ (globalThis).__marcaDeCarga),
+    'atras tampoco recarga, asi que la sesion sigue viva',
+  ).toBe('viva');
+  expect(await page.evaluate(() => /** @type {any} */ (globalThis).__busca.estado.tipo))
+    .toBe('busca');
+});
+
+test('un clic con Ctrl NO se intercepta: sigue siendo un enlace de verdad', async ({ page }) => {
+  await page.goto('/index.html?j=busca&t=60&c=9');
+  await page.waitForFunction(() => /** @type {any} */ (globalThis).__busca?.estado != null);
+  const antes = page.url();
+  await page.locator('.juegos a', { hasText: 'Comprar' }).click({ modifiers: ['Control'] });
+  await page.waitForTimeout(300);
+  expect(page.url(), 'con Ctrl el navegador abre otra pestana y esta no cambia').toBe(antes);
+});
+
+test('el aviso de arranque se ve SIN modulos y desaparece con ellos', async ({ page }) => {
+  // Una pagina en blanco no dice que hacer. Esto si.
+  await page.goto('/index.html?j=busca&t=60&c=9');
+  await page.waitForFunction(() => /** @type {any} */ (globalThis).__busca?.estado != null);
+  await expect(page.locator('#aviso-arranque')).toHaveCount(0);
+
+  // Y el texto estatico existe en el HTML servido, para quien lo abra sin poder ejecutarlo.
+  const html = await page.evaluate(() => fetch('/index.html').then((r) => r.text()));
+  expect(html).toContain('id="aviso-arranque"');
+  expect(html).toContain('npm run servir');
+});

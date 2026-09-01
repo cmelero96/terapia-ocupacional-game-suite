@@ -182,6 +182,7 @@ export function arrancar({
         dp: dp(cAcotada, 0, 0),
         dpPedida: dp(cAcotada, 0, 0),
         intentos,
+        instrumento: tipo,
         contenido: variante === null ? null : { id: variante.id, ordinal: variante.ordinal },
         incompleto: !cierre.resuelto,
       });
@@ -290,6 +291,7 @@ export function arrancar({
       dp: dp(config.C, t.svEfectiva, t.ssEfectiva),
       dpPedida: dp(config.C, t.svPedida, t.ssPedida),
       intentos,
+      instrumento: tipo,
       contenido: variante === null ? null : { id: variante.id, ordinal: variante.ordinal },
       incompleto: !cierre.resuelto,
     });

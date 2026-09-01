@@ -29,7 +29,7 @@ function tablero({ aciertos, fallos, incompleto }) {
   }
   return {
     objetivo: 'obj', distractores: [], semilla: 1, schemaVersion: 'v1',
-    dm: 48, dp: 20, dpPedida: 20, intentos, contenido: null, incompleto,
+    dm: 48, dp: 20, dpPedida: 20, intentos, instrumento: 'busca', contenido: null, incompleto,
   };
 }
 

@@ -39,6 +39,13 @@ export const MAX_SESIONES_EN_MEMORIA = 20;
  * @property {number} dp
  * @property {number} dpPedida
  * @property {Intento[]} intentos
+ * @property {string} instrumento
+ *   Qué instrumento produjo este tablero.
+ *
+ *   **Hace falta desde que cambiar de juego conserva la sesión.** Una sesión puede mezclar
+ *   varios instrumentos —el terapeuta hace tres ejercicios seguidos con el mismo paciente— y
+ *   sin este campo el registro no dice cuál produjo cada tablero: la precisión de una sesión
+ *   sería la media de tareas que no se pueden promediar.
  * @property {{ id: string, ordinal: number } | null} contenido
  *   El nivel del **eje de contenido** con el que se jugó, o `null` si el instrumento no
  *   tiene eje. Sistema 32.
