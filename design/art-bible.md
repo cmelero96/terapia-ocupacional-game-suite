@@ -74,6 +74,19 @@ Es el argumento que la revisión del sistema 2 elevó explícitamente contra el 
 del revisor sénior a recortar alcance, y quedó escrito en el concepto como entrada
 obligatoria de este documento. Se cumple.
 
+> **El coste de recoloreado por contraste NO existe, medido el 2026-09-01.** Este documento y
+> el GDD del sistema 1 avisaban de que el presupuesto de contenido no incluye ningún paso de
+> recoloreado, y que eso podía invalidar el número sobre el que se apoya la decisión de
+> producción.
+>
+> Con `mask-image` y `currentColor` el color del dibujo **no está en el archivo**: lo pone el
+> documento. Así que no hay 256 imágenes que auditar por contraste — hay **dos tokens**,
+> `--board-ink` sobre `--board-bg`, a **16,07:1**, y ya tienen puerta.
+>
+> Lo que queda en su lugar es el **grosor del trazo al tamaño mínimo**, que es otra cosa: a
+> 24 px un trazo de 4 unidades sobre 100 mide menos de un píxel. El núcleo del trazo del peor
+> dibujo da 6,69:1 y pasa; que se reconozca a ese tamaño es pregunta para la galería.
+
 **4. Peso.** 256 SVG de línea simple pesan menos que 256 PNG a resolución suficiente para
 140 px en pantalla de alta densidad. Importa porque el despliegue es copiar archivos y
 porque la consulta puede no tener buena conexión.

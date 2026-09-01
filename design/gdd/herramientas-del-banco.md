@@ -291,13 +291,37 @@ Tres salidas **distinguibles a propósito**, porque piden acciones distintas:
    mínimo, para revisar a ojo. Es la cuarta herramienta que ADR-0001 nombra y **la única que no
    está**. No se construye antes de que exista una imagen: una galería vacía no se puede
    revisar.
-2. **Que la imagen cumpla contraste.** Necesita decodificar el archivo. Playwright está
-   declarado como decodificador para eso, y el pipeline no existe. **Es el hueco más caro**:
-   el GDD del sistema 1 avisa de que el cálculo de coste de contenido no incluye ningún paso de
-   recoloreado, y si un porcentaje no marginal del stock falla el contraste, hay horas sin
-   presupuestar.
+2. ~~**Que la imagen cumpla contraste.**~~ **CERRADO el 2026-09-01, y no como estaba
+   previsto.**
+
+   Estaba declarado como «el hueco más caro»: el GDD del sistema 1 avisa de que el coste de
+   contenido no incluye ningún paso de recoloreado, y que si un porcentaje no marginal del arte
+   falla el contraste, hay horas sin presupuestar.
+
+   **Ese coste no existe.** Con `mask-image` y `currentColor`, el color del dibujo **no es una
+   propiedad del archivo**: lo pone el documento. Los píxeles pintados toman exactamente
+   `--board-ink` sobre `--board-bg`, cuya razón es **16,07:1** y ya tiene puerta propia en el
+   generador de tokens. No hay 256 imágenes que auditar: hay **dos tokens**, ya auditados.
+
+   Lo que sí queda es **otra cosa**: el grosor del trazo contra el tamaño mínimo. A 24 px un
+   trazo de 4 unidades sobre 100 mide menos de un píxel de dispositivo. Medido con el núcleo
+   del trazo —percentil 90 de cobertura— el peor de los 64 dibujos da **6,69:1**, así que pasa
+   el 3:1 de WCAG 1.4.11. Puerta en `tests/navegador/banco-contraste.spec.js`.
+
+   **Cuidado al medir esto**, porque el primer intento dio 2,05:1 y parecía un fallo. Usaba la
+   MEDIANA de cobertura, que promedia el borde suavizado con el núcleo. Se vio porque el
+   resultado **no era monótono**: grosor 5 pasaba, 6 fallaba, 7 pasaba — y un trazo más gordo
+   no puede tener menos contraste.
 3. **Que el nombre sea el que usaría el paciente.** Criterio clínico.
 4. **Que el color no separe dos clusters de verdad.** Ver R12: se vigila el nombre, que es una
    aproximación.
 5. **La normalización de los archivos.** El lock asume archivos ya normalizados y nadie los
-   normaliza todavía.
+   normaliza todavía. Hoy no hace falta porque los 64 los genera una herramienta que cumple los
+   requisitos por construcción; hará falta el día que entre arte de fuera.
+6. **Si el trazo es lo bastante gordo para 24 px.** El peor dibujo tiene **15 píxeles** a media
+   cobertura o más a ese tamaño: es legible y es fino. Que se RECONOZCA no lo decide ninguna
+   medida — está en la galería y en la hoja de revisión.
+
+   Y no es un cambio gratis: subir el grosor cambiaría los 64 archivos **bajo sus
+   identificadores**, que es exactamente lo que el proyecto prohíbe. La vía sería retirar los 64
+   y crear otros.
