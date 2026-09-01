@@ -31,6 +31,30 @@
     color: var(--frame-ink-soft);
   }
   .objetivo-glifo { font-size: 2.5rem; line-height: 1; }
+
+  /* --- El dibujo del banco real.
+     Con `mask-image` y `background: currentColor`, NUNCA con `<img>`. Medido en el
+     navegador: un SVG externo en `<img>` no ve el color del documento y sale siempre
+     negro, asi que ignoraria los tokens del proyecto.
+     El tamaño sale del contenedor, que es la celda: el tamaño de objetivo es un parametro
+     clinico y tiene que seguir siendo el que fija el terapeuta. */
+  .dibujo {
+    display: block;
+    inline-size: 68%;
+    block-size: 68%;
+    background: currentColor;
+    -webkit-mask: var(--src) center / contain no-repeat;
+    mask: var(--src) center / contain no-repeat;
+  }
+  .objetivo-glifo.dibujo { inline-size: 2.5rem; block-size: 2.5rem; }
+
+  /* CRITICO, y medido: con colores forzados el navegador fuerza `background-color` a
+     `Canvas`, asi que el dibujo se vuelve INVISIBLE. Justo para quien eligio alto
+     contraste, que es lo contrario de lo que ADR-0005 buscaba.
+     `CanvasText` no se fuerza: es una palabra clave de color del sistema. */
+  @media (forced-colors: active) {
+    .dibujo { background: CanvasText; }
+  }
   .objetivo-nombre {
     font-size: 1.25rem;
     font-weight: 600;
@@ -316,6 +340,8 @@
 <script type="module">
   import { crearSesionViva } from './src/plataforma/sesion-viva.js';
   import { BANCO_PROVISIONAL } from './src/banco-provisional.js';
+  import MANIFIESTO from './src/banco/manifiesto.js';
+  import { bancoDesdeManifiesto } from './src/banco/adaptar.js';
   // Import ESTÁTICO a propósito. Con `await import()` el resto del script corre DESPUÉS
   // del evento `load`, así que cualquier cosa que dependa de que la página esté lista
   // —una prueba de navegador, o un lector de pantalla— ve la página a medias.
@@ -368,10 +394,28 @@
   //
   // Desaparece el día que el banco real tenga 96 elementos.
   const rep = Math.max(1, n('rep', 1));
+
+  // --- Dos bancos, y los dos caminos coexisten a propósito.
+  //
+  // El REAL son los SVG de `assets/art/banco/`, pintados con `mask-image` y `currentColor`.
+  // Hoy son 64 marcadores de los 256 que necesita el producto.
+  //
+  // El PROVISIONAL son emoji. No se retira todavía: el banco real está en construcción, y el
+  // andamio `rep` que mide el presupuesto de 60 elementos DOM se apoya en él.
+  //
+  // `banco=emoji` fuerza el provisional. Por defecto va el real, porque es el camino del
+  // producto: si el real se rompe, hay que verlo al abrir la página y no dentro de un mes.
+  // La traducción vive en `src/banco/adaptar.js`, en UN solo sitio: el manifiesto dice
+  // `status: 'active'` y el generador de tableros espera `'activo'`. Dos vocabularios para
+  // lo mismo, y hacerlo aquí a mano fue exactamente lo que dejó la página con cero celdas.
+  const desdeManifiesto = bancoDesdeManifiesto(MANIFIESTO);
+
+  const usaEmoji = params.get('banco') === 'emoji' || desdeManifiesto.length === 0;
+  const base = usaEmoji ? BANCO_PROVISIONAL : desdeManifiesto;
   const banco = rep === 1
-    ? [...BANCO_PROVISIONAL]
+    ? [...base]
     : Array.from({ length: rep }, (_, k) =>
-        BANCO_PROVISIONAL.map((e) => ({ ...e, id: k === 0 ? e.id : `${e.id}~${k}` })),
+        base.map((e) => ({ ...e, id: k === 0 ? e.id : `${e.id}~${k}` })),
       ).flat();
 
   // Si la configuración no es realizable, el panel DEBE abrir mostrando el conflicto en

@@ -40,7 +40,7 @@ import { politicaPresentacion, CONFIGURACION_POR_DEFECTO } from '../presentacion
 import { validarConfiguracion, ejesAcoplados, dm, dp } from '../dificultad/modelo.js';
 
 /**
- * @typedef {import('../tablero/generador.js').Elemento & { nombre: string, glifo: string }} EntradaBanco
+ * @typedef {import('../tablero/generador.js').Elemento & { nombre: string, glifo: string, archivo?: string }} EntradaBanco
  */
 
 /**
@@ -97,7 +97,16 @@ export function arrancar({
     if (e === undefined) {
       return { id, nombre: `estimulo desconocido: ${id}`, glifo: '?', categories: [] };
     }
-    return { id: e.id, nombre: e.nombre, glifo: e.glifo, categories: e.categories };
+    return {
+      id: e.id,
+      nombre: e.nombre,
+      glifo: e.glifo,
+      categories: e.categories,
+      // El banco real trae archivo; el provisional trae emoji. Los dos caminos coexisten a
+      // proposito: el provisional existe para poder medir sin arte, y no se retira hasta
+      // que el banco real tenga sus 256 elementos.
+      ...(e.archivo === undefined ? {} : { archivo: e.archivo }),
+    };
   };
 
   // --- Los instrumentos que NO usan el banco de imagenes.

@@ -29,7 +29,7 @@ function domFalso() {
 function elemento() {
   /** @type {any} */
   const el = {
-    dataset: {}, style: { setProperty() {}, getPropertyValue: () => '' },
+    dataset: {}, style: { setProperty() {}, removeProperty() {}, getPropertyValue: () => '' },
     classList: { add() {}, remove() {}, toggle() {} },
     children: [], hidden: false, textContent: '',
     append() {}, appendChild() {}, replaceChildren() {}, remove() {},

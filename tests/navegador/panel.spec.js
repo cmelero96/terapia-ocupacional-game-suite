@@ -112,7 +112,11 @@ test('AC-4 — las cuatro perillas están agrupadas por eje', async ({ page }) =
 // ---------------------------------------------------------------- AC-6, AC-7, AC-8
 
 test('AC-6 — una configuración inválida no se puede aplicar, y el mensaje nombra el banco', async ({ page }) => {
-  await page.goto(url());
+  // Con el banco PROVISIONAL de 32 emoji, a propósito. El banco real tiene 64 marcadores, así
+  // que `C = 60` ya es realizable: el criterio no ha cambiado, el montaje del test se quedó
+  // obsoleto cuando el banco creció. Elegir el banco pequeño de forma explícita es mejor que
+  // depender de cuántos elementos tenga el grande hoy.
+  await page.goto(url({ banco: 'emoji' }));
   await page.locator('.abridor').click();
 
   await elegirEscalon(page, 'c', 60);
@@ -120,8 +124,16 @@ test('AC-6 — una configuración inválida no se puede aplicar, y el mensaje no
 
   const bloqueo = page.locator('.mensaje[data-bloquea="si"]');
   await expect(bloqueo).toHaveCount(1);
-  // El banco provisional tiene 32 activos, y el mensaje tiene que decir el número real.
   await expect(bloqueo).toContainText('32 objetos activos');
+});
+
+test('con el banco REAL, C = 60 sí es realizable', async ({ page }) => {
+  // La otra mitad de AC-6: que el bloqueo dependa del banco y no sea un límite fijo.
+  await page.goto(url());
+  await page.locator('.abridor').click();
+  await elegirEscalon(page, 'c', 60);
+  await expect(page.locator('.accion.primaria')).toBeEnabled();
+  await expect(page.locator('.mensaje[data-bloquea="si"]')).toHaveCount(0);
 });
 
 test('AC-7 — el aviso de t < 44 aparece y NO bloquea', async ({ page }) => {
@@ -135,7 +147,7 @@ test('AC-7 — el aviso de t < 44 aparece y NO bloquea', async ({ page }) => {
 });
 
 test('AC-8 — los mensajes dicen CON PALABRAS si impiden continuar', async ({ page }) => {
-  await page.goto(url({ t: 32, c: 100, lim: 'B1,B7' }));
+  await page.goto(url({ t: 32, c: 100, lim: 'B1,B7', banco: 'emoji' }));
   // Con una configuración no realizable el panel se abre SOLO: no hay nada que hacer en la
   // pantalla del paciente hasta corregirla.
   await expect(page.locator('.panel')).toBeVisible();

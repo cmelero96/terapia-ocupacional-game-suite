@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Galería de clusters del banco</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { font: 15px/1.5 system-ui, sans-serif; margin: 0; padding: 1.5rem 2rem;
+         max-width: 70rem; }
+  h1 { font-size: 1.4rem; }
+  .nota { max-width: 44rem; }
+  .barra { display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap;
+           margin: 1rem 0 2rem; padding: 0.75rem 1rem; border: 2px solid; border-radius: 8px; }
+  .barra label { display: flex; gap: 0.4rem; align-items: center; }
+  section { margin-block: 2.5rem; }
+  h2 { font-size: 1.1rem; font-family: ui-monospace, monospace; }
+  .rejilla { display: flex; flex-wrap: wrap; gap: 1.25rem; }
+  figure { margin: 0; text-align: center; inline-size: 6rem; }
+  /* La MISMA tecnica que el tablero: mask-image + currentColor. Ver el comentario de
+     cabecera: con <img> el dibujo sale negro y la galeria mentiria. */
+  .glifo { display: block; margin: 0 auto 0.35rem; background: currentColor;
+           inline-size: var(--t); block-size: var(--t);
+           -webkit-mask: var(--src) center/contain no-repeat;
+           mask: var(--src) center/contain no-repeat; }
+  @media (forced-colors: active) { .glifo { background: CanvasText; } }
+  figcaption { font-size: 0.8rem; }
+  body { --t: 24px; }
+  body[data-gris="si"] { filter: grayscale(1); }
+</style></head><body data-gris="si">
+
+<h1>Galería de clusters del banco de imágenes</h1>
+
+<p class="nota"><strong>Generada por <code>tools/banco/galeria.js</code>. No se edita a
+mano.</strong></p>
+
+<p class="nota">Un cluster está bien formado si <strong>un adulto sin daltonismo, viendo
+los elementos en escala de grises al tamaño mínimo de 24 px, los confunde entre sí más que
+con elementos de otro cluster</strong>. Eso es la propiedad que necesita la perilla de
+similitud visual, y no la puede comprobar ninguna herramienta: hace falta mirar.</p>
+
+<p class="nota">Los dibujos de hoy son <strong>marcadores</strong>, no arte definitivo:
+dibujo de línea generado por <code>tools/banco/dibujar-marcadores.js</code>. Cuando llegue
+el arte real, estos identificadores <strong>se retiran y se crean otros</strong> — no se
+sustituye el archivo, porque un identificador es la clave con la que queda registrado qué
+vio el paciente.</p>
+
+<div class="barra">
+  <label><input type="checkbox" checked
+    onchange="document.body.dataset.gris = this.checked ? 'si' : 'no'"> escala de grises</label>
+  <label>tamaño
+    <select onchange="document.body.style.setProperty('--t', this.value + 'px')">
+      <option value="24" selected>24 px — mínimo de WCAG</option>
+      <option value="44">44 px — mínimo AAA</option>
+      <option value="60">60 px</option>
+      <option value="100">100 px</option>
+      <option value="140">140 px — techo</option>
+    </select></label>
+  <span>64 activos ·
+    4 clusters</span>
+</div>
+
+<section><h2>escritura — 16 elementos</h2>
+<div class="rejilla">
+  <figure>
+    <span class="glifo" style="--src: url('escritura/boligrafo.svg')" role="img"
+      aria-label="bolígrafo"></span>
+    <figcaption>bolígrafo ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('escritura/brocha-fina.svg')" role="img"
+      aria-label="brocha fina"></span>
+    <figcaption>brocha fina ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('escritura/carboncillo.svg')" role="img"
+      aria-label="carboncillo"></span>
+    <figcaption>carboncillo ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('escritura/cera.svg')" role="img"
+      aria-label="cera de color"></span>
+    <figcaption>cera de color ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('escritura/estilografo.svg')" role="img"
+      aria-label="estilógrafo"></span>
+    <figcaption>estilógrafo ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('escritura/lapiz.svg')" role="img"
+      aria-label="lápiz"></span>
+    <figcaption>lápiz ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('escritura/lapiz-corto.svg')" role="img"
+      aria-label="lápiz corto"></span>
+    <figcaption>lápiz corto ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('escritura/marcador.svg')" role="img"
+      aria-label="marcador"></span>
+    <figcaption>marcador ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('escritura/pincel.svg')" role="img"
+      aria-label="pincel"></span>
+    <figcaption>pincel ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('escritura/pluma.svg')" role="img"
+      aria-label="pluma"></span>
+    <figcaption>pluma ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('escritura/plumilla.svg')" role="img"
+      aria-label="plumilla"></span>
+    <figcaption>plumilla ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('escritura/portaminas.svg')" role="img"
+      aria-label="portaminas"></span>
+    <figcaption>portaminas ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('escritura/punzon.svg')" role="img"
+      aria-label="punzón"></span>
+    <figcaption>punzón ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('escritura/rotulador.svg')" role="img"
+      aria-label="rotulador"></span>
+    <figcaption>rotulador ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('escritura/subrayador.svg')" role="img"
+      aria-label="subrayador"></span>
+    <figcaption>subrayador ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('escritura/tiza.svg')" role="img"
+      aria-label="tiza"></span>
+    <figcaption>tiza ·</figcaption>
+  </figure>
+</div></section>
+
+<section><h2>recipientes-abiertos — 16 elementos</h2>
+<div class="rejilla">
+  <figure>
+    <span class="glifo" style="--src: url('recipientes-abiertos/barreno.svg')" role="img"
+      aria-label="barreño"></span>
+    <figcaption>barreño ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('recipientes-abiertos/bol.svg')" role="img"
+      aria-label="bol"></span>
+    <figcaption>bol ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('recipientes-abiertos/cazo.svg')" role="img"
+      aria-label="cazo"></span>
+    <figcaption>cazo ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('recipientes-abiertos/cazuela.svg')" role="img"
+      aria-label="cazuela"></span>
+    <figcaption>cazuela ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('recipientes-abiertos/copa.svg')" role="img"
+      aria-label="copa"></span>
+    <figcaption>copa ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('recipientes-abiertos/cubilete.svg')" role="img"
+      aria-label="cubilete"></span>
+    <figcaption>cubilete ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('recipientes-abiertos/cubo.svg')" role="img"
+      aria-label="cubo"></span>
+    <figcaption>cubo ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('recipientes-abiertos/jarra.svg')" role="img"
+      aria-label="jarra"></span>
+    <figcaption>jarra ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('recipientes-abiertos/jarron.svg')" role="img"
+      aria-label="jarrón"></span>
+    <figcaption>jarrón ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('recipientes-abiertos/maceta.svg')" role="img"
+      aria-label="maceta"></span>
+    <figcaption>maceta ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('recipientes-abiertos/olla-abierta.svg')" role="img"
+      aria-label="olla"></span>
+    <figcaption>olla ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('recipientes-abiertos/papelera.svg')" role="img"
+      aria-label="papelera"></span>
+    <figcaption>papelera ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('recipientes-abiertos/regadera.svg')" role="img"
+      aria-label="regadera"></span>
+    <figcaption>regadera ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('recipientes-abiertos/taza.svg')" role="img"
+      aria-label="taza"></span>
+    <figcaption>taza ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('recipientes-abiertos/tiesto.svg')" role="img"
+      aria-label="tiesto"></span>
+    <figcaption>tiesto ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('recipientes-abiertos/vaso.svg')" role="img"
+      aria-label="vaso"></span>
+    <figcaption>vaso ·</figcaption>
+  </figure>
+</div></section>
+
+<section><h2>redondeados — 16 elementos</h2>
+<div class="rejilla">
+  <figure>
+    <span class="glifo" style="--src: url('redondeados/cebolla.svg')" role="img"
+      aria-label="cebolla"></span>
+    <figcaption>cebolla ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('redondeados/ciruela.svg')" role="img"
+      aria-label="ciruela"></span>
+    <figcaption>ciruela ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('redondeados/granada.svg')" role="img"
+      aria-label="granada"></span>
+    <figcaption>granada ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('redondeados/kiwi.svg')" role="img"
+      aria-label="kiwi"></span>
+    <figcaption>kiwi ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('redondeados/mandarina.svg')" role="img"
+      aria-label="mandarina"></span>
+    <figcaption>mandarina ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('redondeados/manzana.svg')" role="img"
+      aria-label="manzana"></span>
+    <figcaption>manzana ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('redondeados/melocoton.svg')" role="img"
+      aria-label="melocotón"></span>
+    <figcaption>melocotón ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('redondeados/melon.svg')" role="img"
+      aria-label="melón"></span>
+    <figcaption>melón ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('redondeados/nabo.svg')" role="img"
+      aria-label="nabo"></span>
+    <figcaption>nabo ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('redondeados/naranja.svg')" role="img"
+      aria-label="naranja"></span>
+    <figcaption>naranja ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('redondeados/nectarina.svg')" role="img"
+      aria-label="nectarina"></span>
+    <figcaption>nectarina ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('redondeados/pera.svg')" role="img"
+      aria-label="pera"></span>
+    <figcaption>pera ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('redondeados/pomelo.svg')" role="img"
+      aria-label="pomelo"></span>
+    <figcaption>pomelo ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('redondeados/remolacha.svg')" role="img"
+      aria-label="remolacha"></span>
+    <figcaption>remolacha ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('redondeados/sandia.svg')" role="img"
+      aria-label="sandía"></span>
+    <figcaption>sandía ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('redondeados/tomate.svg')" role="img"
+      aria-label="tomate"></span>
+    <figcaption>tomate ·</figcaption>
+  </figure>
+</div></section>
+
+<section><h2>vehiculos-ruedas — 16 elementos</h2>
+<div class="rejilla">
+  <figure>
+    <span class="glifo" style="--src: url('vehiculos-ruedas/ambulancia.svg')" role="img"
+      aria-label="ambulancia"></span>
+    <figcaption>ambulancia ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('vehiculos-ruedas/autobus.svg')" role="img"
+      aria-label="autobús"></span>
+    <figcaption>autobús ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('vehiculos-ruedas/camion.svg')" role="img"
+      aria-label="camión"></span>
+    <figcaption>camión ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('vehiculos-ruedas/camioneta.svg')" role="img"
+      aria-label="camioneta"></span>
+    <figcaption>camioneta ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('vehiculos-ruedas/caravana.svg')" role="img"
+      aria-label="caravana"></span>
+    <figcaption>caravana ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('vehiculos-ruedas/coche.svg')" role="img"
+      aria-label="coche"></span>
+    <figcaption>coche ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('vehiculos-ruedas/coche-pequeno.svg')" role="img"
+      aria-label="coche pequeño"></span>
+    <figcaption>coche pequeño ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('vehiculos-ruedas/furgon.svg')" role="img"
+      aria-label="furgón"></span>
+    <figcaption>furgón ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('vehiculos-ruedas/furgoneta.svg')" role="img"
+      aria-label="furgoneta"></span>
+    <figcaption>furgoneta ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('vehiculos-ruedas/minibus.svg')" role="img"
+      aria-label="minibús"></span>
+    <figcaption>minibús ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('vehiculos-ruedas/monovolumen.svg')" role="img"
+      aria-label="monovolumen"></span>
+    <figcaption>monovolumen ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('vehiculos-ruedas/remolque.svg')" role="img"
+      aria-label="remolque"></span>
+    <figcaption>remolque ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('vehiculos-ruedas/taxi.svg')" role="img"
+      aria-label="taxi"></span>
+    <figcaption>taxi ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('vehiculos-ruedas/todoterreno.svg')" role="img"
+      aria-label="todoterreno"></span>
+    <figcaption>todoterreno ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('vehiculos-ruedas/tractor.svg')" role="img"
+      aria-label="tractor"></span>
+    <figcaption>tractor ·</figcaption>
+  </figure>
+  <figure>
+    <span class="glifo" style="--src: url('vehiculos-ruedas/volquete.svg')" role="img"
+      aria-label="volquete"></span>
+    <figcaption>volquete ·</figcaption>
+  </figure>
+</div></section>
+
+<p class="nota">El punto tras el nombre marca un <strong>marcador</strong>.</p>
+</body></html>

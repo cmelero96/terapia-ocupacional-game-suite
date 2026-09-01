@@ -32,8 +32,28 @@ Cinco argumentos, y el quinto es el que lo cierra.
 
 **1. `forced-colors` funciona.** ADR-0005 acaba de decidir DOM porque el modo de alto
 contraste de Windows no toca los píxeles de un canvas. El mismo argumento aplica al
-formato del activo: un SVG en línea, o referenciado con `<img>` y `currentColor`, responde
-al modo de colores forzados. **Un PNG no.** Para una población de baja visión que eligió
+formato del activo: un SVG **puede** responder al modo de colores forzados. **Un PNG no.**
+
+> **CORREGIDO el 2026-09-01, y estaba mal en la mitad que importa.** Este párrafo decía «un
+> SVG en línea, o referenciado con `<img>` y `currentColor`, responde al modo de colores
+> forzados». **`<img>` no responde**, y no es una sutileza: un SVG externo cargado en `<img>`
+> **no hereda el color del documento**. Medido con el color del documento en `#e11d48`, el
+> trazo sale **negro**. Un banco de 256 SVG servidos con `<img>` ignoraría los tokens del
+> proyecto exactamente igual que un PNG.
+>
+> La técnica correcta es **`mask-image` con `background: currentColor`**. Y trae su propia
+> trampa, también medida: con colores forzados el navegador fuerza `background-color` a
+> `Canvas`, así que **el dibujo desaparece** — justo para la población de baja visión que
+> eligió activamente el alto contraste. Hace falta declarar `background: CanvasText` bajo
+> `@media (forced-colors: active)`.
+>
+> | Técnica | `forced-colors: none` | forzados, claro | forzados, oscuro |
+> |---|---|---|---|
+> | `<img src>` + `currentColor` | trazo negro | negro | negro |
+> | `mask-image` + `currentColor` | correcto | **INVISIBLE** | **INVISIBLE** |
+> | + `background: CanvasText` en forzados | correcto | correcto | correcto |
+>
+> Blindado en `tests/navegador/banco-render.spec.js`, en los tres modos. Para una población de baja visión que eligió
 activamente el alto contraste, un banco de 256 PNG es un banco de 256 elementos que ignoran
 esa elección.
 
@@ -161,6 +181,22 @@ grises al tamaño mínimo de 24 px, los confunde entre sí más que con elemento
 cluster.** Eso es exactamente la propiedad que la perilla necesita, y es medible con
 personas antes de producir las 256.
 
+> **MEDIDO el 2026-09-01, y un cluster de esta tabla no pasa su propio criterio.** Con 64
+> dibujos marcadores generados, la distancia media entre elementos del cluster
+> «vehículos con ruedas» salió **30,6 sobre 255** a 24 px, frente a **30,0 de media entre
+> clusters distintos**: una bicicleta se parecía a un autobús tan poco como a un lápiz. **No
+> era un cluster.**
+>
+> El motivo es la tensión que el criterio expone: dentro de un cluster hay que ser
+> confundible, y en los vehículos las diferencias que hacen a un objeto *nombrable* son
+> precisamente diferencias grandes de silueta. Se arregló estrechando la familia —fuera
+> bicicleta, moto, patinete y monopatín— y la media interna bajó a 22,2.
+>
+> **Consecuencia para el resto de la tabla:** los clusters definidos por función y no por
+> forma —«asientos», «herramientas de mano», «animales de cuatro patas»— corren el mismo
+> riesgo, y con 16 elementos cada uno. Hay una puerta que lo mide:
+> `tests/navegador/banco-distinguibilidad.spec.js`.
+
 > **Aviso, y es el mismo tipo que el de la taxonomía de perfiles:** esta tabla de 16
 > clusters es **una propuesta de ingeniería y arte, no una taxonomía validada.** Está
 > construida sobre criterios de forma que se pueden defender, pero **nadie ha comprobado
@@ -191,7 +227,7 @@ colaborador lo confirmó**, y es lo que sostiene el banco de 256 en lugar de ~13
 | Margen interior | 6 unidades mínimo por lado | El objeto no toca el borde a ningún tamaño |
 | Texto | **Ninguno.** Convertido a trazo si el original lo tenía | Un texto sin convertir depende de fuentes del sistema |
 | Ráster incrustado | **Prohibido** | Anularía las cinco razones de elegir vector |
-| Filtros y máscaras | **Prohibidos** | Coste de render y comportamiento inconsistente bajo `forced-colors` |
+| Filtros y máscaras | **Prohibidos DENTRO del archivo** | Coste de render y comportamiento inconsistente bajo `forced-colors`. La máscara **CSS** con la que el tablero pinta el archivo es otra cosa y es obligatoria: ver el argumento 1 |
 | Grupos y transformaciones | Aplanados | Simplifica la normalización y el diff |
 | Color | Declarado con tokens del proyecto, no con literales hex | Es lo que hace que la regla del color se cumpla por construcción |
 | Peso | Objetivo por debajo de 4 KB por archivo | 256 × 4 KB ≈ 1,5 MB de banco completo |

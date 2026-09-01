@@ -1,33 +1,82 @@
 /**
- * Manifiesto del banco de imagenes. Sistema 1 - ADR-0001.
+ * Manifiesto del banco de imagenes. Sistema 1 · ADR-0001.
  *
  * **GENERADO por tools/banco/importar.js. No se edita a mano.**
  *
- * Modulo JS con literales, no JSON: sin paso de build, `tsc --checkJs` solo comprueba de
- * verdad literales de codigo, y aqui hay registros curados a mano que necesitan esa
+ * Modulo JS con literales, no JSON: sin paso de build, `tsc --checkJs` solo comprueba
+ * de verdad literales de codigo, y aqui hay registros curados a mano que necesitan esa
  * comprobacion entrada por entrada.
  *
- * Un `id` NUNCA se renombra ni se reutiliza. Para cambiar una imagen: retirar el id y crear
- * otro.
- *
- * ---
- *
- * **VACIO A PROPOSITO, y esto no es un hueco por rellenar.**
- *
- * El banco real son 256 imagenes vectoriales, 16 clusters de 16, y ADR-0006 acaba de
- * desbloquear su produccion. Todavia no existe ni una.
- *
- * Un manifiesto vacio es **valido por forma y no sirve para jugar**, y el validador lo dice
- * con esas palabras. Lo que se juega hoy sale de `src/banco-provisional.js`, cuatro clusters
- * de emoji que existen para poder medir antes de que haya arte.
- *
- * Este archivo existe vacio porque las herramientas del sistema 13 necesitan algo contra lo
- * que ejecutarse, y porque asi la primera imagen que llegue entra por el importador en lugar
- * de crear el manifiesto de cero a mano.
+ * Un `id` NUNCA se renombra ni se reutiliza. Para cambiar una imagen: retirar el id y
+ * crear otro.
  */
 
 /** @type {import('./esquema.js').ImageAsset[]} */
 const BANCO = [
+  {"id":"ambulancia","file":"vehiculos-ruedas/ambulancia.svg","categories":["transporte","salud"],"cluster":"vehiculos-ruedas","name":"ambulancia","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"autobus","file":"vehiculos-ruedas/autobus.svg","categories":["transporte"],"cluster":"vehiculos-ruedas","name":"autobús","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"barreno","file":"recipientes-abiertos/barreno.svg","categories":["aseo","cocina"],"cluster":"recipientes-abiertos","name":"barreño","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"bol","file":"recipientes-abiertos/bol.svg","categories":["cocina","vajilla"],"cluster":"recipientes-abiertos","name":"bol","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"boligrafo","file":"escritura/boligrafo.svg","categories":["oficina","escuela"],"cluster":"escritura","name":"bolígrafo","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"brocha-fina","file":"escritura/brocha-fina.svg","categories":["arte","herramientas"],"cluster":"escritura","name":"brocha fina","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"camion","file":"vehiculos-ruedas/camion.svg","categories":["transporte"],"cluster":"vehiculos-ruedas","name":"camión","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"camioneta","file":"vehiculos-ruedas/camioneta.svg","categories":["transporte"],"cluster":"vehiculos-ruedas","name":"camioneta","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"caravana","file":"vehiculos-ruedas/caravana.svg","categories":["transporte"],"cluster":"vehiculos-ruedas","name":"caravana","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"carboncillo","file":"escritura/carboncillo.svg","categories":["arte"],"cluster":"escritura","name":"carboncillo","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"cazo","file":"recipientes-abiertos/cazo.svg","categories":["cocina"],"cluster":"recipientes-abiertos","name":"cazo","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"cazuela","file":"recipientes-abiertos/cazuela.svg","categories":["cocina"],"cluster":"recipientes-abiertos","name":"cazuela","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"cebolla","file":"redondeados/cebolla.svg","categories":["alimentos","verduras","cocina"],"cluster":"redondeados","name":"cebolla","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"cera","file":"escritura/cera.svg","categories":["escuela","arte"],"cluster":"escritura","name":"cera de color","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"ciruela","file":"redondeados/ciruela.svg","categories":["alimentos","frutas"],"cluster":"redondeados","name":"ciruela","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"coche","file":"vehiculos-ruedas/coche.svg","categories":["transporte"],"cluster":"vehiculos-ruedas","name":"coche","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"coche-pequeno","file":"vehiculos-ruedas/coche-pequeno.svg","categories":["transporte"],"cluster":"vehiculos-ruedas","name":"coche pequeño","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"copa","file":"recipientes-abiertos/copa.svg","categories":["cocina","vajilla"],"cluster":"recipientes-abiertos","name":"copa","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"cubilete","file":"recipientes-abiertos/cubilete.svg","categories":["cocina"],"cluster":"recipientes-abiertos","name":"cubilete","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"cubo","file":"recipientes-abiertos/cubo.svg","categories":["aseo","herramientas"],"cluster":"recipientes-abiertos","name":"cubo","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"estilografo","file":"escritura/estilografo.svg","categories":["oficina"],"cluster":"escritura","name":"estilógrafo","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"furgon","file":"vehiculos-ruedas/furgon.svg","categories":["transporte"],"cluster":"vehiculos-ruedas","name":"furgón","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"furgoneta","file":"vehiculos-ruedas/furgoneta.svg","categories":["transporte"],"cluster":"vehiculos-ruedas","name":"furgoneta","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"granada","file":"redondeados/granada.svg","categories":["alimentos","frutas"],"cluster":"redondeados","name":"granada","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"jarra","file":"recipientes-abiertos/jarra.svg","categories":["cocina","vajilla"],"cluster":"recipientes-abiertos","name":"jarra","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"jarron","file":"recipientes-abiertos/jarron.svg","categories":["casa"],"cluster":"recipientes-abiertos","name":"jarrón","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"kiwi","file":"redondeados/kiwi.svg","categories":["alimentos","frutas"],"cluster":"redondeados","name":"kiwi","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"lapiz","file":"escritura/lapiz.svg","categories":["oficina","escuela"],"cluster":"escritura","name":"lápiz","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"lapiz-corto","file":"escritura/lapiz-corto.svg","categories":["oficina","escuela"],"cluster":"escritura","name":"lápiz corto","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"maceta","file":"recipientes-abiertos/maceta.svg","categories":["jardin"],"cluster":"recipientes-abiertos","name":"maceta","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"mandarina","file":"redondeados/mandarina.svg","categories":["alimentos","frutas"],"cluster":"redondeados","name":"mandarina","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"manzana","file":"redondeados/manzana.svg","categories":["alimentos","frutas","cocina"],"cluster":"redondeados","name":"manzana","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"marcador","file":"escritura/marcador.svg","categories":["oficina"],"cluster":"escritura","name":"marcador","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"melocoton","file":"redondeados/melocoton.svg","categories":["alimentos","frutas"],"cluster":"redondeados","name":"melocotón","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"melon","file":"redondeados/melon.svg","categories":["alimentos","frutas"],"cluster":"redondeados","name":"melón","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"minibus","file":"vehiculos-ruedas/minibus.svg","categories":["transporte"],"cluster":"vehiculos-ruedas","name":"minibús","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"monovolumen","file":"vehiculos-ruedas/monovolumen.svg","categories":["transporte"],"cluster":"vehiculos-ruedas","name":"monovolumen","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"nabo","file":"redondeados/nabo.svg","categories":["alimentos","verduras"],"cluster":"redondeados","name":"nabo","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"naranja","file":"redondeados/naranja.svg","categories":["alimentos","frutas"],"cluster":"redondeados","name":"naranja","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"nectarina","file":"redondeados/nectarina.svg","categories":["alimentos","frutas"],"cluster":"redondeados","name":"nectarina","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"olla-abierta","file":"recipientes-abiertos/olla-abierta.svg","categories":["cocina"],"cluster":"recipientes-abiertos","name":"olla","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"papelera","file":"recipientes-abiertos/papelera.svg","categories":["oficina","aseo"],"cluster":"recipientes-abiertos","name":"papelera","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"pera","file":"redondeados/pera.svg","categories":["alimentos","frutas"],"cluster":"redondeados","name":"pera","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"pincel","file":"escritura/pincel.svg","categories":["oficina","arte"],"cluster":"escritura","name":"pincel","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"pluma","file":"escritura/pluma.svg","categories":["oficina"],"cluster":"escritura","name":"pluma","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"plumilla","file":"escritura/plumilla.svg","categories":["arte"],"cluster":"escritura","name":"plumilla","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"pomelo","file":"redondeados/pomelo.svg","categories":["alimentos","frutas"],"cluster":"redondeados","name":"pomelo","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"portaminas","file":"escritura/portaminas.svg","categories":["oficina","escuela"],"cluster":"escritura","name":"portaminas","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"punzon","file":"escritura/punzon.svg","categories":["herramientas"],"cluster":"escritura","name":"punzón","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"regadera","file":"recipientes-abiertos/regadera.svg","categories":["jardin"],"cluster":"recipientes-abiertos","name":"regadera","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"remolacha","file":"redondeados/remolacha.svg","categories":["alimentos","verduras"],"cluster":"redondeados","name":"remolacha","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"remolque","file":"vehiculos-ruedas/remolque.svg","categories":["transporte"],"cluster":"vehiculos-ruedas","name":"remolque","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"rotulador","file":"escritura/rotulador.svg","categories":["oficina","escuela"],"cluster":"escritura","name":"rotulador","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"sandia","file":"redondeados/sandia.svg","categories":["alimentos","frutas"],"cluster":"redondeados","name":"sandía","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"subrayador","file":"escritura/subrayador.svg","categories":["oficina","escuela"],"cluster":"escritura","name":"subrayador","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"taxi","file":"vehiculos-ruedas/taxi.svg","categories":["transporte"],"cluster":"vehiculos-ruedas","name":"taxi","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"taza","file":"recipientes-abiertos/taza.svg","categories":["cocina","vajilla"],"cluster":"recipientes-abiertos","name":"taza","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"tiesto","file":"recipientes-abiertos/tiesto.svg","categories":["jardin"],"cluster":"recipientes-abiertos","name":"tiesto","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"tiza","file":"escritura/tiza.svg","categories":["escuela"],"cluster":"escritura","name":"tiza","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"todoterreno","file":"vehiculos-ruedas/todoterreno.svg","categories":["transporte"],"cluster":"vehiculos-ruedas","name":"todoterreno","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"tomate","file":"redondeados/tomate.svg","categories":["alimentos","verduras","cocina"],"cluster":"redondeados","name":"tomate","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"tractor","file":"vehiculos-ruedas/tractor.svg","categories":["transporte","campo"],"cluster":"vehiculos-ruedas","name":"tractor","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"vaso","file":"recipientes-abiertos/vaso.svg","categories":["cocina","vajilla"],"cluster":"recipientes-abiertos","name":"vaso","status":"active","attrs":{"procedencia":"marcador"}},
+  {"id":"volquete","file":"vehiculos-ruedas/volquete.svg","categories":["transporte","campo"],"cluster":"vehiculos-ruedas","name":"volquete","status":"active","attrs":{"procedencia":"marcador"}},
 ];
 
 export default BANCO;

@@ -76,6 +76,44 @@ export function montarInstrumento({
   raiz.dataset['instrumento'] = tipo;
 
   /**
+   * Pinta el estimulo dentro de un elemento: dibujo del banco, o texto.
+   *
+   * **El dibujo va con `mask-image` y `background: currentColor`, nunca con `<img>`.**
+   * Medido en el navegador, con el color del documento en #e11d48:
+   *
+   * | Tecnica | forced-colors: none | forzados, claro | forzados, oscuro |
+   * |---|---|---|---|
+   * | `<img src>` | trazo **negro** — ignora el documento | negro | negro |
+   * | `mask-image` + `currentColor` | 225,29,72 correcto | **INVISIBLE** | **INVISIBLE** |
+   * | + `background: CanvasText` en forzados | correcto | negro | blanco |
+   *
+   * Las dos filas importan. `<img>` **no ve** `currentColor`: un SVG externo no hereda el
+   * color del documento, asi que ignoraria los tokens del proyecto. La biblia de arte
+   * afirmaba lo contrario y estaba equivocada.
+   *
+   * Y `mask-image` a secas **desaparece** con colores forzados, porque el navegador fuerza
+   * `background-color` a `Canvas`. El icono se vuelve invisible justo para quien eligio alto
+   * contraste, que es lo contrario de lo que ADR-0005 buscaba. El arreglo esta en el CSS de
+   * `.dibujo`, no aqui.
+   *
+   * @param {HTMLElement} el
+   * @param {import('./busca.js').Estimulo} e
+   */
+  function pintarEstimulo(el, e) {
+    if (e.archivo !== undefined && e.archivo !== '') {
+      el.className = 'dibujo';
+      // La ruta se compone aqui y NUNCA viene del instrumento: el instrumento conoce
+      // identificadores, no rutas. Es la regla del manifiesto del sistema 1.
+      el.style.setProperty('--src', `url("assets/art/banco/${e.archivo}")`);
+      el.textContent = '';
+      return;
+    }
+    el.className = '';
+    el.style.removeProperty('--src');
+    el.textContent = e.glifo;
+  }
+
+  /**
    * @param {import('./busca.js').Estimulo} e
    * @param {string} clase
    * @param {string} [claseExtra]
@@ -91,7 +129,7 @@ export function montarInstrumento({
     b.setAttribute('aria-label', e.nombre);
     const g = document.createElement('span');
     g.setAttribute('aria-hidden', 'true');
-    g.textContent = e.glifo;
+    pintarEstimulo(g, e);
     b.append(g);
     return b;
   }
@@ -127,11 +165,13 @@ export function montarInstrumento({
     zonaObjetivo.replaceChildren();
     // Denominacion NUNCA muestra glifo. Los de texto lo muestran solo si su estimulo tiene
     // uno: un simbolo si, una palabra con hueco no.
-    if (tipo !== 'denominar' && objetivo.glifo !== '') {
+    const tieneDibujo = objetivo.archivo !== undefined && objetivo.archivo !== '';
+    if (tipo !== 'denominar' && (tieneDibujo || objetivo.glifo !== '')) {
       const g = document.createElement('span');
-      g.className = 'objetivo-glifo';
-      g.textContent = objetivo.glifo;
       g.setAttribute('aria-hidden', 'true');
+      pintarEstimulo(g, objetivo);
+      // `pintarEstimulo` fija la clase, asi que la del objetivo se AÑADE despues.
+      g.classList.add('objetivo-glifo');
       zonaObjetivo.append(g);
     }
     const n = document.createElement('span');

@@ -19,6 +19,8 @@
     "banco": "node tools/banco/cli.js validar",
     "banco:lock": "node tools/banco/cli.js lock --comprobar",
     "banco:diff": "node tools/banco/cli.js diff",
+    "banco:dibujar": "node tools/banco/dibujar-marcadores.js",
+    "banco:galeria": "node tools/banco/galeria.js",
     "servir": "node tools/servir.js",
     "test:navegador": "playwright test",
     "check": "npm run typecheck && npm run tokens:comprobar && npm run revision:comprobar && npm run banco && npm run banco:lock && npm run invariantes && npm run test"

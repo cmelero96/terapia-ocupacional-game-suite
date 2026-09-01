@@ -44,7 +44,16 @@ export function cabe(C, t, anchoDisponible) {
  * @typedef {object} Estimulo
  * @property {string} id
  * @property {string} nombre Nombre accesible. Del campo `name` del manifiesto, NUNCA la ruta
- * @property {string} glifo Representacion visual provisional, hasta que exista el banco
+ * @property {string} glifo
+ *   Representacion visual **de texto**: un emoji del banco provisional, o el glifo de un
+ *   instrumento de contenido. Vacio cuando el estimulo tiene archivo
+ * @property {string} [archivo]
+ *   Ruta del SVG dentro de `assets/art/banco/`, cuando el estimulo viene del banco real.
+ *
+ *   **Se pinta con `mask-image` y `currentColor`, nunca con `<img>`.** Medido: un SVG externo
+ *   en `<img>` NO ve el color del documento y sale siempre negro, asi que ignoraria los tokens
+ *   del proyecto y el modo de colores forzados. La biblia de arte afirmaba lo contrario y
+ *   estaba equivocada.
  */
 
 /**
