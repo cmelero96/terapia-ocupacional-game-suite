@@ -116,7 +116,7 @@ export class Ordenar {
     const correcto = palabra === this.siguientePalabra();
     // Cada palabra es un intento. Registrar solo la frase completa perderia que un paciente
     // acerto cuatro de cinco.
-    this.intentos.push({ idActivado: evento.idObjetivo, correcto, latencia });
+    this.intentos.push({ idActivado: evento.idObjetivo, correcto, latencia, modo: evento.modo });
 
     if (!correcto) {
       // Activar mal no hace NADA visible y no retrocede: el pilar 2 prohibe marcar el

@@ -109,7 +109,7 @@ export class Busca {
    */
   activar(evento, latencia) {
     const correcto = evento.idObjetivo === this.tablero.objetivo;
-    this.intentos.push({ idActivado: evento.idObjetivo, correcto, latencia });
+    this.intentos.push({ idActivado: evento.idObjetivo, correcto, latencia, modo: evento.modo });
     if (correcto) {
       this.tablero = this.siguienteTablero();
       this.tableroNumero += 1;

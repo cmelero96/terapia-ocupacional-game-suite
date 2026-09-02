@@ -169,7 +169,7 @@ export class Clasificar {
 
     const cats = this.resolver(this.seleccionado).categories;
     const correcto = cats.includes(evento.idObjetivo);
-    this.intentos.push({ idActivado: evento.idObjetivo, correcto, latencia });
+    this.intentos.push({ idActivado: evento.idObjetivo, correcto, latencia, modo: evento.modo });
     this.seleccionado = null;
 
     if (correcto) {

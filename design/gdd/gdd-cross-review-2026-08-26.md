@@ -30,6 +30,9 @@ criterios que hablan de lo mismo desde documentos distintos.
 | **X3** | AC-13 —el progreso de permanencia no se anuncia por lector— estaba escrito, marcado BLOCKING, y **no tenía test** | **CERRADO** |
 | **X4** | AC-8 —el barrido no tiene límite de vueltas— tampoco tenía test de navegador | **CERRADO** |
 | **X5** | Una cadencia de barrido fuera de rango abre el panel con el conflicto. Comportamiento correcto y **sin test**; lo descubrí al escribir X4 con un valor inválido | **CERRADO** |
+| **X6** | **Ninguna latencia se medía nunca, en ningún modo de entrada.** `latencia()` comparaba las etiquetas de origen, y el único par que el producto produce —reloj monótono contra marca del evento— se rechazaba siempre. Una de las dos métricas del producto. **Dos tests fijaban el defecto** | **CERRADO** |
+| **X7** | `Intento` no guardaba el **modo**, así que el arreglo del 2026-08-31 corregía un valor que nadie persistía | **CERRADO** |
+| **A6** | El aviso A6 pedía un motivo `barridoRecortado`. **Cerrado por una vía más ancha**: la latencia con pulsador está dominada por la cadencia siempre, recortada o no, así que se separa la clase entera en lugar de marcar el caso extremo | **CERRADO** |
 
 ### Y cómo se arreglan los recuentos, que es lo que importa
 

@@ -155,7 +155,7 @@ export class TresEnRaya {
     if (id.startsWith('r:')) {
       if (this.acertado) return { registrado: false, correcto: false, avanza: false };
       const correcto = id === `r:${this.reto.resultado}`;
-      this.intentos.push({ idActivado: id, correcto, latencia });
+      this.intentos.push({ idActivado: id, correcto, latencia, modo: evento.modo });
       if (correcto) this.acertado = true;
       // Fallar no coloca y no marca nada. Se sortea otra operacion, sin decir por que.
       if (!correcto) this.reto = this.#nuevoReto();

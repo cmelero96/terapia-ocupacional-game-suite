@@ -61,9 +61,41 @@ test('test_canario_F1_los_cuatro_casos', () => {
   assert.equal(atras.ms, undefined);
   assert.equal(atras.ms === undefined ? atras.motivo : '', 'relojRetrocedio');
 
-  const mezcla = latencia(1000, 1016, 'evento', 'reloj');
+  // El cuarto caso es la MEZCLA DE RELOJES, y este test la tenia mal: usaba
+  // `'evento'` contra `'reloj'`, que son el MISMO reloj —los dos monotonos— y por tanto
+  // comparables. El reloj que no se puede mezclar es el de pared.
+  const mezcla = latencia(1000, 1016, 'reloj', 'pared');
   assert.equal(mezcla.ms, undefined);
   assert.equal(mezcla.ms === undefined ? mezcla.motivo : '', 'origenesMezclados');
+});
+
+test('test_evento_y_reloj_SON_comparables_porque_son_el_mismo_reloj', () => {
+  // El defecto que este archivo fijaba. `event.timeStamp` es un `DOMHighResTimeStamp` con el
+  // mismo origen de tiempo que `performance.now()`: medido en el navegador, 0,00 ms de
+  // diferencia.
+  //
+  // Y ese es exactamente el par que produce el producto: el tablero marca su inicio con una
+  // lectura del reloj monotono y la activacion trae la marca del evento. Con la regla
+  // anterior, NINGUNA latencia se midio nunca, en ningun modo de entrada.
+  //
+  // La regla del proyecto habla de `event.timeStamp` contra el reloj monotono **de otra carga
+  // de pagina**. Dentro de la misma carga son el mismo reloj.
+  assert.equal(latencia(1000, 1016, 'evento', 'reloj').ms, 16);
+  assert.equal(latencia(1000, 1016, 'reloj', 'evento').ms, 16);
+  assert.equal(latencia(1000, 1016, 'evento', 'evento').ms, 16);
+});
+
+test('test_el_reloj_de_PARED_no_se_mezcla_con_ninguno_de_los_dos', () => {
+  // El caso que la regla protege de verdad: un `event.timeStamp` heredado basado en epoch.
+  for (const otro of /** @type {const} */ (['evento', 'reloj'])) {
+    for (const par of /** @type {const} */ ([[otro, 'pared'], ['pared', otro]])) {
+      const r = latencia(1000, 1016, par[0], par[1]);
+      assert.equal(r.ms, undefined, `${par[0]} contra ${par[1]}`);
+      assert.equal(r.ms === undefined ? r.motivo : '', 'origenesMezclados');
+    }
+  }
+  // Y dos marcas de pared entre si SI se pueden restar: son el mismo reloj.
+  assert.equal(latencia(1000, 1016, 'pared', 'pared').ms, 16);
 });
 
 test('test_una_latencia_negativa_NUNCA_se_registra_como_0', () => {
@@ -77,16 +109,16 @@ test('test_una_latencia_negativa_NUNCA_se_registra_como_0', () => {
   }
 });
 
-test('test_no_se_restan_dos_origenes_de_reloj_distintos', () => {
+test('test_no_se_restan_dos_CLASES_de_reloj_distintas', () => {
   // Los dos numeros darian 16, que es plausible. No importa: no son comparables.
-  const r = latencia(1000, 1016, 'evento', 'reloj');
+  const r = latencia(1000, 1016, 'reloj', 'pared');
   assert.equal(r.ms, undefined);
   assert.equal(r.ms === undefined ? r.motivo : '', 'origenesMezclados');
 });
 
 test('test_los_tres_motivos_degenerados_son_distinguibles', () => {
   // Piden acciones distintas: defecto de codigo, defecto del entorno, limitacion aceptable.
-  const a = latencia(1000, 1016, 'evento', 'reloj');
+  const a = latencia(1000, 1016, 'reloj', 'pared');
   const b = latencia(1000, 999, 'reloj', 'reloj');
   const c = latencia(1000, 1000, 'reloj', 'reloj');
   assert.notEqual(

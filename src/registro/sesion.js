@@ -9,6 +9,7 @@
  */
 
 import { dm, dp } from '../dificultad/modelo.js';
+import { claseDeReloj, claseDeLatencia } from '../entrada/constantes.js';
 
 /** Sin persistencia, el registro crece con la jornada. 20 es mucho mas de lo que una
  * consulta produce en un dia. */
@@ -27,6 +28,25 @@ export const MAX_SESIONES_EN_MEMORIA = 20;
  * @property {string} idActivado
  * @property {boolean} correcto
  * @property {Latencia} latencia
+ * @property {import('../entrada/constantes.js').Modo} [modo]
+ *   Por qué vía se activó.
+ *
+ *   **Faltaba, y eso dejaba sin efecto un arreglo anterior.** El 2026-08-31 se corrigió que el
+ *   enlace con el DOM escribía `modo: 'tactil'` a mano para las cinco vías; el valor pasó a ser
+ *   el real y **nadie lo persistía**. La barrera AC-2 cazó el literal inventado; nada cazó que
+ *   el valor corregido se tiraba.
+ *
+ *   Importa porque **una latencia no significa lo mismo en cada vía**:
+ *
+ *   | Vía | Qué mide la latencia |
+ *   |---|---|
+ *   | táctil, ratón, teclado | tiempo de reacción |
+ *   | pulsador | espera del barrido **más** reacción |
+ *   | permanencia | umbral de permanencia **más** reacción |
+ *
+ *   Promediarlas es promediar tres cantidades distintas. Medido: 424 ms con pulsador a 500 ms
+ *   por paso, y 1.036 ms con permanencia de 600 ms — los dos dominados por su propio ajuste.
+ * @property {boolean} [incompleto] Reservado
  */
 
 /**
@@ -94,8 +114,18 @@ export const MAX_SESIONES_EN_MEMORIA = 20;
  * @returns {Latencia}
  */
 export function latencia(tInicio, tFin, origenInicio, origenFin) {
-  // Aunque los dos numeros darian una diferencia plausible, no son comparables.
-  if (origenInicio !== origenFin) return { ms: undefined, motivo: 'origenesMezclados' };
+  // Se comparan las CLASES DE RELOJ, no las etiquetas.
+  //
+  // La version anterior comparaba las etiquetas, asi que `'evento'` contra `'reloj'` daba
+  // siempre `origenesMezclados` — y ese es exactamente el par que produce el producto: el
+  // tablero marca su inicio con el reloj monotono y la activacion trae `event.timeStamp`.
+  // Medido: NINGUNA latencia se midio nunca, en ningun modo de entrada.
+  //
+  // Y son el mismo reloj: `event.timeStamp` es un `DOMHighResTimeStamp` con el mismo origen
+  // de tiempo que `performance.now()`. Medido, 0,00 ms de diferencia.
+  if (claseDeReloj(origenInicio) !== claseDeReloj(origenFin)) {
+    return { ms: undefined, motivo: 'origenesMezclados' };
+  }
   // NUNCA 0 aqui: un 0 se leeria como un acierto instantaneo, que es un dato clinico
   // plausible y falso.
   if (tFin < tInicio) return { ms: undefined, motivo: 'relojRetrocedio' };
@@ -137,6 +167,10 @@ export function dificultadRegistrada(tablero, config) {
  * @property {Map<string, { intentos: number, aciertos: number, precision: number }>} porInstrumento
  *   El desglose. **Es lo que hay que mirar cuando la sesión mezcla ejercicios**
  * @property {number | undefined} latenciaMedia
+ *   **`undefined` si la sesión mezcla clases de vía.** Ver `motivoLatencia`
+ * @property {import('../dificultad/constantes.js').MotivoSinMetrica | undefined} motivoLatencia
+ * @property {Map<string, { media: number | undefined, medidas: number, vias: string[] }>} latenciaPorClase
+ *   El desglose. Clave: `reaccion`, `barrido`, `permanencia` o `desconocida`
  * @property {number} latenciasSinDato
  */
 
@@ -209,6 +243,42 @@ export function resumenSesion(sesion) {
     else definidas.push(i.latencia.ms);
   }
 
+  // --- Desglose de latencia POR CLASE DE VIA.
+  //
+  // Una latencia no mide lo mismo en cada via: con pulsador incluye la espera de que el
+  // barrido llegue, y con permanencia el umbral entero. Medido: 424 ms con pulsador a 500 ms
+  // por paso, y 1.036 ms con permanencia de 600 ms — los dos dominados por su propio ajuste,
+  // no por el paciente.
+  //
+  // Promediar dos clases da un numero que no es de ninguna. Misma forma que mezclar
+  // instrumentos.
+  /** @type {Map<string, { medidas: number[], modos: Set<string> }>} */
+  const porClase = new Map();
+  for (const i of todos) {
+    const clase = claseDeLatencia(i.modo);
+    const previo = porClase.get(clase) ?? { medidas: [], modos: new Set() };
+    if (i.latencia.ms !== undefined) previo.medidas.push(i.latencia.ms);
+    if (i.modo !== undefined) previo.modos.add(i.modo);
+    porClase.set(clase, previo);
+  }
+
+  /** @type {Map<string, { media: number | undefined, medidas: number, vias: string[] }>} */
+  const latenciaPorClase = new Map();
+  for (const [clase, v] of porClase) {
+    latenciaPorClase.set(clase, {
+      media: v.medidas.length === 0
+        ? undefined
+        : v.medidas.reduce((a, b) => a + b, 0) / v.medidas.length,
+      medidas: v.medidas.length,
+      vias: [...v.modos],
+    });
+  }
+
+  /** @type {import('../dificultad/constantes.js').MotivoSinMetrica | undefined} */
+  let motivoLatencia;
+  if (definidas.length === 0) motivoLatencia = 'datosInsuficientes';
+  else if (porClase.size > 1) motivoLatencia = 'viasMezcladas';
+
   return {
     intentos,
     aciertos,
@@ -221,10 +291,13 @@ export function resumenSesion(sesion) {
     motivoPrecision,
     instrumentos,
     porInstrumento,
-    latenciaMedia:
-      definidas.length === 0
-        ? undefined
-        : definidas.reduce((a, b) => a + b, 0) / definidas.length,
+    // `undefined` en cuanto haya un motivo. No queda una version mezclada disponible: si
+    // existiera, alguien la leeria.
+    latenciaMedia: motivoLatencia === undefined
+      ? definidas.reduce((a, b) => a + b, 0) / definidas.length
+      : undefined,
+    motivoLatencia,
+    latenciaPorClase,
     latenciasSinDato: sinDato,
   };
 }

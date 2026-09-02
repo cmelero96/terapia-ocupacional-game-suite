@@ -127,7 +127,7 @@ export class Comprar {
     }
 
     const correcto = this.compra.lista.includes(id);
-    this.intentos.push({ idActivado: id, correcto, latencia });
+    this.intentos.push({ idActivado: id, correcto, latencia, modo: evento.modo });
 
     if (!correcto) {
       // Coger algo que no toca no marca nada y NO retira nada de la lista. Tachar lo que

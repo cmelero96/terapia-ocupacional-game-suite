@@ -255,3 +255,84 @@ test('una cadencia de barrido fuera de rango ABRE el panel, no mata la pagina', 
   );
   expect(fallo, 'y el mensaje nombra el rango valido').toMatch(/\[3000, 60000\]/);
 });
+
+// ---------------------------------------------------------------- la latencia, de verdad
+
+test('las CUATRO vias de acceso registran una latencia real', async ({ browser }) => {
+  // Ninguna se media. El tablero marcaba su inicio con el reloj monotono y la activacion
+  // traia `event.timeStamp`, y `latencia()` comparaba las ETIQUETAS de origen: ese par daba
+  // siempre `origenesMezclados`, y es el unico que el producto produce.
+  //
+  // Son el mismo reloj: medido, `event.timeStamp` y `performance.now()` difieren 0,00 ms.
+  /** @type {[string, string, string][]} */
+  const VIAS = [
+    ['raton', 'j=busca&t=80&c=6', 'click'],
+    ['toque', 'j=busca&t=80&c=6', 'tap'],
+    ['pulsador', 'j=busca&t=80&c=6&barrido=1&vuelta=3000', 'tecla'],
+    ['permanencia', 'j=busca&t=80&c=6&dwell=1&ms=600', 'quieto'],
+  ];
+  for (const [via, params, accion] of VIAS) {
+    const ctx = await browser.newContext({ hasTouch: true });
+    const page = await ctx.newPage();
+    await page.goto(`/index.html?${params}`);
+    await page.waitForFunction(() => /** @type {any} */ (globalThis).__busca?.estado != null);
+    await page.waitForTimeout(350);
+
+    const caja = await page.locator('.celda').first().boundingBox();
+    if (accion === 'click') await page.locator('.celda').first().click();
+    if (accion === 'tap') await page.touchscreen.tap((caja?.x ?? 0) + 10, (caja?.y ?? 0) + 10);
+    if (accion === 'tecla') await page.keyboard.press('Enter');
+    if (accion === 'quieto') {
+      await page.mouse.move((caja?.x ?? 0) + 12, (caja?.y ?? 0) + 12);
+      await page.waitForTimeout(900);
+    }
+    await page.waitForTimeout(250);
+
+    const lat = await page.evaluate(
+      () => /** @type {any} */ (globalThis).__busca.estado.instrumento.intentos
+        .map((/** @type {any} */ i) => i.latencia),
+    );
+    expect(lat.length, `${via}: tiene que haber un intento`).toBeGreaterThan(0);
+    expect(lat[0].motivo, `${via}: sin motivo de rechazo`).toBeUndefined();
+    expect(typeof lat[0].ms, `${via}: latencia = ${JSON.stringify(lat[0])}`).toBe('number');
+    expect(lat[0].ms, `${via}: latencia positiva`).toBeGreaterThan(0);
+    await ctx.close();
+  }
+});
+
+test('el MODO de cada activacion llega al registro', async ({ page }) => {
+  // Faltaba, y eso dejaba sin efecto el arreglo del 2026-08-31: el modo pasó a ser el real y
+  // nadie lo persistia. La barrera AC-2 cazo el literal inventado; nada cazo que se tiraba.
+  await page.goto('/index.html?j=busca&t=80&c=6&barrido=1&vuelta=3000');
+  await page.waitForFunction(() => /** @type {any} */ (globalThis).__busca?.estado != null);
+  await page.waitForTimeout(300);
+
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(500);
+  await page.locator('.celda').first().click({ force: true });
+  await page.waitForTimeout(350);
+
+  const modos = await page.evaluate(
+    () => /** @type {any} */ (globalThis).__busca.estado.instrumento.intentos
+      .map((/** @type {any} */ i) => i.modo),
+  );
+  // Con barrido activo, una tecla ES el pulsador: el navegador no los distingue.
+  expect(modos).toContain('pulsador');
+  expect(modos).toContain('raton');
+});
+
+test('una sesion que MEZCLA vias no publica una latencia de sesion', async ({ page }) => {
+  await page.goto('/index.html?j=busca&t=80&c=6&barrido=1&vuelta=3000');
+  await page.waitForFunction(() => /** @type {any} */ (globalThis).__busca?.estado != null);
+  await page.waitForTimeout(300);
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(500);
+  await page.locator('.celda').first().click({ force: true });
+  await page.waitForTimeout(350);
+
+  await page.locator('.abridor').click();
+  const texto = await page.locator('.panel').innerText();
+  expect(texto).toMatch(/2 vias de acceso distintas/);
+  expect(texto, 'y el desglose dice QUE incluye cada una')
+    .toMatch(/incluye la espera del barrido/);
+});

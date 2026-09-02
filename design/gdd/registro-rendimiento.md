@@ -7,6 +7,54 @@
 > **Implements Pillar**: **2 — el error se mide, no se muestra.** Este sistema es la mitad
 > que mide
 
+> ## AVISO, 2026-09-02: la latencia no se media. En absoluto.
+>
+> `latencia()` comparaba las **etiquetas** de origen de tiempo, y el unico par que el producto
+> produce es «reloj monotono» contra «marca del evento». Resultado medido, con raton:
+>
+> ```
+> latencia registrada: { motivo: "origenesMezclados" }
+> ```
+>
+> **Ninguna latencia se midio nunca, en ningun modo de entrada** — una de las dos metricas de
+> este sistema, ausente desde el principio. Y dos tests unitarios **fijaban el defecto**,
+> comprobando que ese par se rechazaba.
+>
+> Era falso que no fueran comparables. Medido: `event.timeStamp` y `performance.now()` difieren
+> **0,00 ms** — son el mismo reloj, con el mismo origen de tiempo. La regla del proyecto habla
+> de `event.timeStamp` contra el reloj monotono **de otra carga de pagina**, y la
+> implementacion la aplicaba dentro de la misma.
+>
+> Ahora la comparabilidad la decide la **clase de reloj** (`monotono` contra `pared`) y la
+> etiqueta conserva la procedencia, que es informacion util: una marca del evento dice cuando
+> ocurrio la entrada, y una lectura de reloj cuando se ejecuto el JavaScript.
+>
+> ### Y con la latencia funcionando aparecio lo siguiente
+>
+> **No mide lo mismo en cada via.** Medido: **424 ms con pulsador** a 500 ms por paso, y
+> **1.036 ms con permanencia** de 600 ms. Los dos dominados por su propio ajuste, no por el
+> paciente.
+>
+> | Clase | Vias | Que incluye |
+> |---|---|---|
+> | `reaccion` | tactil, raton, teclado | el tiempo de reaccion |
+> | `barrido` | pulsador | la espera del barrido **mas** la reaccion |
+> | `permanencia` | permanencia | el umbral **mas** la reaccion |
+>
+> Mezclar dos clases da un numero que no es de ninguna, asi que la latencia de sesion pasa a
+> `undefined` con motivo `viasMezcladas` y hay desglose por clase. Es lo mismo que ya se hace
+> con los instrumentos y con las variantes de contenido.
+>
+> **Esto cierra A6 del informe cruzado por una via distinta a la que pedia.** A6 pedia un
+> motivo `barridoRecortado` para cuando la cadencia toca su suelo. El problema es mas ancho: la
+> latencia con pulsador esta dominada por la cadencia **siempre**, recortada o no, y por eso la
+> clase entera se separa en lugar de marcar solo el caso extremo.
+>
+> Y hacia falta un campo que no existia: **`Intento.modo`**. El 2026-08-31 se corrigio que el
+> enlace con el DOM escribia `modo: 'tactil'` a mano para las cinco vias; el valor paso a ser el
+> real y **nadie lo persistia**. La barrera AC-2 cazo el literal inventado; nada cazo que el
+> valor corregido se tiraba.
+
 ## Overview
 
 **El registro lo sabe todo; la pantalla del paciente no sabe nada.** Esa separación no es

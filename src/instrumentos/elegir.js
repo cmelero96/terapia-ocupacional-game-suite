@@ -94,7 +94,7 @@ export class Elegir {
    */
   activar(evento, latencia) {
     const correcto = evento.idObjetivo === this.ronda.correcta;
-    this.intentos.push({ idActivado: evento.idObjetivo, correcto, latencia });
+    this.intentos.push({ idActivado: evento.idObjetivo, correcto, latencia, modo: evento.modo });
     if (correcto) {
       this.ronda = this.#sortear();
       this.tableroNumero += 1;

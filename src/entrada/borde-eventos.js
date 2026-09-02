@@ -31,8 +31,17 @@ import { MaquinaPuntero } from './adaptador.js';
  */
 export function marcaDeTiempo(evento, reloj) {
   const t = evento.timeStamp;
-  if (typeof t === 'number' && t > 0) return { t, origen: 'evento' };
-  return { t: reloj.now(), origen: 'reloj' };
+  if (typeof t !== 'number' || !(t > 0)) return { t: reloj.now(), origen: 'reloj' };
+
+  // Un `DOMHighResTimeStamp` cuenta milisegundos desde el origen de tiempo del documento, y
+  // comparte ese origen con `performance.now()`: los dos son el MISMO reloj.
+  //
+  // Un `event.timeStamp` heredado esta basado en epoch, y ese si es otro reloj. La frontera
+  // esta en 1e12 ms, que son casi 32 años: ninguna pestaña lleva abierta tanto, y cualquier
+  // epoch de hoy lo pasa por mucho (~1,7e12).
+  const EPOCH_MINIMO = 1e12;
+  if (t >= EPOCH_MINIMO) return { t, origen: 'pared' };
+  return { t, origen: 'evento' };
 }
 
 /**

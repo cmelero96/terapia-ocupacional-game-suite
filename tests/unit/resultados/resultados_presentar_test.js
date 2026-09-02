@@ -17,6 +17,8 @@ const resumen = (p = {}) => ({
   tableros: 2, tablerosIncompletos: 0, intentosIncompletos: 0,
   motivoPrecision: undefined, instrumentos: ['busca'],
   porInstrumento: new Map([['busca', { intentos: 10, aciertos: 8, precision: 0.8 }]]),
+  motivoLatencia: undefined,
+  latenciaPorClase: new Map([['reaccion', { media: 1240, medidas: 10, vias: ['tactil'] }]]),
   ...p,
 });
 

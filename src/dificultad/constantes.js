@@ -72,7 +72,11 @@ export const N_MIN = 5;
  * abarque varios instrumentos. Y es el mismo tipo de defecto que los otros tres: una
  * precisión calculada sobre dos ejercicios distintos es un número que no le pasó a nadie.
  *
- * @typedef {'datosInsuficientes' | 'ejesAcoplados' | 'ejesMezclados' | 'instrumentosMezclados'} MotivoSinMetrica
+ * El quinto, `viasMezcladas`, se añadió al empezar a medir latencias de verdad: una latencia
+ * con pulsador incluye la espera del barrido y una táctil no, así que promediarlas produce un
+ * número que no es de ninguna de las dos.
+ *
+ * @typedef {'datosInsuficientes' | 'ejesAcoplados' | 'ejesMezclados' | 'instrumentosMezclados' | 'viasMezcladas'} MotivoSinMetrica
  */
 
 export {};

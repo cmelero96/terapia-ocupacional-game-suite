@@ -38,11 +38,96 @@ export const MS_PERMANENCIA_POR_DEFECTO = 800;
  */
 
 /**
+ * Qué cantidad mide una latencia en cada vía. **No son comparables entre clases.**
+ *
+ * | Clase | Vías | Qué incluye |
+ * |---|---|---|
+ * | `reaccion` | táctil, ratón, teclado | el tiempo de reacción |
+ * | `barrido` | pulsador | la espera de que el barrido llegue, MÁS la reacción |
+ * | `permanencia` | permanencia | el umbral de permanencia, MÁS la reacción |
+ *
+ * Medido: 424 ms con pulsador a 500 ms por paso, y 1.036 ms con una permanencia de 600 ms.
+ * Los dos están dominados por su propio ajuste, no por el paciente.
+ *
+ * Promediar dos clases produce un número que no es de ninguna de las dos — la misma forma que
+ * mezclar instrumentos o variantes de contenido.
+ *
+ * @type {Readonly<Record<Modo, 'reaccion' | 'barrido' | 'permanencia'>>}
+ */
+export const CLASE_DE_LATENCIA = Object.freeze({
+  tactil: 'reaccion',
+  raton: 'reaccion',
+  teclado: 'reaccion',
+  pulsador: 'barrido',
+  permanencia: 'permanencia',
+});
+
+/**
+ * @param {Modo | undefined} modo
+ * @returns {'reaccion' | 'barrido' | 'permanencia' | 'desconocida'}
+ */
+export function claseDeLatencia(modo) {
+  if (modo === undefined) return 'desconocida';
+  return CLASE_DE_LATENCIA[modo] ?? 'desconocida';
+}
+
+/**
  * De donde salio la marca de tiempo de una activacion.
  *
- * Nunca se mezclan dos origenes en un mismo calculo de latencia.
+ * ## Dos conceptos que estaban confundidos en uno, y eso rompio la latencia
  *
- * @typedef {'evento' | 'reloj'} OrigenTiempo
+ * Este typedef mezclaba **procedencia** —¿vino del evento o de una lectura de reloj?— con
+ * **comparabilidad** —¿se pueden restar dos marcas?—. Y `latencia()` rechazaba cualquier par
+ * con etiquetas distintas, asi que un `'evento'` contra un `'reloj'` daba siempre
+ * `origenesMezclados`.
+ *
+ * El tablero marca su inicio con una lectura del reloj monotono y la activacion trae
+ * `event.timeStamp`. Nunca coincidian. **Resultado medido: ninguna latencia se midio nunca,
+ * en ningun modo de entrada.** Una de las dos metricas del producto.
+ *
+ * Y es falso que no sean comparables. Medido en el navegador:
+ *
+ * ```
+ * event.timeStamp : 856.7
+ * performance.now : 856.7      diferencia: 0.00 ms
+ * ```
+ *
+ * **Son el mismo reloj.** `event.timeStamp` es un `DOMHighResTimeStamp` con el mismo origen
+ * de tiempo que `performance.now()` dentro del mismo documento.
+ *
+ * La regla del proyecto dice: *«un `event.timeStamp` y una lectura del reloj monotono **de
+ * otra carga de pagina** no son comparables»*. La implementacion la aplicaba dentro de la
+ * misma carga, donde si lo son.
+ *
+ * ## Ahora
+ *
+ * La etiqueta conserva la PROCEDENCIA, que es informacion util: una marca del evento dice
+ * cuando ocurrio la entrada, y una lectura de reloj dice cuando se ejecuto el JavaScript.
+ * La COMPARABILIDAD la decide `claseDeReloj`, y ahi `'evento'` y `'reloj'` son la misma clase.
+ *
+ * `'pared'` es la que de verdad no se puede mezclar: un `event.timeStamp` heredado basado en
+ * epoch, que algunos navegadores antiguos producen.
+ *
+ * @typedef {'evento' | 'reloj' | 'pared'} OrigenTiempo
  */
+
+/**
+ * A que reloj pertenece cada procedencia. **Solo esto decide si dos marcas se pueden restar.**
+ *
+ * @type {Readonly<Record<OrigenTiempo, 'monotono' | 'pared'>>}
+ */
+export const CLASE_DE_RELOJ = Object.freeze({
+  evento: 'monotono',
+  reloj: 'monotono',
+  pared: 'pared',
+});
+
+/**
+ * @param {OrigenTiempo} origen
+ * @returns {'monotono' | 'pared'}
+ */
+export function claseDeReloj(origen) {
+  return CLASE_DE_RELOJ[origen] ?? 'pared';
+}
 
 export {};

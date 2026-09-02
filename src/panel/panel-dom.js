@@ -11,7 +11,7 @@
 
 import { conflictos, esAplicable, avisos, describirRango } from './conflictos.js';
 import {
-  presentarPorInstrumento,
+  presentarPorInstrumento, presentarLatenciaPorClase,
   presentarPrecision, presentarLatencia, presentarDificultadTolerada,
 } from '../resultados/presentar.js';
 import { resumenSesion } from '../registro/sesion.js';
@@ -376,6 +376,13 @@ export function montarPanel({
     sec.append(metrica(presentarLatencia(res, {
       resolucionMs: s.resolucionMs, fiableParaPresupuesto: s.fiableParaPresupuesto,
     })));
+    // Desglose por clase de vía. Se muestra con más de una, y también con UNA sola cuando no
+    // es reacción: «424 ms» no se puede interpretar sin saber que 500 de esos milisegundos
+    // eran la cadencia del barrido.
+    const clases = [...res.latenciaPorClase.keys()];
+    if (clases.length > 1 || (clases.length === 1 && clases[0] !== 'reaccion')) {
+      for (const fila of presentarLatenciaPorClase(res)) sec.append(metrica(fila));
+    }
 
     // PARTIDO por variante de contenido (sistema 32, AC-4). Antes era una lista plana con
     // los intentos de TODOS los tableros, y con dos variantes en la misma sesión eso

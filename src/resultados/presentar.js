@@ -45,6 +45,9 @@ export const TEXTO_MOTIVO = {
     'pueden separar. Sube el tamaño si quieres medir el eje perceptivo.',
   ejesMezclados:
     'Sin dato: se movieron los dos ejes en la misma sesion. Mueve un eje por sesion.',
+  viasMezcladas:
+    'Sin dato de sesion: se usaron vias de acceso distintas, y una latencia con pulsador ' +
+    'incluye la espera del barrido mientras que una tactil no. Mira el desglose por via.',
   instrumentosMezclados:
     'Sin dato de sesion: hay varios ejercicios distintos y su precision no se puede ' +
     'promediar. Mira el desglose por ejercicio.',
@@ -113,6 +116,46 @@ export function presentarPrecision(resumen) {
 }
 
 /**
+ * Qué incluye una latencia en cada clase de vía. Lo lee el terapeuta.
+ *
+ * @type {Record<string, string>}
+ */
+export const ETIQUETA_CLASE_LATENCIA = {
+  reaccion: 'Reaccion (tactil, raton o teclado)',
+  barrido: 'Con pulsador — incluye la espera del barrido',
+  permanencia: 'Con permanencia — incluye el umbral',
+  desconocida: 'Via sin registrar',
+};
+
+/**
+ * El desglose de latencia por clase de via.
+ *
+ * **Nunca un total**, por el mismo motivo que en los instrumentos: el total es el numero que
+ * no significa nada. Y cada fila dice QUE incluye, porque «424 ms» no se puede interpretar
+ * sin saber que 500 de esos milisegundos eran la cadencia del barrido.
+ *
+ * @param {import('../registro/sesion.js').Resumen} resumen
+ * @returns {Presentado[]}
+ */
+export function presentarLatenciaPorClase(resumen) {
+  /** @type {Presentado[]} */
+  const filas = [];
+  for (const [clase, v] of resumen.latenciaPorClase) {
+    const etiqueta = ETIQUETA_CLASE_LATENCIA[clase] ?? clase;
+    if (v.media === undefined) {
+      filas.push({ etiqueta, valor: 'Sin dato: ninguna latencia se pudo medir.', tieneDato: false });
+      continue;
+    }
+    filas.push({
+      etiqueta,
+      valor: `${Math.round(v.media)} ms de media, sobre ${v.medidas} medida${v.medidas === 1 ? '' : 's'}.`,
+      tieneDato: true,
+    });
+  }
+  return filas;
+}
+
+/**
  * El desglose por instrumento. Es lo que sustituye a la precision de sesion cuando hay mas
  * de un ejercicio.
  *
@@ -153,6 +196,18 @@ export function presentarPorInstrumento(resumen, etiquetas = {}) {
 export function presentarLatencia(resumen, reloj) {
   const medidas = resumen.intentos - resumen.latenciasSinDato;
   if (resumen.latenciaMedia === undefined) {
+    // Los dos motivos piden acciones distintas: uno se arregla midiendo, y el otro mirando
+    // el desglose por via que YA existe.
+    if (resumen.motivoLatencia === 'viasMezcladas') {
+      return {
+        etiqueta: 'Latencia',
+        valor:
+          `Sin dato de sesion: se usaron ${resumen.latenciaPorClase.size} vias de acceso `
+          + 'distintas. Una latencia con pulsador incluye la espera del barrido y una tactil '
+          + 'no. Mira el desglose de abajo.',
+        tieneDato: false,
+      };
+    }
     return {
       etiqueta: 'Latencia',
       valor:
