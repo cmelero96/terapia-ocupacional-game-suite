@@ -55,16 +55,38 @@ test('test_dificultad_tolerada_sin_dato_no_es_0', () => {
 
 // ---------------------------------------------------------------- AC-2
 
-test('test_los_cuatro_motivos_producen_textos_DISTINTOS', () => {
-  const motivos = ['datosInsuficientes', 'ejesAcoplados', 'ejesMezclados', 'origenesMezclados'];
-  const textos = motivos.map(textoDeMotivo);
-  assert.equal(new Set(textos).size, 4, 'los cuatro textos deben diferir');
+test('test_TODOS_los_motivos_producen_textos_DISTINTOS', () => {
+  // La lista sale de `TEXTO_MOTIVO`, no escrita a mano.
+  //
+  // La version anterior nombraba CUATRO, y el GDD del sistema 12 tambien. En el codigo habia
+  // cinco —`relojRetrocedio` nunca entro en la tabla del documento— y con el eje de
+  // instrumentos mezclados son seis. Un recuento escrito a mano se queda obsoleto en silencio,
+  // y este llevaba obsoleto desde antes de que yo tocara nada.
+  const motivos = Object.keys(TEXTO_MOTIVO);
+  assert.ok(motivos.length >= 6, `esperaba 6 o mas motivos, hay ${motivos.length}`);
+  const textos = motivos.map((m) => textoDeMotivo(/** @type {any} */ (m)));
+  assert.equal(new Set(textos).size, motivos.length, 'todos los textos deben diferir');
   for (const t of textos) {
     // Ni un guion ni "N/A" como unica explicacion.
     assert.ok(t.length > 30, `texto demasiado corto: ${t}`);
     assert.doesNotMatch(t, /^[-–—]$/);
     assert.doesNotMatch(t, /N\/A/);
   }
+});
+
+test('test_ningun_motivo_cae_en_el_texto_de_DESCONOCIDO', () => {
+  // `textoDeMotivo` no lanza con un motivo desconocido, y hace bien: una pantalla que se rompe
+  // al abrir una sesion vieja es peor. Pero eso hace que un motivo sin texto no falle en
+  // ningun sitio, y salga como cadena de depuracion. La barrera AC-2c del sistema 14 compara
+  // los emisores de `src/` con esta tabla; aqui se comprueba la otra mitad.
+  for (const m of Object.keys(TEXTO_MOTIVO)) {
+    assert.doesNotMatch(
+      textoDeMotivo(/** @type {any} */ (m)), /motivo desconocido/,
+      `'${m}' cae en el texto de desconocido`,
+    );
+  }
+  // Y uno que de verdad no existe SI lo hace, sin lanzar.
+  assert.match(textoDeMotivo(/** @type {any} */ ('inventado')), /motivo desconocido/);
 });
 
 test('test_cada_motivo_dice_que_deberia_hacer_el_terapeuta', () => {

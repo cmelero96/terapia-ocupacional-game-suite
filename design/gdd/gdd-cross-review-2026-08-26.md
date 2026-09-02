@@ -12,6 +12,46 @@ bloqueantes **ya están en el código**, así que no son correcciones de documen
 
 ---
 
+## Repaso de criterios cruzados — 2026-09-02
+
+**El hueco de alcance de este informe, cubierto.** El pase de consistencia agotó sus turnos y
+dejó sin comprobar el apartado 2f: los criterios de aceptación cruzados. Eran 166; hoy son
+**239**, en 18 documentos.
+
+Hecho a mano, agrupando por tema en lugar de comparando pares: las contradicciones viven entre
+criterios que hablan de lo mismo desde documentos distintos.
+
+### Lo que encontró
+
+| # | Hallazgo | Estado |
+|---|---|---|
+| **X1** | `resultados-sesion.md` dice **«los cuatro motivos»** y hay **seis**. `relojRetrocedio` existía en el código y nunca entró en la tabla del documento; `instrumentosMezclados` se añadió el 2026-09-01. **El recuento llevaba obsoleto desde antes de la revisión cruzada** | **CERRADO** |
+| **X2** | `capa-adaptacion-entrada.md` no exigía en ningún sitio que el barrido **no cruce la frontera de modo con el foco** — el defecto ya había ocurrido y estaba arreglado, sin criterio que lo respaldara | **CERRADO** — AC-19 nuevo |
+| **X3** | AC-13 —el progreso de permanencia no se anuncia por lector— estaba escrito, marcado BLOCKING, y **no tenía test** | **CERRADO** |
+| **X4** | AC-8 —el barrido no tiene límite de vueltas— tampoco tenía test de navegador | **CERRADO** |
+| **X5** | Una cadencia de barrido fuera de rango abre el panel con el conflicto. Comportamiento correcto y **sin test**; lo descubrí al escribir X4 con un valor inválido | **CERRADO** |
+
+### Y cómo se arreglan los recuentos, que es lo que importa
+
+X1 no se arregla contando otra vez: un recuento escrito a mano se vuelve a quedar obsoleto.
+
+- El test **deriva la lista de `TEXTO_MOTIVO`** en lugar de nombrarla.
+- Y la **barrera AC-2c del sistema 14** compara los motivos que `src/` emite con los que tienen
+  texto. Sin ella, añadir un motivo sin texto **no falla en ningún sitio**: sale en la pantalla
+  del terapeuta como «motivo desconocido». Probada en las dos direcciones.
+
+### Lo que este repaso NO cubre
+
+Los pares de criterios que se contradicen **sin compartir vocabulario**. Agrupar por tema
+encuentra los que hablan de lo mismo con las mismas palabras; dos criterios que se contradicen
+diciéndolo de formas distintas se escapan.
+
+Y no encontré ninguna contradicción **directa** entre dos criterios BLOCKING de documentos
+distintos. Eso es un resultado, no una ausencia de resultado: los cinco hallazgos son
+**referencias obsoletas y criterios sin test**, no reglas incompatibles.
+
+---
+
 ## Estado de los bloqueantes — actualizado el 2026-09-01
 
 **Nueve de los trece, cerrados.** El resto está aparcado por decisión explícita, no por

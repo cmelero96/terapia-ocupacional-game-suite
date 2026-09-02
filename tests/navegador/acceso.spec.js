@@ -172,3 +172,86 @@ test('el aviso de contenido PROVISIONAL sale en los juegos que lo usan, y no en 
     ).toHaveCount(0);
   }
 });
+
+// ---------------------------------------------------------------- criterios sin test
+
+test('AC-13 — el progreso de permanencia NO se anuncia por lector de pantalla', async ({ page }) => {
+  // Un progreso anunciado convierte una espera en una cuenta atras, y una cuenta atras es
+  // presion de tiempo — el anti-pilar 2. El criterio estaba escrito y NO tenia test: lo
+  // encontro el repaso de criterios cruzados.
+  await page.goto('/index.html?j=busca&t=80&c=6&dwell=1&ms=900');
+  await page.waitForFunction(() => /** @type {any} */ (globalThis).__busca?.estado != null);
+
+  const celda = page.locator('.celda').first();
+  const caja = await celda.boundingBox();
+  await page.mouse.move((caja?.x ?? 0) + 12, (caja?.y ?? 0) + 12);
+  await page.waitForTimeout(300);
+
+  // El progreso EXISTE: si no, el test no estaria comprobando nada.
+  const progreso = await celda.evaluate((el) => el.style.getPropertyValue('--dwell'));
+  expect(Number(progreso), 'debe haber progreso que comprobar').toBeGreaterThan(0);
+
+  // Y va en una propiedad personalizada de CSS, que ningun lector de pantalla lee.
+  const anuncios = await page.evaluate(() => {
+    const marcados = [...document.querySelectorAll('[aria-live], [role="status"], [role="alert"], [role="progressbar"], [aria-valuenow]')];
+    return marcados.map((e) => e.tagName + '.' + String(e.className).slice(0, 30));
+  });
+  expect(anuncios, 'ninguna region que anuncie el progreso').toEqual([]);
+
+  // Ni el valor del progreso aparece en ningun atributo accesible del tablero.
+  const atributos = await page.locator('#tablero').evaluate((raiz) => {
+    /** @type {string[]} */
+    const out = [];
+    for (const el of [raiz, ...raiz.querySelectorAll('*')]) {
+      for (const a of el.attributes) {
+        if (a.name.startsWith('aria-') || a.name === 'title') out.push(`${a.name}=${a.value}`);
+      }
+    }
+    return out.join(' ');
+  });
+  expect(atributos).not.toMatch(/dwell|progres|\d\.\d{3}/);
+});
+
+test('AC-8 — el barrido no tiene limite de vueltas', async ({ page }) => {
+  // El criterio pide 500 pasos, que con la cadencia mas rapida admitida serian mas de un
+  // minuto: demasiado para un test de navegador. Se comprueba lo que de verdad estaria mal —
+  // un limite de una o dos vueltas, que es el que alguien escribiria a mano.
+  //
+  // `vuelta=3000` es el MINIMO admitido: `cadenciaBarrido` exige [3000, 60000]. Mi primera
+  // version puso 1200 y la pagina no arrancaba, que es lo correcto y no lo que yo esperaba.
+  await page.goto('/index.html?j=busca&t=60&c=6&barrido=1&vuelta=3000');
+  await page.waitForFunction(() => /** @type {any} */ (globalThis).__busca?.estado != null);
+
+  const foco = () => page.evaluate(() => document.activeElement?.getAttribute('aria-label'));
+  const a = await foco();
+  expect(a, 'el barrido arranca en un objetivo').not.toBeNull();
+
+  // Mas de dos vueltas enteras de un tiron.
+  await page.waitForTimeout(7000);
+  const b = await foco();
+  await page.waitForTimeout(600);
+  const c = await foco();
+
+  expect(
+    b !== a || c !== b,
+    `tras dos vueltas el foco sigue moviendose: ${a} -> ${b} -> ${c}`,
+  ).toBe(true);
+  expect(
+    await page.evaluate(
+      () => /** @type {any} */ (globalThis).__busca.estado.montado.cadencia() !== null,
+    ),
+    'y la cadencia sigue declarada',
+  ).toBe(true);
+});
+
+test('una cadencia de barrido fuera de rango ABRE el panel, no mata la pagina', async ({ page }) => {
+  // Lo descubri al escribir el test de AC-8 con un valor invalido. El comportamiento es el
+  // correcto —mismo camino que una `C` irrealizable— y no tenia test.
+  await page.goto('/index.html?j=busca&t=60&c=6&barrido=1&vuelta=1200');
+  await page.waitForTimeout(500);
+  await expect(page.locator('.panel:not([hidden])')).toHaveCount(1);
+  const fallo = await page.evaluate(
+    () => /** @type {any} */ (globalThis).__busca?.arranqueFallido ?? null,
+  );
+  expect(fallo, 'y el mensaje nombra el rango valido').toMatch(/\[3000, 60000\]/);
+});

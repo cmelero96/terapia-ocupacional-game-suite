@@ -44,14 +44,28 @@ frontera de modo del sistema 11.
 2. **Nunca se muestra un 0 por ausencia de datos.** Cuando una métrica es `undefined`, la
    pantalla dice **el motivo**, no un guion, no un cero, no "N/A".
 
-   Los cuatro motivos piden acciones distintas del terapeuta, y por eso son cuatro:
+   Cada motivo pide una acción distinta del terapeuta, **y ésa es la razón de que sean
+   varios**: colapsarlos en un «sin dato» genérico le quitaría lo único que puede usar.
 
    | Motivo | Qué se le dice | Qué debería hacer |
    |---|---|---|
    | `datosInsuficientes` | *"Faltan intentos: hacen falta al menos 5 en un mismo nivel."* | Más sesiones, o menos variación |
    | `ejesAcoplados` | *"Con objetivos por debajo de 44 px, el error de gesto y el de búsqueda no se pueden separar."* | Subir `t` si quiere medir el eje perceptivo |
    | `ejesMezclados` | *"Se movieron los dos ejes en la misma sesión."* | Mover un eje por sesión |
+   | `instrumentosMezclados` | *"Hay varios ejercicios distintos y su precisión no se puede promediar."* | Mirar el desglose por ejercicio |
    | `origenesMezclados` | *"Fallo de medición de tiempo."* | Es un defecto de software: avisar |
+   | `relojRetrocedio` | *"El reloj retrocedió durante la medición."* | Es un defecto del entorno: avisar |
+
+   > **Este documento decía «los cuatro motivos» y llevaba obsoleto desde antes de la
+   > revisión cruzada.** `relojRetrocedio` existía en el código y nunca entró en la tabla; con
+   > `instrumentosMezclados` son seis. Lo encontró el repaso de criterios cruzados del
+   > 2026-09-02, que es lo que el pase de consistencia había dejado sin cubrir.
+   >
+   > **No se arregla contando otra vez.** Un recuento escrito a mano se vuelve a quedar
+   > obsoleto: el test deriva ahora la lista de `TEXTO_MOTIVO`, y la barrera AC-2c del sistema
+   > 14 compara los motivos que `src/` emite con los que tienen texto. Un motivo sin texto
+   > sale en la pantalla del terapeuta como «motivo desconocido», y eso no fallaba en ningún
+   > sitio.
 
    Un 0 se leería como *"no acertó ninguna"* o *"no tolera ninguna dificultad"* — datos
    clínicos plausibles y devastadores. Es la cuarta aparición del patrón prohibido.
@@ -185,8 +199,10 @@ es información clínica.
 **ENTONCES** ningún elemento de métrica contiene `"0 %"`, `"0 ms"` ni `"0"` como valor, y
 cada una muestra **su motivo**.
 
-**AC-2 — Los cuatro motivos son distinguibles en pantalla** · Unit · **BLOCKING**
-**DADO** los cuatro motivos,
+**AC-2 — TODOS los motivos son distinguibles en pantalla** · Unit · **BLOCKING**
+*Decía «los cuatro» y son seis. El recuento no se escribe a mano: la lista se deriva de
+`TEXTO_MOTIVO`, y la barrera AC-2c comprueba que no falte ninguno.*
+**DADO** cada motivo declarado,
 **ENTONCES** cada uno produce un texto **distinto**, y ninguno contiene un guion ni "N/A"
 como única explicación.
 *Piden acciones distintas del terapeuta: confundirlos le da el consejo equivocado.*

@@ -21,6 +21,10 @@
  */
 
 import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { TEXTO_MOTIVO } from '../../src/resultados/presentar.js';
+
+/** Avisos que NO rompen el build. */
+const avisosCi = [];
 import { join, relative, sep } from 'node:path';
 
 const RAIZ = process.cwd();
@@ -412,6 +416,48 @@ for (const ruta of archivos) {
   });
 }
 
+
+// ---------------------------------------------------------------- AC-2c (sist. 12)
+/**
+ * Sistema 12, AC-2c — todo motivo que `src/` emite tiene su TEXTO.
+ *
+ * `textoDeMotivo` no lanza con un motivo desconocido: devuelve "motivo desconocido (x)", y
+ * hace bien —una pantalla que se rompe al abrir una sesion vieja es peor. Pero eso significa
+ * que **añadir un motivo sin su texto no falla en ningun sitio**: sale en pantalla del
+ * terapeuta como una cadena de depuracion.
+ *
+ * Y ya paso dos veces. El GDD del sistema 12 lista CUATRO motivos; en el codigo habia cinco
+ * —`relojRetrocedio` nunca entro en la tabla del documento— y con el eje de instrumentos
+ * mezclados son seis. El recuento del documento llevaba obsoleto desde antes.
+ *
+ * Esta barrera compara las dos listas: los literales que `src/` emite, y las claves de
+ * `TEXTO_MOTIVO`. Un motivo sin texto FALLA; un texto sin motivo que lo emita solo avisa,
+ * porque puede ser un motivo que solo produce un instrumento futuro.
+ */
+const MOTIVOS_EMITIDOS = new Set();
+for (const ruta of archivos) {
+  const codigo = sinComentarios(readFileSync(ruta, 'utf8'));
+  for (const m of codigo.matchAll(/motivo(?:Precision)?:?\s*=?\s*'([a-zA-Z]+)'/g)) {
+    MOTIVOS_EMITIDOS.add(m[1]);
+  }
+}
+
+for (const motivo of MOTIVOS_EMITIDOS) {
+  if (!Object.prototype.hasOwnProperty.call(TEXTO_MOTIVO, motivo)) {
+    fallos.push({
+      barrera: 'AC-2c/s12',
+      mensaje: `el motivo '${motivo}' se emite en src/ y NO tiene texto en TEXTO_MOTIVO: `
+        + 'saldria en la pantalla del terapeuta como "motivo desconocido".',
+    });
+  }
+}
+
+for (const motivo of Object.keys(TEXTO_MOTIVO)) {
+  if (!MOTIVOS_EMITIDOS.has(motivo)) {
+    avisosCi.push(`el motivo '${motivo}' tiene texto y nadie lo emite en src/.`);
+  }
+}
+
 // ---------------------------------------------------------------- informe
 /** @param {string} b */
 const cuenta = (b) => fallos.filter((f) => f.barrera === b).length;
@@ -429,11 +475,14 @@ console.log(`  AC-6   sin APIs de audio ........... ${marca('AC-6/s6')}`);
 console.log(`  AC-9   raiz sin exencion ........... ${marca('AC-9/s10')}`);
 console.log(`  AC-7   resultados sin juicios ...... ${marca('AC-7/s12')}`);
 console.log(`  AC-3   ordinal sin aritmetica ..... ${marca('AC-3/s32')}`);
+console.log(`  AC-2c  motivos con texto ......... ${marca('AC-2c/s12')}`);
 
 const noCreados = declarados.filter((d) => !declaradosExistentes.includes(d));
 if (noCreados.length > 0) {
   console.log(`\n  Bordes declarados que aun no existen: ${noCreados.join(', ')}`);
 }
+
+for (const a of avisosCi) console.log(`  aviso  ${a}`);
 
 if (fallos.length > 0) {
   console.error(`\nFALLO — ${fallos.length} violacion(es):\n`);

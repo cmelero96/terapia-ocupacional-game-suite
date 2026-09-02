@@ -454,6 +454,25 @@ atributo de "resaltado" que no sea el foco.**
 *ADR-0005 hecho criterio: un cursor propio sería un segundo modelo de foco que hay que
 mantener de acuerdo con el primero.*
 
+**AC-19 — El barrido NO cruza la frontera de modo con el foco** · Integration (Playwright) · **BLOCKING**
+**DADO** el barrido activo y el foco fuera del ámbito del tablero —en el selector de
+instrumento o en el botón del panel—,
+**CUANDO** pasa más de una vuelta entera,
+**ENTONCES** el foco **sigue donde el terapeuta lo puso**. El barrido sólo avanza mientras el
+foco está dentro del tablero, o en ningún sitio.
+
+*Criterio AÑADIDO el 2026-09-02, después del defecto. Medido: con el barrido activo, el
+terapeuta pulsaba Tab doce veces y **no llegaba al botón del panel**, porque el barrido se lo
+devolvía al tablero cada 500 ms. Los enlaces respondían al ratón y no al teclado.*
+
+*Lo grave es lo que implica: el interruptor del barrido está EN el panel, así que activarlo
+dejaba al terapeuta sin vía de teclado para volver a apagarlo.*
+
+*El barrido es del PACIENTE y el marco es del TERAPEUTA: es la frontera de modo del sistema 11
+aplicada al foco, y este documento no la exigía en ningún sitio.*
+
+---
+
 **AC-8 — El barrido no tiene límite de vueltas** · Unit · **BLOCKING**
 **DADO** un tablero de 6 objetivos y un programador que avanza 500 pasos,
 **ENTONCES** el barrido sigue activo, ha dado 83 vueltas, y **no ha emitido ningún evento de
@@ -537,7 +556,7 @@ hoy rompen el build.*
 |---|---|
 | `src/entrada/` | Nuevo. Y `src/entrada/borde-eventos.js` es el **segundo** archivo exento de `src/`, por `.timeStamp` |
 | El `Programador` real, en el borde impuro | Envuelve `setTimeout`. El de test avanza a mano |
-| **Playwright** | AC-7, AC-13 y AC-18 lo necesitan. **Primer sistema del proyecto que no se puede cerrar sin navegador** |
+| **Playwright** | AC-7, AC-13, AC-18 y AC-19 lo necesitan. **Primer sistema del proyecto que no se puede cerrar sin navegador** |
 | Las cuatro constantes en el registro | `msPasoMin`, `msPasoMax`, `pxToleranciaMin`, `ratioTolerancia` |
 
 > **AC-2 del sistema 3 tiene que cambiar, y es un cambio real.** Decía que el archivo exento
