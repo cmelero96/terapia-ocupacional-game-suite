@@ -288,6 +288,7 @@ export function montarPanel({
       prefersReducedMotion,
       ultimoTablero: ultimoTablero(),
       opciones: opciones === undefined ? null : opciones(borrador.C),
+      ...(estado.instrumento === undefined ? {} : { instrumento: estado.instrumento }),
     });
 
     zonaAvisos.replaceChildren();

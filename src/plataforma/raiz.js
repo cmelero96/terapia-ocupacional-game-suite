@@ -16,7 +16,7 @@
 import {
   relojMonotono, relojPared, crearFuenteDeProduccion, medirResolucionReloj, programadorReal,
 } from './borde-impuro.js';
-import { C_MIN, C_MAX } from '../dificultad/constantes.js';
+import { acotarC } from '../instrumentos/limites.js';
 import { resolverVariante } from '../dificultad/contenido.js';
 import { generarTablero } from '../tablero/generador.js';
 import { Busca } from '../instrumentos/busca.js';
@@ -133,7 +133,11 @@ export function arrancar({
           // El nivel del eje de contenido, sistema 32. Ya no es un literal: el terapeuta lo
           // elige, y el registro lo guarda.
           tipoOperacion: /** @type {any} */ (variante?.id ?? 'sumaHasta10'),
-          nOpciones: Math.min(Math.max(config.C, 2), 6),
+          // El tope lo declara `limites.js`, en un solo sitio. Estaba escrito a mano aqui,
+          // dentro de `Comprar` y dentro de `TresEnRaya`, y un dato en cuatro sitios no se
+          // mantiene sincronizado: el aviso del eje plano se le enseñaba a tres instrumentos
+          // cuando el problema lo tienen seis.
+          nOpciones: acotarC(tipo, config.C),
           nuevaFuente: crearFuenteDeProduccion,
         })
       : tipo === 'comprar'
@@ -151,7 +155,7 @@ export function arrancar({
           fuente: fuenteDeRondas,
           // La cantidad de opciones sale de `C`, acotada: mas de 6 opciones de texto no
           // caben en una linea legible al tamaño de objetivo del rango clinico.
-          nOpciones: Math.min(Math.max(config.C, 2), 6),
+          nOpciones: acotarC(tipo, config.C),
           nuevaFuente: crearFuenteDeProduccion,
         })
       : new Ordenar({
@@ -168,9 +172,10 @@ export function arrancar({
       const intentos = inst.intentos.slice(cerrados);
       if (intentos.length === 0) return;
       cerrados = inst.intentos.length;
-      // El techo es C_MAX, no un 100 escrito a mano: ADR-0006 lo bajó a 60, y una guarda
-      // con el número antiguo dejaría pasar una C que el panel ya no permite pedir.
-      const cAcotada = Math.min(Math.max(config.C, C_MIN), C_MAX);
+      // Acotada por INSTRUMENTO, no por los limites generales: es la C que el paciente
+      // recibio de verdad, y `dp` tiene que salir de esa. Con los limites generales, una
+      // ronda de 4 opciones se registraba con la dificultad de una C de 40.
+      const cAcotada = acotarC(tipo, config.C);
       sesion.tableros.push({
         objetivo: inst.tablero.objetivo,
         distractores: inst.tablero.distractores,

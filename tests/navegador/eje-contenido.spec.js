@@ -167,3 +167,67 @@ test('AC-9 — con dos variantes en la sesion, el panel lo DICE', async ({ page 
   expect(texto).toMatch(/tareas distintas/);
   expect(texto).toMatch(/no se suman/);
 });
+
+// ---------------------------------------------------------------- el eje perceptivo plano
+
+test('el aviso del eje plano llega a los SEIS instrumentos que lo tienen', async ({ page }) => {
+  // Se decidia con una lista escrita a mano que nombraba TRES. Medido: `ordenar` y el tres en
+  // raya llegan a los mismos 2,1 puntos sobre 100, y `comprar` a 6,3.
+  const PLANOS = ['rellenar', 'simbolos', 'precios', 'ordenar', 'comprar', 'tresEnRaya'];
+  for (const j of PLANOS) {
+    await page.goto(`/index.html?j=${j}&t=60&c=6`);
+    await page.locator('.abridor').click();
+    const avisos = await page.locator('.mensaje.aviso').allTextContents();
+    expect(
+      avisos.some((a) => /apenas varia/.test(a)),
+      `${j} deberia avisar de que el eje perceptivo no mide progreso`,
+    ).toBe(true);
+  }
+});
+
+test('los tres instrumentos del banco NO reciben ese aviso', async ({ page }) => {
+  // Un aviso que sale siempre se convierte en ruido y deja de leerse.
+  for (const j of ['busca', 'denominar', 'clasificar']) {
+    await page.goto(`/index.html?j=${j}&t=60&c=6`);
+    await page.locator('.abridor').click();
+    const avisos = await page.locator('.mensaje.aviso').allTextContents();
+    expect(
+      avisos.some((a) => /apenas varia/.test(a)),
+      `${j} NO deberia avisar: llega a 40 puntos solo con la cantidad`,
+    ).toBe(false);
+  }
+});
+
+test('el aviso dice QUE cuenta la C de ese ejercicio y cuanto recorrido hay', async ({ page }) => {
+  // «La cantidad» no dice nada: en rellenar son silabas y en comprar articulos de un lineal.
+  await page.goto('/index.html?j=comprar&t=60&c=6');
+  await page.locator('.abridor').click();
+  const aviso = (await page.locator('.mensaje.aviso').allTextContents())
+    .find((a) => /apenas varia/.test(a)) ?? '';
+  expect(aviso).toMatch(/artículos en el lineal/);
+  expect(aviso, 'y el recorrido medido').toMatch(/6\.3 puntos sobre 100/);
+});
+
+test('la dificultad registrada usa la C SERVIDA, no la pedida', async ({ page }) => {
+  // El defecto grave: pedir C = 60 en precio justo dejaba registrado dp = 40 cuando el
+  // paciente vio SEIS opciones, que son dp = 2,1. 37,9 puntos de dificultad inventada, y
+  // siempre en la direccion peligrosa.
+  await page.goto('/index.html?j=precios&t=60&c=60');
+  await page.waitForFunction(() => /** @type {any} */ (globalThis).__busca?.estado != null);
+
+  const celdas = await page.locator('.celda').count();
+  expect(celdas, 'el paciente ve como mucho 6 opciones').toBeLessThanOrEqual(6);
+
+  await page.locator('.celda').first().click();
+  await page.waitForTimeout(300);
+
+  const dps = await page.evaluate(() => {
+    const s = /** @type {any} */ (globalThis).__busca.viva.sesionConTableros();
+    return s.tableros.map((/** @type {any} */ t) => t.dp);
+  });
+  expect(dps.length).toBeGreaterThan(0);
+  for (const d of dps) {
+    expect(d, `dp registrada ${d}: tiene que ser la de 6 opciones, no la de 60`)
+      .toBeLessThan(5);
+  }
+});

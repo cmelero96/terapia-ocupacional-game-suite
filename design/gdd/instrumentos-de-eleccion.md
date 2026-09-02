@@ -229,6 +229,17 @@ funciona en estos instrumentos.**
 2,1 en la dificultad tolerada es ruido, no progreso: `dificultadTolerada` se calcula, devuelve
 un número, y ese número no mide nada en estos tres instrumentos.
 
+> **Y no son tres, son SEIS. Medido el 2026-09-01.** El aviso del panel se decidía con una
+> lista escrita a mano que nombraba rellenar, símbolos y precios. `ordenar` y el tres en raya
+> llegan a los mismos 2,1 puntos; `comprar`, a 6,3. Ahora se deriva del instrumento en
+> `src/instrumentos/limites.js`, y el umbral está declarado.
+>
+> **Y el mismo dato duplicado escondía un defecto peor.** `dp` se calculaba con los límites
+> generales, no con los del instrumento: un terapeuta que pedía `C = 60` en precio justo dejaba
+> registrado `dp = 40` cuando el paciente vio **seis** opciones, que son `dp = 2,1`. **37,9
+> puntos de dificultad inventada**, y siempre en la dirección peligrosa — el registro decía que
+> el paciente aguantó más de lo que aguantó. Es la misma clase que el bloqueante S2.
+
 Lo que **sí** mide aquí: **la precisión y la latencia a configuración fija.** El panel lo dice
 con esas palabras, para que nadie lea el eje tolerado de un ejercicio de elección como si
 fuera comparable con el de Busca.

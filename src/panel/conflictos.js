@@ -10,6 +10,7 @@
 import { disposicion } from '../instrumentos/busca.js';
 import { cadenciaBarrido } from '../entrada/adaptador.js';
 import { T_AAA } from '../dificultad/constantes.js';
+import { ejePerceptivoPlano, rangoDeDp, limitesDe } from '../instrumentos/limites.js';
 
 /**
  * @typedef {'noCabe' | 'bancoInsuficiente' | 'barridoRecortado' | 'perfilTenso'} CodigoConflicto
@@ -120,10 +121,14 @@ export function esAplicable(lista) {
  * @param {{ pedidas: number, servidas: number } | null} [entrada.opciones]
  *   Para los instrumentos de elección: cuántas opciones pidió la configuración y cuántas
  *   sirvió el contenido. Ver el aviso `opcionesNoAlcanzadas`
+ * @param {string} [entrada.instrumento]
+ *   Para decidir si el eje perceptivo puede mostrar progreso. **Se deriva del instrumento,
+ *   no de una lista escrita a mano**: la lista decía tres instrumentos y el problema lo
+ *   tienen seis
  * @returns {Aviso[]}
  */
 export function avisos({
-  config, prefersReducedMotion, ultimoTablero = null, opciones = null,
+  config, prefersReducedMotion, ultimoTablero = null, opciones = null, instrumento,
 }) {
   /** @type {Aviso[]} */
   const salida = [];
@@ -181,18 +186,21 @@ export function avisos({
   // La medicion de progreso perceptivo NO funciona en estos instrumentos, y decirlo importa
   // mas que cualquier otro aviso de esta lista.
   //
-  // `dp` se normaliza contra C_MAX = 60. Con `C` acotada a [2, 6], el rango accesible es de
-  // 2,1 puntos sobre 100 — medido. Busca accede a los 100. Un cambio de 0 a 2,1 en el eje
-  // tolerado es ruido, no progreso.
+  // Se DERIVA del instrumento, no de una lista escrita a mano. La lista anterior nombraba
+  // tres —rellenar, simbolos, precios— y el problema lo tienen SEIS: `ordenar` y el tres en
+  // raya llegan a los mismos 2,1 puntos sobre 100, y `comprar` a 6,3. Busca llega a 40 solo
+  // con la cantidad.
   //
   // Lo que SI mide en estos instrumentos: la precision y la latencia a configuracion fija.
-  if (opciones !== null) {
+  if (instrumento !== undefined && ejePerceptivoPlano(instrumento)) {
+    const r = rangoDeDp(instrumento);
+    const l = limitesDe(instrumento);
     salida.push({
       codigo: 'ejePerceptivoPlano',
       mensaje:
-        'En este ejercicio la dificultad perceptiva apenas varia: la cantidad de opciones '
-        + 'llega a 6, y la escala esta pensada para tableros de hasta 60. Mira la precision '
-        + 'y la latencia, no el eje tolerado.',
+        `En este ejercicio la dificultad perceptiva apenas varia: ${l.significado} llega a `
+        + `${l.max}, y toda la escala accesible son ${r.rango.toFixed(1)} puntos sobre 100. `
+        + 'Mira la precision y la latencia a configuracion fija, no el eje tolerado.',
     });
   }
 
