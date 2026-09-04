@@ -179,3 +179,24 @@ test('el boton de terminar cumple el tamaño de objetivo del panel', async ({ pa
   const caja = await page.locator('.accion.terminar').boundingBox();
   expect(caja?.height ?? 0).toBeGreaterThanOrEqual(44);
 });
+
+test('terminar CONSERVA la configuracion aplicada en la jornada', async ({ page }) => {
+  // Empezar con otro paciente no es reiniciar los ajustes: si volvieran a los de la URL, el
+  // terapeuta perderia en silencio todo lo que hubiera ajustado.
+  await arrancar(page);
+  await page.locator('.abridor').click();
+  await page.locator('#perilla-t .escalon[data-valor="100"]').click();
+  await page.locator('.accion.primaria').click();
+  await page.waitForTimeout(300);
+
+  await page.locator('.abridor').click();
+  await page.locator('.accion.terminar').click();
+  await page.locator('.accion.terminar').click();
+
+  const t = await page.evaluate(
+    () => /** @type {any} */ (globalThis).__busca.viva.estado.instrumento.t,
+  );
+  expect(t, 'el tamaño de objetivo aplicado sigue puesto').toBe(100);
+  const conf = await page.evaluate(() => /** @type {any} */ (globalThis).__busca.config.t);
+  expect(conf, 'y la superficie de depuracion no miente').toBe(100);
+});

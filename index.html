@@ -604,7 +604,10 @@
       if (viva === null) return;
       viva.terminarYEmpezarOtra();
       estado = viva.estado;
-      globalThis.__busca = { viva, estado, config, panel, estadoPanel };
+      // `estadoPanel.config` y no `config`: `config` es la de la CARGA, y terminar una sesión
+      // conserva lo que el terapeuta haya aplicado durante la jornada. Publicar la de la
+      // carga haría que la superficie de depuración mintiera justo después de un cambio.
+      globalThis.__busca = { viva, estado, config: estadoPanel.config, panel, estadoPanel };
     },
     // Cuántas opciones pide la configuración y cuántas sirve el CONTENIDO de verdad.
     //
