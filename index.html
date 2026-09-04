@@ -277,6 +277,22 @@
      interfaz del terapeuta, pero tiene que ser operable con las mismas vias que el
      tablero. */
   .fila-escalones { grid-template-columns: 14rem 1fr; }
+
+  /* REFLUJO — WCAG 1.4.10. El perfil de usuario incluye baja visión, y un terapeuta con
+     baja visión usa el zoom del navegador: al 400 % sobre 1280 px, la anchura efectiva es
+     de 320 px CSS. Medido ahí, el panel se desplazaba en las DOS direcciones —cuerpo de 450
+     px en una ventana de 320— por las filas de etiqueta más mando, que son una rejilla de
+     `14rem 1fr 5rem` y no caben.
+     El tablero del PACIENTE ya cumplía: 320 px justos, sin desbordar. Era sólo el panel.
+     Las filas se apilan, y los escalones ya envolvían por su cuenta. */
+  @media (max-width: 40rem) {
+    .fila, .fila-escalones { grid-template-columns: 1fr; }
+    /* Apilado, el valor deja de estar en una columna a la derecha: alinearlo a la derecha lo
+       separaría de la etiqueta a la que pertenece. */
+    .valor { text-align: start; }
+    .acciones { flex-wrap: wrap; }
+    .accion.terminar { margin-inline-start: 0; }
+  }
   .etiqueta-escalones { font-weight: 500; }
   .escalones { display: flex; flex-wrap: wrap; gap: 0.35rem; }
   .escalon {

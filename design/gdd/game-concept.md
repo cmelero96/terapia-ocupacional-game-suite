@@ -829,8 +829,18 @@ banco es el error más caro disponible: cuatro instrumentos dependen de él.
 - **Protección contra reactivación accidental.** Sin ventana de repetición, un
   temblor o un roce prolongado genera una ráfaga de "fallos" que contamina el
   registro de precisión que el pilar 2 promete medir con exactitud.
-- **Zoom y reflujo de texto** (WCAG 1.4.4, 1.4.10, 1.4.12). El perfil incluye baja
-  visión y ningún documento dice todavía qué pasa al 200% de texto o al 400% de zoom.
+- ~~**Zoom y reflujo de texto** (WCAG 1.4.4, 1.4.10, 1.4.12)~~ — **MEDIDO el 2026-09-04**,
+  y era medio hueco de verdad. Al 400 % de zoom sobre 1280 px la anchura efectiva es de
+  320 px CSS, que es lo que mide 1.4.10:
+
+  | Qué | A 320 px | Al 200 % de texto |
+  |---|---|---|
+  | Tablero del paciente | 320 px justos, **sin desbordar** | nada recortado |
+  | Panel del terapeuta | **cuerpo de 450 px: desplazamiento en dos direcciones** | nada recortado |
+
+  El tablero ya cumplía; era sólo el panel, y la causa eran las filas de etiqueta más mando
+  —una rejilla de `14rem 1fr 5rem` que no cabe en 320 px—. Ahora se apilan. Regresión en
+  `tests/navegador/reflujo-y-zoom.spec.js`.
 - **El coste de ingeniería de F2 es entrada obligatoria de la decisión ráster contra
   vector en `/art-bible`.** El GDD del sistema 2 define un procedimiento para medir el
   contraste de una silueta recortada con transparencia: umbral de alfa, erosión
