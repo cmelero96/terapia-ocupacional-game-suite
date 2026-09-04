@@ -142,7 +142,7 @@ test('test_la_misma_dificultad_y_la_misma_variante_caen_en_la_misma_celda', () =
  * @param {number} [dp]
  */
 const tab = (id, aciertos, dp = 20) => ({
-  dp, dm: 48,
+  dp, dpPedida: dp, dm: 48,
   contenido: id === null ? null : { id },
   intentos: aciertos.map((correcto) => ({ correcto })),
 });
@@ -193,7 +193,7 @@ test('test_los_tableros_sin_eje_van_todos_a_la_clave_null', () => {
 
 test('test_la_particion_respeta_el_EJE_que_se_le_pide', () => {
   const m = observacionesPorVariante({
-    tableros: [{ dp: 20, dm: 48, contenido: null, intentos: [{ correcto: true }] }],
+    tableros: [{ dp: 20, dpPedida: 20, dm: 48, contenido: null, intentos: [{ correcto: true }] }],
   }, 'dm');
   assert.equal(m.get(null)?.[0]?.d, 48, 'con eje dm, la dificultad es dm');
 });

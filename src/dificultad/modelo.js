@@ -29,12 +29,38 @@ import {
 
 /**
  * @typedef {object} Observacion
- * @property {number} d       Dificultad del eje observado: `dm` O `dp`, nunca los dos
+ * @property {number} d
+ *   **La dificultad PEDIDA del eje observado**, que es la clave de agrupación: `dm` o `dp`,
+ *   nunca los dos.
+ *
+ *   Se agrupa por lo pedido y no por lo realizado, y eso lo obligó una medición. Con la
+ *   configuración FIJA `t = 100, C = 9, sv = 0,25, ss = 0,25`, la `dp` realizada salía **19,2
+ *   en unos tableros y 14,2 en otros**: la similitud semántica no siempre se puede servir con
+ *   el banco que hay, y `ssEfectiva` caía a 0.
+ *
+ *   Agrupando por lo realizado, esa configuración se partía en **dos celdas**, así que ocho
+ *   aciertos seguidos daban `datosInsuficientes` — cuatro y cuatro, y ninguna llegaba a
+ *   `N_MIN`. Medido: hacían falta 24 tableros para lo que el criterio dice que son cinco
+ *   intentos.
+ *
+ *   Y agrupar por lo pedido es además lo correcto conceptualmente: **una celda de progreso es
+ *   una configuración del terapeuta.** Es lo que se compara entre sesiones.
+ * @property {number} [dRealizada]
+ *   La dificultad que el paciente afrontó de verdad. **Es la que se REPORTA**, porque la
+ *   pedida sobrestima cuando el banco no da para lo configurado.
+ *
+ *   Si falta, se usa `d`.
  * @property {boolean} acierto
  */
 
 /**
- * @typedef {{ valor: number } | { valor: undefined, motivo: import('./constantes.js').MotivoSinMetrica }} Metrica
+ * Una métrica: o tiene valor, o tiene motivo. **Nunca las dos, y nunca ninguna.**
+ *
+ * Cuando tiene valor, puede traer además la dispersión de lo realizado dentro de la celda: la
+ * `pedida` con la que el terapeuta la configuró, y el mínimo y el máximo de lo que el banco
+ * sirvió de verdad. Si el rango es ancho, la media no es un ajuste estable.
+ *
+ * @typedef {{ valor: number, pedida?: number, realizadaMin?: number, realizadaMax?: number } | { valor: undefined, motivo: import('./constantes.js').MotivoSinMetrica }} Metrica
  */
 
 /** Redondeo a un decimal, la convencion publicada del sistema. @param {number} x */
@@ -222,23 +248,46 @@ export function dificultadTolerada(observaciones, opciones = {}) {
   if (opciones.mezclados === true) return { valor: undefined, motivo: 'ejesMezclados' };
   if (opciones.acoplados === true) return { valor: undefined, motivo: 'ejesAcoplados' };
 
-  /** @type {Map<number, { intentos: number, aciertos: number }>} */
+  /** @type {Map<number, { intentos: number, aciertos: number, realizadas: number[] }>} */
   const porNivel = new Map();
   for (const o of observaciones) {
-    const bucket = porNivel.get(o.d) ?? { intentos: 0, aciertos: 0 };
+    const bucket = porNivel.get(o.d) ?? { intentos: 0, aciertos: 0, realizadas: [] };
     bucket.intentos += 1;
     if (o.acierto) bucket.aciertos += 1;
+    bucket.realizadas.push(o.dRealizada ?? o.d);
     porNivel.set(o.d, bucket);
   }
 
-  /** @type {number[]} */
+  /** @type {{ pedida: number, realizadas: number[] }[]} */
   const niveles = [];
-  for (const [d, { intentos, aciertos }] of porNivel) {
-    if (intentos >= minimo && aciertos / intentos >= precision) niveles.push(d);
+  for (const [d, { intentos, aciertos, realizadas }] of porNivel) {
+    if (intentos >= minimo && aciertos / intentos >= precision) {
+      niveles.push({ pedida: d, realizadas });
+    }
   }
 
   // Conjunto vacio significa FALTA EL DATO, y falta de dato FALLA.
   if (niveles.length === 0) return { valor: undefined, motivo: 'datosInsuficientes' };
 
-  return { valor: d1(Math.max(...niveles)) };
+  // La celda mas dificil que TOLERO, elegida por lo PEDIDO —que es la escala en la que el
+  // terapeuta se mueve— y reportada por lo REALIZADO, que es lo que el paciente afronto.
+  //
+  // Si se reportara lo pedido, el numero sobrestimaria cuando el banco no da para lo
+  // configurado: exactamente el defecto que el campo `dp` efectiva existe para evitar.
+  let mejor = /** @type {{ pedida: number, realizadas: number[] }} */ (niveles[0]);
+  for (const n of niveles) if (n.pedida > mejor.pedida) mejor = n;
+
+  const media = mejor.realizadas.reduce((a, b) => a + b, 0) / mejor.realizadas.length;
+  const min = Math.min(...mejor.realizadas);
+  const max = Math.max(...mejor.realizadas);
+
+  return {
+    valor: d1(media),
+    pedida: d1(mejor.pedida),
+    // La DISPERSION de lo realizado dentro de una sola configuracion. Si es ancha, el banco
+    // no esta dando lo mismo en cada tablero, y el terapeuta necesita saberlo para no leer la
+    // media como si fuera un ajuste estable.
+    realizadaMin: d1(min),
+    realizadaMax: d1(max),
+  };
 }

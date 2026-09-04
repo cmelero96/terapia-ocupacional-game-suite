@@ -196,19 +196,32 @@ export function claveDeProgreso(tablero) {
  * más sesión para llegar a `N_MIN`. La respuesta correcta cuando falta dato ya existe y es
  * `datosInsuficientes`. Antes falta de dato que dato falso.
  *
- * @param {{ tableros: readonly { dp: number, dm: number, contenido: { id: string } | null, intentos: readonly { correcto: boolean }[] }[] }} sesion
+ * @param {{ tableros: readonly { dp: number, dpPedida: number, dm: number, contenido: { id: string } | null, intentos: readonly { correcto: boolean }[] }[] }} sesion
  * @param {'dp' | 'dm'} eje
- * @returns {Map<string | null, { d: number, acierto: boolean }[]>}
+ * @returns {Map<string | null, import('./modelo.js').Observacion[]>}
  *   Clave `null` para los tableros sin eje de contenido. **Es una clave legítima**, no un
  *   hueco: agrupa los seis instrumentos que no declaran variantes.
  */
 export function observacionesPorVariante(sesion, eje) {
-  /** @type {Map<string | null, { d: number, acierto: boolean }[]>} */
+  /** @type {Map<string | null, import('./modelo.js').Observacion[]>} */
   const porVariante = new Map();
   for (const t of sesion.tableros) {
     const clave = t.contenido === null ? null : t.contenido.id;
     const lista = porVariante.get(clave) ?? [];
-    for (const i of t.intentos) lista.push({ d: t[eje], acierto: i.correcto });
+
+    // La clave de agrupación es lo PEDIDO y el valor reportado es lo REALIZADO.
+    //
+    // Medido: con la configuración fija `t = 100, C = 9, sv = 0,25, ss = 0,25`, la `dp`
+    // realizada salía 19,2 en unos tableros y 14,2 en otros —la similitud semántica no
+    // siempre se puede servir con el banco que hay—. Agrupando por lo realizado, ocho
+    // aciertos seguidos daban `datosInsuficientes`: cuatro y cuatro, y ninguna celda llegaba
+    // a `N_MIN`.
+    //
+    // `dm` no tiene pedida y realizada: el tamaño de objetivo es el que es.
+    const pedida = eje === 'dp' ? t.dpPedida : t.dm;
+    for (const i of t.intentos) {
+      lista.push({ d: pedida, dRealizada: t[eje], acierto: i.correcto });
+    }
     porVariante.set(clave, lista);
   }
   return porVariante;

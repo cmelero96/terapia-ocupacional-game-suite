@@ -7,6 +7,46 @@
 > **Implements Pillar**: **3 — la dificultad vive en un rango que fija el terapeuta.**
 > Este sistema *es* ese pilar
 
+> ## AVISO, 2026-09-02: la celda de progreso era la dificultad REALIZADA, y eso la rompia
+>
+> Medido en el navegador con la configuracion **fija** `t = 100, C = 9, sv = 0,25, ss = 0,25`:
+> la `dp` realizada salia **19,2 en unos tableros y 14,2 en otros**. La similitud semantica no
+> siempre se puede servir con el banco que hay, y `ssEfectiva` caia a 0.
+>
+> Agrupando por lo realizado, esa configuracion se partia en **dos celdas**:
+>
+> ```
+> 8 tableros, 8 aciertos, precision 1
+> dificultad tolerada: { motivo: "datosInsuficientes" }
+> ```
+>
+> **Ocho aciertos seguidos con una configuracion fija, y la metrica del eje de progreso —la
+> razon de ser del producto— decia que faltaban datos.** Cuatro intentos en cada celda, y
+> ninguna llegaba a `N_MIN = 5`. Hicieron falta **24 tableros** para lo que el criterio dice
+> que son cinco intentos.
+>
+> ### El arreglo
+>
+> Se agrupa por lo **pedido** y se reporta lo **realizado**.
+>
+> Y agrupar por lo pedido no es un apaño para que la metrica dispare: es lo correcto.
+> **Una celda de progreso es una configuracion del terapeuta**, que es lo que se compara entre
+> sesiones. Reportar lo realizado conserva la regla que el campo `dp` efectiva existe para
+> cumplir: la pedida sobrestima cuando el banco no da para lo configurado.
+>
+> La **celda mas dificil** se elige por lo pedido, no por lo realizado. Si se eligiera por lo
+> realizado, una configuracion facil servida generosamente podria ganarle a una dificil servida
+> pobremente, y el terapeuta veria como maximo tolerado un ajuste que no es el mas alto que
+> puso.
+>
+> Y la **dispersion viaja junto al numero**, como todo lo demas en la pantalla de resultados:
+>
+> ```
+> 16.7 (configuraste 19.2; el banco sirvio entre 14.2 y 19.2, y este numero es la media)
+> ```
+>
+> Sin esa nota, «16,7» se lee como un ajuste estable, y no lo es.
+
 ## Overview
 
 La dificultad de un ejercicio **no es un número**. Son dos ejes independientes que se

@@ -244,9 +244,25 @@ export function presentarDificultadTolerada(metrica, eje) {
     // clinico plausible y devastador cuando lo que ocurre es que faltan datos.
     return { etiqueta, valor: textoDeMotivo(metrica.motivo), tieneDato: false };
   }
+  // La DISPERSION viaja junto al numero, como todo lo demas en esta pantalla.
+  //
+  // Una celda de progreso es una CONFIGURACION del terapeuta, y dentro de una configuracion
+  // fija el banco no sirve siempre lo mismo. Medido con `t = 100, C = 9, sv = 0,25,
+  // ss = 0,25`: la dificultad realizada iba de 14,2 a 19,2, porque la similitud semantica no
+  // siempre se puede servir.
+  //
+  // Sin esta nota, el terapeuta lee «18,0» como un ajuste estable, y no lo es.
+  const min = metrica.realizadaMin;
+  const max = metrica.realizadaMax;
+  const dispersa = min !== undefined && max !== undefined && max - min >= 1;
+  const nota = dispersa
+    ? ` (configuraste ${metrica.pedida?.toFixed(1)}; el banco sirvio entre `
+      + `${min.toFixed(1)} y ${max.toFixed(1)}, y este numero es la media)`
+    : '';
+
   return {
     etiqueta,
-    valor: `${metrica.valor.toFixed(1)}`,
+    valor: `${metrica.valor.toFixed(1)}${nota}`,
     tieneDato: true,
     limitacion: LIMITACION_ESCALA,
   };
