@@ -488,7 +488,6 @@ export function montarPanel({
     aviso.className = 'mensaje aviso';
     aviso.dataset['bloquea'] = 'no';
     aviso.textContent = `⚠ ${AVISO_SIN_GUARDAR}`;
-    sec.append(aviso);
 
     const etiqueta = document.createElement('label');
     etiqueta.className = 'etiqueta-informe';
@@ -506,8 +505,53 @@ export function montarPanel({
       ...(formatoHora === undefined ? {} : { formatoHora }),
     });
 
-    sec.append(etiqueta, area);
+    // El informe va PLEGADO, y esto no es una preferencia de presentacion.
+    //
+    // El GDD declara —y acepta— que un paciente que pulse el boton del panel lo abre: *«no
+    // hay proteccion, y es una decision declarada, no un olvido»*. Ese riesgo se evaluo
+    // cuando el panel mostraba el progreso de LA SESION EN CURSO, o sea los datos del propio
+    // paciente que esta delante.
+    //
+    // El informe de la jornada cambia la clase de riesgo: dentro estan **las sesiones de los
+    // pacientes anteriores**. Un paciente que abre el panel por accidente ya no veria solo su
+    // propia precision, sino la de otras personas.
+    //
+    // Plegarlo no revoca la decision del GDD ni esconde el panel tras un gesto: el panel
+    // sigue abriendose de un toque y el progreso de la sesion en curso sigue a la vista. Lo
+    // que exige un toque mas es lo que pertenece a terceros.
+    const desplegar = document.createElement('button');
+    desplegar.type = 'button';
+    desplegar.className = 'accion desplegar-informe';
+    desplegar.setAttribute('aria-expanded', 'false');
+    desplegar.setAttribute('aria-controls', area.id);
+    desplegar.textContent = sesiones.length === 1
+      ? 'Ver el informe de esta sesión'
+      : `Ver el informe de la jornada (${sesiones.length} sesiones)`;
+    etiqueta.hidden = true;
+    area.hidden = true;
+    aviso.hidden = true;
+    desplegar.addEventListener('click', () => {
+      const abierto = desplegar.getAttribute('aria-expanded') === 'true';
+      desplegar.setAttribute('aria-expanded', abierto ? 'false' : 'true');
+      etiqueta.hidden = abierto;
+      area.hidden = abierto;
+      aviso.hidden = abierto;
+      if (!abierto) area.focus();
+    });
+
+    sec.append(desplegar, aviso, etiqueta, area);
     return sec;
+  }
+
+  /**
+   * Despliega el informe sin que haya que buscarlo.
+   *
+   * Se usa justo despues de terminar una sesion: ahi el terapeuta SI acaba de pedirlo, y el
+   * paciente de esa sesion ya no esta delante.
+   */
+  function desplegarInforme() {
+    const b = dialogo.querySelector('.desplegar-informe');
+    if (b instanceof HTMLButtonElement && b.getAttribute('aria-expanded') !== 'true') b.click();
   }
 
   function construir() {
@@ -816,8 +860,7 @@ export function montarPanel({
     // terminar solo existe en memoria, y cerrar el panel aqui esconderia el informe que el
     // terapeuta tiene que copiar antes de seguir.
     construir();
-    const area = dialogo.querySelector('#informe-jornada');
-    if (area instanceof HTMLTextAreaElement) area.focus();
+    desplegarInforme();
   });
 
   aplicar.addEventListener('click', () => {

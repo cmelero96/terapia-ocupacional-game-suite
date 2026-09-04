@@ -69,15 +69,30 @@ test('con BARRIDO activo, el terapeuta puede cambiar de juego por teclado', asyn
     .toBe('tresEnRaya');
 });
 
+/**
+ * Qué celda tiene el foco, por POSICIÓN y no por etiqueta.
+ *
+ * La etiqueta no es única: un tablero puede repetir un dibujo cuando el cluster es pequeño,
+ * así que comparar etiquetas hacía que el barrido «no avanzara» de vez en cuando. Era una
+ * prueba intermitente, no un defecto del producto.
+ *
+ * @param {import('@playwright/test').Page} page
+ * @returns {Promise<number>} El índice de la celda enfocada, o -1
+ */
+const indiceEnfocado = (page) => page.evaluate(
+  () => [...document.querySelectorAll('.celda')].indexOf(
+    /** @type {Element} */ (document.activeElement),
+  ),
+);
+
 test('el barrido SIGUE avanzando dentro del tablero', async ({ page }) => {
   // La otra mitad: confinarlo no puede apagarlo.
   await page.goto('/index.html?j=busca&t=60&c=9&barrido=1&vuelta=3000');
   await page.waitForFunction(() => /** @type {any} */ (globalThis).__busca?.estado != null);
-  const foco = () => page.evaluate(() => document.activeElement?.getAttribute('aria-label'));
-  const a = await foco();
+  const a = await indiceEnfocado(page);
   await page.waitForTimeout(1000);
-  const b = await foco();
-  expect(a, 'el barrido arranca en una celda').not.toBeNull();
+  const b = await indiceEnfocado(page);
+  expect(a, 'el barrido arranca en una celda').toBeGreaterThanOrEqual(0);
   expect(b, 'y avanza').not.toBe(a);
 });
 
@@ -91,9 +106,10 @@ test('el barrido se REANUDA al volver el foco al tablero', async ({ page }) => {
 
   // El terapeuta devuelve el foco al tablero.
   await page.locator('.celda').first().focus();
-  const a = await page.evaluate(() => document.activeElement?.getAttribute('aria-label'));
+  const a = await indiceEnfocado(page);
   await page.waitForTimeout(900);
-  const b = await page.evaluate(() => document.activeElement?.getAttribute('aria-label'));
+  const b = await indiceEnfocado(page);
+  expect(a, 'el foco esta en una celda').toBeGreaterThanOrEqual(0);
   expect(b, 'el barrido vuelve a moverse').not.toBe(a);
 });
 

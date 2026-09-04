@@ -155,6 +155,19 @@ funciona**.
   bajo la configuración anterior.
 - **Si el paciente pulsa el botón del panel**: se abre. **No hay protección**, y es una
   decisión declarada, no un olvido. Ver la regla 2.
+- **Si el paciente pulsa el botón del panel y dentro hay datos de OTROS pacientes**: no los
+  ve. Es un matiz añadido el 2026-09-04, y no revoca la decisión de arriba.
+
+  Esa decisión se tomó cuando lo que el panel enseñaba era el progreso de **la sesión en
+  curso**: los datos del propio paciente que está delante. El informe de la jornada
+  —sistema 12, el texto que el terapeuta copia a la historia clínica— cambia la clase de
+  riesgo, porque dentro están **las sesiones de los pacientes anteriores del día**.
+
+  Por eso el informe va **plegado** detrás de un botón que dice cuántas sesiones contiene, y
+  se despliega solo al terminar una sesión, que es cuando el terapeuta acaba de pedirlo y el
+  paciente de esa sesión ya no está delante. El panel sigue abriéndose de un toque, el
+  progreso de la sesión en curso sigue a la vista, y **no se esconde nada tras un gesto**: lo
+  que exige un toque más es sólo lo que pertenece a terceros.
 - **Si la configuración guardada ya no es válida** —el banco se redujo entre sesiones—: el
   panel abre mostrando el conflicto y **sin permitir empezar** hasta resolverlo.
 - **Si `prefers-reduced-motion` cambia con el panel abierto**: el interruptor se actualiza y

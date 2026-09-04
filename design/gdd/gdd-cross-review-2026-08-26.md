@@ -43,6 +43,22 @@ X1 no se arregla contando otra vez: un recuento escrito a mano se vuelve a queda
   texto. Sin ella, añadir un motivo sin texto **no falla en ningún sitio**: sale en la pantalla
   del terapeuta como «motivo desconocido». Probada en las dos direcciones.
 
+### 2b — «qué puede tocar el paciente», medido el 2026-09-04
+
+Un documento no puede responder a esto: la respuesta es la que dé el DOM que se sirve. Medido
+en los nueve instrumentos, el paciente alcanza cinco cosas: los objetos del tablero, los
+destinos de Clasificar, las casillas del tres en raya, los enlaces del selector de ejercicio y
+**el botón del panel**.
+
+Las cinco estaban previstas, y la última está declarada y aceptada en el GDD del sistema 11.
+Pero el informe de la jornada, añadido ese mismo día, había cambiado la clase de riesgo de esa
+decisión: dentro del panel estaban **las sesiones de los pacientes anteriores del día**. El
+informe pasa a ir plegado detrás de un botón; el panel sigue abriéndose de un toque.
+
+La regresión es `tests/navegador/alcance-paciente.spec.js`, y su forma importa: compara lo
+alcanzable con una **lista declarada**, así que un elemento nuevo que el paciente pueda activar
+obliga a decidirlo en lugar de aparecer solo.
+
 ### Lo que este repaso NO cubre
 
 Los pares de criterios que se contradicen **sin compartir vocabulario**. Agrupar por tema
@@ -94,7 +110,7 @@ llamadas de herramienta, y declaró sus huecos:
 | Apartado | Estado |
 |---|---|
 | 2a bidireccionalidad | Cubierto para los sistemas 1-12, 21, 24. **No** para 13-20, 22, 23, 25-27 |
-| 2b contradicciones de regla | **Parcial.** No revisó "qué puede tocar el paciente" |
+| 2b contradicciones de regla | **Parcial.** No revisó "qué puede tocar el paciente" — **cubierto el 2026-09-04**, ver abajo |
 | 2c referencias obsoletas | Un hallazgo. Una pista del brief sin confirmar |
 | 2d propiedad de perillas | Cubierto para las cuatro pedidas |
 | 2e compatibilidad de fórmulas | Los cinco pares, con números |

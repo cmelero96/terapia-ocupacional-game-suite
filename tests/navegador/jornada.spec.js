@@ -40,6 +40,16 @@ async function acertar(page, n) {
   }
 }
 
+/**
+ * Despliega el informe. Va PLEGADO a proposito: dentro estan las sesiones de los pacientes
+ * anteriores, y el GDD acepta que un paciente que pulse el boton abra el panel.
+ *
+ * @param {import('@playwright/test').Page} page
+ */
+async function verInforme(page) {
+  await page.locator('.desplegar-informe').click();
+}
+
 /** @param {import('@playwright/test').Page} page */
 const jornada = (page) => page.evaluate(() => {
   const v = /** @type {any} */ (globalThis).__busca.viva;
@@ -86,6 +96,7 @@ test('el informe es de SOLO LECTURA y se puede seleccionar sin arrastrar', async
   await arrancar(page);
   await acertar(page, 2);
   await page.locator('.abridor').click();
+  await verInforme(page);
 
   const area = page.locator('#informe-jornada');
   await expect(area).toHaveAttribute('readonly', '');
@@ -104,6 +115,7 @@ test('el informe AVISA de que nada se guarda, y lo dice antes de los datos', asy
   await arrancar(page);
   await acertar(page, 2);
   await page.locator('.abridor').click();
+  await verInforme(page);
 
   const texto = await page.locator('#informe-jornada')
     .evaluate((el) => /** @type {HTMLTextAreaElement} */ (el).value);
@@ -126,6 +138,7 @@ test('el informe incluye la sesion EN CURSO, no solo las terminadas', async ({ p
 
   await acertar(page, 2);
   await page.locator('.abridor').click();
+  await verInforme(page);
 
   const texto = await page.locator('#informe-jornada')
     .evaluate((el) => /** @type {HTMLTextAreaElement} */ (el).value);
@@ -199,4 +212,68 @@ test('terminar CONSERVA la configuracion aplicada en la jornada', async ({ page 
   expect(t, 'el tamaño de objetivo aplicado sigue puesto').toBe(100);
   const conf = await page.evaluate(() => /** @type {any} */ (globalThis).__busca.config.t);
   expect(conf, 'y la superficie de depuracion no miente').toBe(100);
+});
+
+// -------------------------------------------------- el informe va PLEGADO, y por qué
+
+test('el informe de la jornada NO se ve al abrir el panel', async ({ page }) => {
+  // El GDD declara —y acepta— que un paciente que pulse el boton del panel lo abre: «no hay
+  // proteccion, y es una decision declarada, no un olvido». Ese riesgo se evaluo cuando el
+  // panel mostraba el progreso de LA SESION EN CURSO: los datos del paciente que esta
+  // delante.
+  //
+  // El informe de la jornada cambia la clase de riesgo: dentro estan las sesiones de los
+  // pacientes ANTERIORES. Plegarlo no revoca la decision ni esconde el panel tras un gesto.
+  await arrancar(page);
+  await acertar(page, 2);
+  await page.locator('.abridor').click();
+
+  await expect(page.locator('#informe-jornada')).toBeHidden();
+  await expect(page.locator('.desplegar-informe')).toHaveAttribute('aria-expanded', 'false');
+  // Y el progreso de la sesion EN CURSO sigue a la vista: eso no cambia.
+  await expect(page.locator('.seccion.resultados')).toBeVisible();
+});
+
+test('un solo toque despliega el informe, y otro lo vuelve a plegar', async ({ page }) => {
+  await arrancar(page);
+  await acertar(page, 2);
+  await page.locator('.abridor').click();
+
+  await verInforme(page);
+  await expect(page.locator('#informe-jornada')).toBeVisible();
+  await expect(page.locator('.desplegar-informe')).toHaveAttribute('aria-expanded', 'true');
+
+  await page.locator('.desplegar-informe').click();
+  await expect(page.locator('#informe-jornada')).toBeHidden();
+});
+
+test('al TERMINAR la sesion el informe se despliega solo', async ({ page }) => {
+  // Ahi el terapeuta si acaba de pedirlo, y el paciente de esa sesion ya no esta delante.
+  await arrancar(page);
+  await acertar(page, 2);
+  await page.locator('.abridor').click();
+  await page.locator('.accion.terminar').click();
+  await page.locator('.accion.terminar').click();
+
+  await expect(page.locator('#informe-jornada')).toBeVisible();
+  await expect(page.locator('.desplegar-informe')).toHaveAttribute('aria-expanded', 'true');
+});
+
+test('el boton del informe DICE cuantas sesiones hay dentro', async ({ page }) => {
+  // Sin el recuento, el terapeuta no sabe si desplegarlo delante del paciente es inocuo.
+  await arrancar(page);
+  await acertar(page, 1);
+  await page.locator('.abridor').click();
+  await expect(page.locator('.desplegar-informe')).toContainText('esta sesión');
+
+  await page.locator('.accion.terminar').click();
+  await page.locator('.accion.terminar').click();
+  await expect(page.locator('.desplegar-informe')).toContainText('2 sesiones');
+});
+
+test('el boton del informe cumple el tamaño de objetivo', async ({ page }) => {
+  await arrancar(page);
+  await page.locator('.abridor').click();
+  const caja = await page.locator('.desplegar-informe').boundingBox();
+  expect(caja?.height ?? 0).toBeGreaterThanOrEqual(44);
 });
