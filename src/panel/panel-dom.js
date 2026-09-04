@@ -717,6 +717,56 @@ export function montarPanel({
   abridor.textContent = 'Panel del terapeuta';
   abridor.setAttribute('aria-haspopup', 'dialog');
 
+  /**
+   * Los elementos que el panel deja INERTES mientras está abierto.
+   *
+   * @type {Element[]}
+   */
+  const aislados = [];
+
+  /**
+   * Aísla el panel del resto de la página.
+   *
+   * ## El defecto, medido
+   *
+   * El panel declara `aria-modal="true"`, que promete que lo de fuera no está disponible. No
+   * lo estaba cumpliendo. Tabulando desde el panel abierto:
+   *
+   * ```
+   * Aplicar | Cerrar | Terminar | BODY | A | A | A | A | A | A | A | A | A | abridor | ...
+   * ```
+   *
+   * **Tres tabulaciones y el foco se iba del panel**, y después recorría los nueve enlaces
+   * del selector de ejercicio POR DETRÁS de un panel opaco: foco invisible, y activar uno
+   * cambiaba el ejercicio desde debajo de una ventana modal. Diez paradas de nada antes de
+   * volver a los mandos, en un flujo que tiene que durar treinta segundos.
+   *
+   * ## Por qué `inert` y no una trampa de foco en JavaScript
+   *
+   * `inert` quita los elementos del orden de tabulación **y del árbol de accesibilidad**, que
+   * es exactamente lo que `aria-modal` promete. Una trampa hecha a mano sólo arregla la
+   * tabulación, y además hay que capturarla en `document`: cuando el foco ya está en `body`,
+   * el `keydown` del diálogo no lo ve.
+   */
+  function aislar() {
+    /** @type {Element} */
+    let nodo = dialogo;
+    while (nodo.parentElement !== null && nodo.parentElement !== document.documentElement) {
+      for (const hermano of nodo.parentElement.children) {
+        if (hermano !== nodo && !hermano.hasAttribute('inert')) {
+          hermano.setAttribute('inert', '');
+          aislados.push(hermano);
+        }
+      }
+      nodo = nodo.parentElement;
+    }
+  }
+
+  function desaislar() {
+    for (const el of aislados) el.removeAttribute('inert');
+    aislados.length = 0;
+  }
+
   function abrir() {
     borrador = aEscalones(estado.config);
     borradorAcceso = { ...estado.acceso };
@@ -727,6 +777,9 @@ export function montarPanel({
       `correctas.`;
     construir();
     dialogo.hidden = false;
+    // El orden importa: primero visible, despues aislado. `inert` sobre un ancestro del
+    // dialogo lo dejaria inerte a el tambien.
+    aislar();
     estado.abierto = true;
     if (alAbrir !== undefined) alAbrir();
     // La sesion se pausa: el tablero deja de ser alcanzable por teclado.
@@ -738,6 +791,7 @@ export function montarPanel({
     // Una confirmacion a medias NO sobrevive al cierre: si sobreviviera, el terapeuta que
     // vuelve a abrir el panel encontraria el boton armado y terminaria la sesion de un toque.
     cancelarConfirmacion();
+    desaislar();
     dialogo.hidden = true;
     estado.abierto = false;
     if (alCerrar !== undefined) alCerrar();
@@ -775,8 +829,42 @@ export function montarPanel({
     alAplicar(estado.config, estado.acceso, borradorVariante);
     cerrar();
   });
+  /**
+   * Lo que puede recibir el foco DENTRO del panel, en orden de tabulación.
+   *
+   * `tabIndex >= 0` es el filtro, no una lista de selectores: los botones de escalón usan el
+   * patrón del ARIA APG y sólo el elegido está en el orden de tabulación. Una lista de
+   * selectores devolvería los diez y el ciclo se rompería.
+   *
+   * @returns {HTMLElement[]}
+   */
+  function enfocables() {
+    return [...dialogo.querySelectorAll('button, input, textarea, select, a[href], [tabindex]')]
+      .filter((el) => el instanceof HTMLElement && el.tabIndex >= 0 && !el.hidden)
+      .filter((el) => !(el instanceof HTMLButtonElement && el.disabled))
+      .map((el) => /** @type {HTMLElement} */ (el));
+  }
+
   dialogo.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') cerrar();
+
+    // El CICLO de tabulación. `inert` ya impide que el foco llegue a lo de fuera, pero sin
+    // esto la tabulación desde el último mando pasa por el documento —medido: una parada en
+    // `BODY`, o sea en nada— antes de volver al panel. Para quien navega con teclado o con
+    // pulsador, esa parada muerta es indistinguible de un panel que dejó de responder.
+    if (e.key === 'Tab') {
+      const lista = enfocables();
+      const primero = lista[0];
+      const ultimo = lista[lista.length - 1];
+      if (primero === undefined || ultimo === undefined) return;
+      if (e.shiftKey && document.activeElement === primero) {
+        e.preventDefault();
+        ultimo.focus();
+      } else if (!e.shiftKey && document.activeElement === ultimo) {
+        e.preventDefault();
+        primero.focus();
+      }
+    }
   });
 
   contenedor.append(abridor, dialogo);
