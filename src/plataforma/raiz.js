@@ -57,7 +57,11 @@ import { validarConfiguracion, ejesAcoplados, dm, dp } from '../dificultad/model
  * @param {string} [entrada.varianteContenido]
  *   Identificador del nivel del eje de contenido — sistema 32. Un id que no existe LANZA;
  *   la ausencia se resuelve al ordinal 1, que es el más fácil.
- * @param {{ registro: import('../registro/sesion.js').Registro, sesion: import('../registro/sesion.js').Sesion }} [entrada.existente]
+ * @param {{ registro: import('../registro/sesion.js').Registro, sesion?: import('../registro/sesion.js').Sesion }} [entrada.existente]
+ *
+ *   Con `sesion`, se CONSERVA esa sesión: es lo que hace que reconfigurar o cambiar de juego
+ *   no destruya el registro. **Sin `sesion` pero con `registro`, se abre una sesión nueva en
+ *   el mismo registro**: es empezar con otro paciente sin perder lo anterior de la jornada.
  *   La sesion que hay que CONSERVAR al reconfigurar. Sin esto, reconfigurar crearia una
  *   sesion nueva y los tableros cerrados irian a la que se descarta — que es exactamente
  *   el bloqueante S1 del informe cruzado, reintroducido por la puerta de atras.

@@ -21,6 +21,7 @@ import {
   ESCALONES_T, ESCALONES_C, ESCALONES_PROPORCION, escalonMasCercano,
 } from '../dificultad/escalones.js';
 import { variantesDe, observacionesPorVariante } from '../dificultad/contenido.js';
+import { informeDeJornada, AVISO_SIN_GUARDAR } from '../resultados/informe.js';
 
 /**
  * Nombre legible de cada instrumento, para el desglose por ejercicio.
@@ -227,6 +228,13 @@ function deslizador({ id, etiqueta, valor, min, max, paso, unidad, alCambiar }) 
  * @param {boolean} entrada.prefersReducedMotion
  * @param {() => { tableros: number, intentos: number, aciertos: number }} entrada.progreso
  * @param {() => import('../registro/sesion.js').Sesion | null} [entrada.sesion]
+ * @param {() => import('../registro/sesion.js').Sesion[]} [entrada.jornada]
+ *   TODAS las sesiones de la jornada, en orden de inserción, incluida la que está en curso.
+ *   Su ausencia oculta la sección de jornada entera
+ * @param {() => void} [entrada.alTerminarSesion]
+ *   Termina la sesión en curso y abre otra en el MISMO registro: el paciente siguiente.
+ *   Sin esto, la única forma de pasar al siguiente era recargar, y recargar destruye el
+ *   registro de la jornada entera
  * @param {() => { svPedida: number, svEfectiva: number } | null} entrada.ultimoTablero
  * @param {(C: number) => { pedidas: number, servidas: number }} [entrada.opciones]
  *   Solo los instrumentos de elección lo pasan. Su ausencia significa "este instrumento no
@@ -239,6 +247,7 @@ function deslizador({ id, etiqueta, valor, min, max, paso, unidad, alCambiar }) 
 export function montarPanel({
   contenedor, estado, bancoActivo, anchoDisponible, prefersReducedMotion,
   progreso, ultimoTablero, opciones, alAplicar, alAbrir, alCerrar, sesion,
+  jornada, alTerminarSesion,
 }) {
   // Borrador: se edita aqui y solo pasa a `estado` al aplicar. Cerrar sin aplicar no
   // cambia nada.
@@ -272,6 +281,24 @@ export function montarPanel({
   cerrarBoton.type = 'button';
   cerrarBoton.className = 'accion';
   cerrarBoton.textContent = 'Cerrar sin cambios';
+
+  // Terminar la sesion y empezar otra.
+  //
+  // Va con confirmacion de dos pasos, al contrario que `aplicar`, y por la razon opuesta: no
+  // es reversible. La sesion terminada se queda en el registro y se puede leer, pero no se
+  // puede volver a ella, y todo lo que se juegue despues va a la del paciente siguiente.
+  const terminarBoton = document.createElement('button');
+  terminarBoton.type = 'button';
+  terminarBoton.className = 'accion terminar';
+  const TEXTO_TERMINAR = 'Terminar sesión y empezar otra';
+  terminarBoton.textContent = TEXTO_TERMINAR;
+  let confirmandoTerminar = false;
+
+  function cancelarConfirmacion() {
+    confirmandoTerminar = false;
+    terminarBoton.textContent = TEXTO_TERMINAR;
+    delete terminarBoton.dataset['confirmando'];
+  }
 
   const zonaProgreso = document.createElement('p');
   zonaProgreso.className = 'progreso';
@@ -411,6 +438,69 @@ export function montarPanel({
       sec.append(aviso);
     }
 
+    return sec;
+  }
+
+  /**
+   * La jornada: las sesiones anteriores, el informe copiable, y el paso al paciente
+   * siguiente.
+   *
+   * ## Por qué el informe es un `<textarea>` y no texto normal
+   *
+   * Porque hay que poder **copiarlo**, y las dos alternativas fallan:
+   *
+   * - La API del portapapeles necesita contexto seguro. El proyecto se abre a menudo con
+   *   `file://` —el terapeuta abre `index.html` directamente— y ahí no existe.
+   * - Un bloque de texto suelto obliga a seleccionar arrastrando, y el arrastre está
+   *   prohibido como vía única en todo el producto.
+   *
+   * Un `<textarea readonly>` se selecciona entero con `Ctrl+A` desde el teclado, sin
+   * arrastrar y sin permisos. Y no es un campo de entrada disfrazado: es de sólo lectura y
+   * lo dice su etiqueta.
+   *
+   * @returns {HTMLElement | null}
+   */
+  function seccionJornada() {
+    if (jornada === undefined) return null;
+    const sesiones = jornada();
+
+    const sec = document.createElement('section');
+    sec.className = 'seccion jornada';
+    const h = document.createElement('h2');
+    h.textContent = 'Jornada';
+    sec.append(h);
+
+    const cuenta = document.createElement('p');
+    cuenta.className = 'metrica-valor';
+    const anteriores = Math.max(0, sesiones.length - 1);
+    cuenta.textContent = anteriores === 0
+      ? 'Primera sesión de la jornada.'
+      : `Sesión ${sesiones.length} de la jornada. Las ${anteriores} anteriores siguen en el `
+        + 'informe de abajo.';
+    sec.append(cuenta);
+
+    // El aviso de que esto no se guarda va ARRIBA del informe, no debajo: debajo se lee
+    // cuando ya se ha cerrado la pestaña.
+    const aviso = document.createElement('p');
+    aviso.className = 'mensaje aviso';
+    aviso.dataset['bloquea'] = 'no';
+    aviso.textContent = `⚠ ${AVISO_SIN_GUARDAR}`;
+    sec.append(aviso);
+
+    const etiqueta = document.createElement('label');
+    etiqueta.className = 'etiqueta-informe';
+    etiqueta.htmlFor = 'informe-jornada';
+    etiqueta.textContent = 'Informe de la jornada (sólo lectura). Ctrl+A y Ctrl+C para copiar.';
+
+    const area = document.createElement('textarea');
+    area.id = 'informe-jornada';
+    area.className = 'informe';
+    area.readOnly = true;
+    area.rows = 14;
+    area.spellcheck = false;
+    area.value = informeDeJornada(sesiones, { etiquetas: ETIQUETA_INSTRUMENTO });
+
+    sec.append(etiqueta, area);
     return sec;
   }
 
@@ -599,13 +689,17 @@ export function montarPanel({
       grupo('Presentación', [reducido, silencio]),
     );
 
-    cuerpo.append(seccionEjercicio, seccionAcceso, zonaAvisos, seccionResultados(), zonaProgreso);
+    const jor = seccionJornada();
+    cuerpo.append(seccionEjercicio, seccionAcceso, zonaAvisos, seccionResultados());
+    if (jor !== null) cuerpo.append(jor);
+    cuerpo.append(zonaProgreso);
     refrescarAvisos();
   }
 
   const acciones = document.createElement('div');
   acciones.className = 'acciones';
   acciones.append(aplicar, cerrarBoton);
+  if (alTerminarSesion !== undefined) acciones.append(terminarBoton);
   dialogo.append(cuerpo, acciones);
 
   const abridor = document.createElement('button');
@@ -635,6 +729,9 @@ export function montarPanel({
   }
 
   function cerrar() {
+    // Una confirmacion a medias NO sobrevive al cierre: si sobreviviera, el terapeuta que
+    // vuelve a abrir el panel encontraria el boton armado y terminaria la sesion de un toque.
+    cancelarConfirmacion();
     dialogo.hidden = true;
     estado.abierto = false;
     if (alCerrar !== undefined) alCerrar();
@@ -644,8 +741,28 @@ export function montarPanel({
 
   abridor.addEventListener('click', abrir);
   cerrarBoton.addEventListener('click', cerrar);
+
+  terminarBoton.addEventListener('click', () => {
+    if (alTerminarSesion === undefined) return;
+    if (!confirmandoTerminar) {
+      confirmandoTerminar = true;
+      terminarBoton.dataset['confirmando'] = 'si';
+      terminarBoton.textContent = 'Confirmar: terminar y empezar otra';
+      return;
+    }
+    cancelarConfirmacion();
+    alTerminarSesion();
+    // El panel se queda ABIERTO y se reconstruye. Es deliberado: la sesion que se acaba de
+    // terminar solo existe en memoria, y cerrar el panel aqui esconderia el informe que el
+    // terapeuta tiene que copiar antes de seguir.
+    construir();
+    const area = dialogo.querySelector('#informe-jornada');
+    if (area instanceof HTMLTextAreaElement) area.focus();
+  });
+
   aplicar.addEventListener('click', () => {
     if (aplicar.disabled) return;
+    cancelarConfirmacion();
     estado.config = { ...borrador };
     estado.acceso = { ...borradorAcceso };
     if (borradorVariante !== undefined) estado.varianteContenido = borradorVariante;

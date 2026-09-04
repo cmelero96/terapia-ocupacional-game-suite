@@ -237,14 +237,23 @@
     color: var(--frame-ink);
     display: grid;
     grid-template-rows: 1fr auto;
-    overflow: auto;
+    /* El CUERPO desplaza, no el panel entero.
+       Antes desplazaba el panel completo, y con el informe de la jornada el contenido pasó a
+       ser más alto que la pantalla. Consecuencia medida: al abrir el panel, `aplicar.focus()`
+       arrastraba el panel hasta abajo y las perillas de dificultad quedaban 410 px por encima
+       del borde superior. El terapeuta abría el panel y NO veía los mandos.
+       Con el cuerpo como contenedor de desplazamiento, la fila de acciones queda siempre
+       visible y alcanzable, y enfocarla ya no mueve nada. */
+    overflow: hidden;
   }
   /* `display: grid` en `.panel` sobrescribe el `display: none` que el atributo `hidden`
      aplica por defecto, porque una clase gana a un selector de atributo. Sin esta regla el
      panel OCULTO cubre e intercepta toda la página, y la aplicación es inusable. */
   .panel[hidden] { display: none; }
 
-  .panel-cuerpo { padding: 1.5rem; max-width: 60rem; }
+  /* `min-block-size: 0` es lo que permite que un elemento de rejilla se encoja por debajo de
+     su contenido; sin él, `overflow: auto` no desplaza nada. */
+  .panel-cuerpo { padding: 1.5rem; max-width: 60rem; overflow: auto; min-block-size: 0; }
   .panel h2 { font-size: 1.1rem; margin: 1.5rem 0 0.5rem; }
   .panel h2:first-child { margin-top: 0; }
 
@@ -324,6 +333,22 @@
   .accion.primaria { border-color: var(--frame-accent); font-weight: 600; }
   .accion:disabled { color: var(--frame-ink-soft); cursor: not-allowed; }
   .accion:focus-visible { outline: 3px solid var(--frame-accent); outline-offset: 2px; }
+  /* Terminar la sesión va SEPARADO de las otras dos: es la única acción del panel que no se
+     puede deshacer. La separación es de posición, no de color: en escala de grises y con
+     colores forzados la distinción tiene que sobrevivir, y el texto del botón ya la dice. */
+  .accion.terminar { margin-inline-start: auto; }
+  .accion.terminar[data-confirmando='si'] { font-weight: 600; border-width: 3px; }
+
+  .etiqueta-informe { display: block; margin-block: 0.75rem 0.25rem; font-size: 0.95rem; }
+  /* Monoespaciado a propósito: el informe se pega en otro documento y sus columnas tienen
+     que aguantar. Y seleccionable con Ctrl+A, sin arrastrar. */
+  .informe {
+    inline-size: 100%; box-sizing: border-box; padding: 0.5rem;
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; font-size: 0.85rem;
+    background: var(--frame-bg); color: var(--frame-ink);
+    border: 2px solid var(--frame-line); border-radius: 8px; resize: vertical;
+  }
+  .informe:focus-visible { outline: 3px solid var(--frame-accent); outline-offset: 2px; }
 
   /* Estímulo reducido: ni una transición, ni un desvanecimiento. Instantáneo significa
      instantáneo. El acuse pierde el movimiento y CONSERVA la existencia. */
@@ -547,6 +572,19 @@
           aciertos: viva.estado.instrumento.intentos.filter((i) => i.correcto).length,
         },
     sesion: () => viva?.sesionConTableros?.() ?? null,
+    // TODA la jornada, con el tablero en curso ya cerrado para que la sesión activa aparezca
+    // con lo jugado hasta ahora y no una vuelta por detrás.
+    jornada: () => {
+      if (viva === null) return [];
+      viva.sesionConTableros();
+      return viva.registro.ordenadas();
+    },
+    alTerminarSesion: () => {
+      if (viva === null) return;
+      viva.terminarYEmpezarOtra();
+      estado = viva.estado;
+      globalThis.__busca = { viva, estado, config, panel, estadoPanel };
+    },
     // Cuántas opciones pide la configuración y cuántas sirve el CONTENIDO de verdad.
     //
     // Sólo los instrumentos de elección tienen `ronda`, así que la comprobación es por la

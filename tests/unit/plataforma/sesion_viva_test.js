@@ -107,3 +107,119 @@ test('test_la_marca_de_ejes_acoplados_se_ENDURECE_y_no_se_relaja', () => {
   viva.reconfigurar({ config: { t: 100, C: 6, sv: 0.3, ss: 0.3 } });
   assert.equal(viva.sesion.ejesAcoplados, true, 'y subir el tamaño NO la borra');
 });
+
+// -------------------------------------------------- terminar y empezar otra (la jornada)
+
+/**
+ * El bloqueante que apareció al medir una sesión larga: **no había forma de pasar al
+ * paciente siguiente sin perder lo anterior.**
+ *
+ * El GDD del sistema 9 guarda hasta 20 sesiones porque *«20 sesiones son mucho más de lo
+ * que una jornada de consulta produce»*. O sea que el diseño cuenta con varias sesiones por
+ * jornada — y sólo se abría una, al cargar la página. Para pasar al siguiente había que
+ * recargar, que es exactamente el bloqueante S1 otra vez, ahora por la puerta de la jornada.
+ *
+ * El tope de 20 era CÓDIGO MUERTO: nunca podía llegar a dos.
+ */
+
+/** @param {{ estado: any }} sesionViva */
+function jugarUnTablero(sesionViva) {
+  const inst = sesionViva.estado.instrumento;
+  inst.activar(
+    { idObjetivo: inst.tablero.objetivo, tActivacion: 1, modo: 'tactil', origenTiempo: 'evento' },
+    { ms: 300 },
+  );
+  sesionViva.estado.cerrarTablero({ resuelto: true });
+}
+
+test('test_terminar_abre_una_sesion_NUEVA_y_conserva_la_anterior', () => {
+  const zonas = domFalso();
+  const viva = crearSesionViva({
+    ...zonas, tipo: 'busca', banco: [...BANCO_PRUEBA],
+    config: { t: 60, C: 6, sv: 0.3, ss: 0.3 },
+  });
+  jugarUnTablero(viva);
+  jugarUnTablero(viva);
+
+  const terminada = viva.terminarYEmpezarOtra();
+
+  // DOS, no tres: el tablero en curso no tenia ni un intento, y un tablero que nadie toco no
+  // es un dato. Registrarlo con cero intentos bajaria la precision de la sesion con un
+  // tablero que el paciente no jugo.
+  assert.equal(terminada.tableros.length, 2, 'los 2 jugados; el intacto no cuenta');
+  assert.equal(viva.sesion.tableros.length, 0, 'la sesion nueva empieza VACIA');
+  assert.notEqual(viva.sesion.orden, terminada.orden, 'y es otra sesion');
+  assert.ok(viva.sesion.orden > terminada.orden, 'posterior en orden de insercion');
+
+  const jornada = viva.registro.ordenadas();
+  assert.equal(jornada.length, 2, 'las DOS estan en el registro de la jornada');
+  assert.equal(jornada[0]?.orden, terminada.orden, 'y la terminada sigue siendo legible');
+  assert.equal(jornada[0]?.tableros.length, 2);
+});
+
+test('test_el_tablero_en_curso_al_terminar_queda_marcado_INCOMPLETO', () => {
+  // Nunca se resolvio: contarlo como resuelto inventaria un acierto que no ocurrio.
+  const zonas = domFalso();
+  const viva = crearSesionViva({
+    ...zonas, tipo: 'busca', banco: [...BANCO_PRUEBA],
+    config: { t: 60, C: 6, sv: 0.3, ss: 0.3 },
+  });
+  jugarUnTablero(viva);
+  // Un fallo en el tablero SIGUIENTE: asi tiene un intento y no esta resuelto, que es el
+  // estado real de un tablero a medias cuando el terapeuta termina la sesion.
+  const inst = viva.estado.instrumento;
+  const fallo = inst.tablero.distractores[0] ?? inst.tablero.objetivo;
+  inst.activar(
+    { idObjetivo: fallo, tActivacion: 1, modo: 'tactil', origenTiempo: 'evento' },
+    { ms: 300 },
+  );
+  const terminada = viva.terminarYEmpezarOtra();
+
+  assert.equal(terminada.tableros.length, 2, 'el resuelto y el que estaba a medias');
+  assert.equal(terminada.tableros.filter((t) => t.incompleto).length, 1);
+  assert.equal(terminada.tableros.filter((t) => !t.incompleto).length, 1, 'el resuelto, no');
+});
+
+test('test_la_sesion_nueva_sigue_siendo_JUGABLE', () => {
+  // El instrumento se desmonta y se vuelve a montar. Si el montaje nuevo no quedara vivo, el
+  // terapeuta terminaria la sesion y se encontraria un tablero que no responde.
+  const zonas = domFalso();
+  const viva = crearSesionViva({
+    ...zonas, tipo: 'busca', banco: [...BANCO_PRUEBA],
+    config: { t: 60, C: 6, sv: 0.3, ss: 0.3 },
+  });
+  viva.terminarYEmpezarOtra();
+  jugarUnTablero(viva);
+
+  assert.equal(viva.sesion.tableros.length, 1, 'lo jugado despues va a la sesion NUEVA');
+  assert.equal(viva.registro.ordenadas().length, 2, 'y no se abrio una tercera');
+});
+
+test('test_terminar_conserva_la_CONFIGURACION_aplicada', () => {
+  // Empezar con otro paciente no es reiniciar los ajustes: si volviera a los de la URL, el
+  // terapeuta perderia en silencio todo lo que hubiera ajustado en la jornada.
+  const zonas = domFalso();
+  const viva = crearSesionViva({
+    ...zonas, tipo: 'busca', banco: [...BANCO_PRUEBA],
+    config: { t: 60, C: 6, sv: 0.3, ss: 0.3 },
+  });
+  viva.reconfigurar({ config: { t: 100, C: 9, sv: 0.5, ss: 0.2 } });
+  viva.terminarYEmpezarOtra();
+
+  assert.equal(viva.estado.instrumento.t, 100);
+  assert.equal(dm(viva.estado.instrumento.t), dm(100));
+});
+
+test('test_tres_sesiones_seguidas_van_en_ORDEN', () => {
+  const zonas = domFalso();
+  const viva = crearSesionViva({
+    ...zonas, tipo: 'busca', banco: [...BANCO_PRUEBA],
+    config: { t: 60, C: 6, sv: 0.3, ss: 0.3 },
+  });
+  viva.terminarYEmpezarOtra();
+  viva.terminarYEmpezarOtra();
+
+  const ordenes = viva.registro.ordenadas().map((s) => s.orden);
+  assert.equal(ordenes.length, 3);
+  assert.deepStrictEqual([...ordenes].sort((a, b) => a - b), ordenes, 'en orden creciente');
+});

@@ -32,11 +32,17 @@ export function crearSesionViva(entradaInicial) {
   let actual = arrancar(entrada);
 
   /**
-   * El registro y la sesion de la PRIMERA construccion. Se conservan a traves de cada
-   * reconfiguracion: son lo que no debe morir.
+   * El registro de la PRIMERA construccion. Se conserva a traves de todo: es lo que no debe
+   * morir, y guarda todas las sesiones de la jornada.
    */
   const registro = actual.registro;
-  const sesion = actual.sesion;
+
+  /**
+   * La sesion EN CURSO. Cambia solo al terminar una y empezar otra.
+   *
+   * @type {import('../registro/sesion.js').Sesion}
+   */
+  let sesionActual = actual.sesion;
 
   /**
    * Reconfigura sin recargar. Los tableros ya cerrados siguen en la sesion.
@@ -66,19 +72,58 @@ export function crearSesionViva(entradaInicial) {
 
     // Se le PASA la sesion existente: si no, el instrumento nuevo cerraria sus tableros
     // en una sesion recien creada y los datos se partirian en dos.
-    actual = arrancar({ ...entrada, existente: { registro, sesion } });
+    actual = arrancar({ ...entrada, existente: { registro, sesion: sesionActual } });
     return actual;
+  }
+
+  /**
+   * Termina la sesion en curso y empieza otra. **El paciente siguiente.**
+   *
+   * ## Por que hace falta, y por que no existia
+   *
+   * El GDD del sistema 9 dice que el registro guarda hasta 20 sesiones porque *«20 sesiones
+   * son mucho mas de lo que una jornada de consulta produce»*. O sea que el diseño **cuenta
+   * con varias sesiones por jornada**.
+   *
+   * Y no habia ninguna forma de abrir la segunda: una sesion se abria al cargar la pagina, y
+   * punto. Para pasar al paciente siguiente habia que recargar, que es exactamente lo que
+   * destruye el registro — el bloqueante S1 otra vez, ahora por la puerta de la jornada.
+   *
+   * ## Lo que hace y lo que NO hace
+   *
+   * Cierra el tablero en curso marcandolo incompleto, deja la sesion terminada **en el
+   * registro** —de donde el terapeuta puede seguir leyendola— y abre una nueva en el mismo
+   * registro.
+   *
+   * **No guarda nada en ningun sitio.** En el primer hito no hay persistencia por diseño: el
+   * registro vive en memoria y muere al cerrar el navegador. Eso no es un descuido, es una
+   * decision aplazada sobre datos de salud — y la pantalla lo tiene que decir.
+   *
+   * @returns {import('../registro/sesion.js').Sesion} La sesion que se acaba de terminar
+   */
+  function terminarYEmpezarOtra() {
+    // El tablero en curso NO esta resuelto: si lo estuviera, se habria cerrado solo.
+    actual.cerrarTablero({ resuelto: false });
+    actual.montado.desconectar();
+    const terminada = sesionActual;
+
+    // Sin `sesion` en `existente`: eso es lo que hace que `arrancar` abra una nueva en el
+    // MISMO registro, conservando las anteriores.
+    actual = arrancar({ ...entrada, existente: { registro } });
+    sesionActual = actual.sesion;
+    return terminada;
   }
 
   return {
     get estado() { return actual; },
     registro,
-    sesion,
+    get sesion() { return sesionActual; },
     reconfigurar,
+    terminarYEmpezarOtra,
     /** La sesion con TODOS los tableros cerrados, incluido el que esta en curso. */
     sesionConTableros: () => {
       actual.cerrarTablero({ resuelto: false });
-      return sesion;
+      return sesionActual;
     },
   };
 }
