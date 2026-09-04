@@ -231,6 +231,9 @@ function deslizador({ id, etiqueta, valor, min, max, paso, unidad, alCambiar }) 
  * @param {() => import('../registro/sesion.js').Sesion[]} [entrada.jornada]
  *   TODAS las sesiones de la jornada, en orden de inserción, incluida la que está en curso.
  *   Su ausencia oculta la sección de jornada entera
+ * @param {(selloPared: number) => string} [entrada.formatoHora]
+ *   Formatea la hora de una sesión para el informe. Va inyectada porque la hora local es una
+ *   lectura del entorno. Su ausencia omite la hora, no la inventa
  * @param {() => void} [entrada.alTerminarSesion]
  *   Termina la sesión en curso y abre otra en el MISMO registro: el paciente siguiente.
  *   Sin esto, la única forma de pasar al siguiente era recargar, y recargar destruye el
@@ -247,7 +250,7 @@ function deslizador({ id, etiqueta, valor, min, max, paso, unidad, alCambiar }) 
 export function montarPanel({
   contenedor, estado, bancoActivo, anchoDisponible, prefersReducedMotion,
   progreso, ultimoTablero, opciones, alAplicar, alAbrir, alCerrar, sesion,
-  jornada, alTerminarSesion,
+  jornada, alTerminarSesion, formatoHora,
 }) {
   // Borrador: se edita aqui y solo pasa a `estado` al aplicar. Cerrar sin aplicar no
   // cambia nada.
@@ -498,7 +501,10 @@ export function montarPanel({
     area.readOnly = true;
     area.rows = 14;
     area.spellcheck = false;
-    area.value = informeDeJornada(sesiones, { etiquetas: ETIQUETA_INSTRUMENTO });
+    area.value = informeDeJornada(sesiones, {
+      etiquetas: ETIQUETA_INSTRUMENTO,
+      ...(formatoHora === undefined ? {} : { formatoHora }),
+    });
 
     sec.append(etiqueta, area);
     return sec;

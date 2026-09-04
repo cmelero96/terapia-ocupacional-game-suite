@@ -131,7 +131,8 @@ test('test_los_tableros_SIN_TERMINAR_se_cuentan_en_el_informe', () => {
 
 test('test_el_nombre_del_ejercicio_se_muestra_LEGIBLE', () => {
   const bloque = bloqueDeSesion(
-    sesion({ orden: 0, instrumento: 'tresEnRaya' }), 1, { tresEnRaya: 'Tres en raya' },
+    sesion({ orden: 0, instrumento: 'tresEnRaya' }), 1,
+    { etiquetas: { tresEnRaya: 'Tres en raya' } },
   );
   assert.match(bloque, /Ejercicios: Tres en raya/);
 });
@@ -171,7 +172,7 @@ test('test_una_sesion_que_mezcla_EJERCICIOS_no_publica_una_precision_de_sesion',
     })),
   });
 
-  const bloque = bloqueDeSesion(s, 1, { busca: 'Busca', precios: 'Precio justo' });
+  const bloque = bloqueDeSesion(s, 1, { etiquetas: { busca: 'Busca', precios: 'Precio justo' } });
   assert.doesNotMatch(bloque, /40 %/, 'la precision mezclada NO se publica');
   // Y el desglose por ejercicio si.
   assert.match(bloque, /Busca/);
@@ -199,4 +200,39 @@ test('test_una_metrica_sin_dato_escribe_el_MOTIVO_y_no_un_numero', () => {
   const bloque = bloqueDeSesion(sesion({ orden: 0, aciertos: 1 }), 1);
   assert.match(bloque, /Dificultad/);
   assert.doesNotMatch(bloque, /Dificultad[^\n]*: 20\.0/);
+});
+
+// ---------------------------------------------------------------- la hora, y el reparto
+
+test('test_la_HORA_va_en_el_encabezado_de_cada_sesion', () => {
+  // El terapeuta corta este texto en trozos y los pega en historias clinicas distintas.
+  // Fuera de aqui, «Sesion 2» no se puede atribuir a un paciente.
+  const texto = informeDeJornada(
+    [sesion({ orden: 0 }), sesion({ orden: 1 })],
+    { formatoHora: (ms) => (ms === 0 ? '09:30' : '11:05') },
+  );
+  assert.match(texto, /--- Sesión 1 · 09:30 ---/);
+});
+
+test('test_sin_funcion_de_hora_NO_se_inventa_una', () => {
+  // `src/` no construye un `Date`: la hora local es una lectura del entorno. Sin funcion se
+  // omite el dato, que es la regla de siempre — antes falta de dato que dato falso.
+  const texto = informeDeJornada([sesion({ orden: 0 })]);
+  assert.match(texto, /--- Sesión 1 ---/);
+  assert.doesNotMatch(texto, /·/);
+});
+
+test('test_la_funcion_de_hora_recibe_el_SELLO_DE_PARED_de_esa_sesion', () => {
+  const s = sesion({ orden: 3 });
+  s.selloPared = 1770000000000;
+  /** @type {number[]} */
+  const recibidos = [];
+  bloqueDeSesion(s, 1, { formatoHora: (ms) => { recibidos.push(ms); return 'x'; } });
+  assert.deepStrictEqual(recibidos, [1770000000000]);
+});
+
+test('test_los_bloques_van_SEPARADOS_por_una_linea_en_blanco', () => {
+  // Sin separacion, los limites entre pacientes no se ven de un vistazo al cortar el texto.
+  const texto = informeDeJornada([sesion({ orden: 0 }), sesion({ orden: 1 })]);
+  assert.match(texto, /\n\n--- Sesión 2 ---/);
 });

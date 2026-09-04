@@ -59,13 +59,24 @@ function linea(m) {
 /**
  * El bloque de una sesión.
  *
+ * La hora del día va en el encabezado, y hace falta: el terapeuta **corta este texto en
+ * trozos** y los pega en historias clínicas distintas. Fuera de aquí, «Sesión 2» no se puede
+ * atribuir a un paciente.
+ *
+ * El formato se INYECTA. Este módulo no puede construir un `Date` —la hora local es una
+ * lectura del entorno, y `src/` no las hace fuera del borde impuro— y sin función no se
+ * inventa una hora: se omite.
+ *
  * @param {import('../registro/sesion.js').Sesion} s
  * @param {number} numero El que ve el terapeuta: 1 para la primera de la jornada
- * @param {Record<string, string>} etiquetas Nombres de instrumento para mostrar
+ * @param {object} [opciones]
+ * @param {Record<string, string>} [opciones.etiquetas] Nombres de instrumento para mostrar
+ * @param {(selloPared: number) => string} [opciones.formatoHora]
  * @returns {string}
  */
-export function bloqueDeSesion(s, numero, etiquetas = {}) {
-  const partes = [`--- Sesión ${numero} ---`];
+export function bloqueDeSesion(s, numero, { etiquetas = {}, formatoHora } = {}) {
+  const hora = formatoHora === undefined ? '' : ` · ${formatoHora(s.selloPared)}`;
+  const partes = [`--- Sesión ${numero}${hora} ---`];
 
   if (s.tableros.length === 0) {
     // No es un cero: es una sesión que no llegó a empezar. Un «0 tableros, precisión 0 %»
@@ -130,9 +141,10 @@ export function bloqueDeSesion(s, numero, etiquetas = {}) {
  * @param {import('../registro/sesion.js').Sesion[]} sesiones En orden de inserción
  * @param {object} [opciones]
  * @param {Record<string, string>} [opciones.etiquetas]
+ * @param {(selloPared: number) => string} [opciones.formatoHora]
  * @returns {string}
  */
-export function informeDeJornada(sesiones, { etiquetas = {} } = {}) {
+export function informeDeJornada(sesiones, { etiquetas = {}, formatoHora } = {}) {
   const cabecera = [
     `INFORME DE LA JORNADA — ${sesiones.length} `
     + `${sesiones.length === 1 ? 'sesión' : 'sesiones'}`,
@@ -147,6 +159,12 @@ export function informeDeJornada(sesiones, { etiquetas = {} } = {}) {
     return 'INFORME DE LA JORNADA — sin sesiones todavía.';
   }
 
-  const bloques = sesiones.map((s, i) => bloqueDeSesion(s, i + 1, etiquetas));
-  return [...cabecera, '', ...bloques].join('\n');
+  const bloques = sesiones.map(
+    (s, i) => bloqueDeSesion(s, i + 1, {
+      etiquetas, ...(formatoHora === undefined ? {} : { formatoHora }),
+    }),
+  );
+  // Línea en blanco ENTRE bloques: el terapeuta corta este texto en trozos, uno por paciente,
+  // y sin separación los límites no se ven de un vistazo.
+  return [...cabecera, '', bloques.join('\n\n')].join('\n');
 }

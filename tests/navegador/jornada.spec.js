@@ -130,8 +130,10 @@ test('el informe incluye la sesion EN CURSO, no solo las terminadas', async ({ p
   const texto = await page.locator('#informe-jornada')
     .evaluate((el) => /** @type {HTMLTextAreaElement} */ (el).value);
   expect(texto).toMatch(/2 sesiones/);
-  expect(texto).toMatch(/--- Sesión 1 ---/);
-  expect(texto).toMatch(/--- Sesión 2 ---/);
+  // Con la HORA: el terapeuta reparte este texto entre historias clinicas distintas, y sin
+  // ella «Sesion 2» no se puede atribuir a un paciente.
+  expect(texto).toMatch(/--- Sesión 1 · \d\d:\d\d ---/);
+  expect(texto).toMatch(/--- Sesión 2 · \d\d:\d\d ---/);
   // La primera tuvo 3 tableros y la segunda 2. Los dos recuentos tienen que estar.
   expect(texto).toMatch(/Tableros terminados: 3/);
   expect(texto).toMatch(/Tableros terminados: 2/);

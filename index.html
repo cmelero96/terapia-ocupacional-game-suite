@@ -579,6 +579,11 @@
       viva.sesionConTableros();
       return viva.registro.ordenadas();
     },
+    // La hora local del sello de pared. Se formatea AQUI, en el borde impuro: `src/` no
+    // construye un `Date`, y el informe sin hora no se puede repartir entre pacientes.
+    formatoHora: (ms) => new Date(ms).toLocaleTimeString('es-ES', {
+      hour: '2-digit', minute: '2-digit',
+    }),
     alTerminarSesion: () => {
       if (viva === null) return;
       viva.terminarYEmpezarOtra();
